@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_margin="8dp">
+
+    <ImageView
+        android:id="@+id/shortcut_icon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_placeholder_logo"
+        android:background="@drawable/rounded_background"
+        android:scaleType="centerCrop"
+        android:clipToOutline="true"
+        android:contentDescription="@string/media_logo" />
+
+    <TextView
+        android:id="@+id/shortcut_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Shortcut"
+        android:textColor="@android:color/black"
+        android:textSize="12sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+</LinearLayout>

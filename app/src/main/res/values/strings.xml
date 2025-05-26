@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">StreamPlay</string>
+
+    <!-- PlayerFragment -->
+    <string name="media_logo">Sender Logo</string>
+    <string name="button_play_pause">Play/Pause</string>
+    <string name="button_forward">Next</string>
+    <string name="button_back">Back</string>
+
+    <string name="open_streams">Streams verwalten</string>
+    <string name="open_meta_history">Meta-Verlauf</string>
+    <string name="open_settings">Einstellungen</string>
+<string name="manual_log">Manual Log</string>
+    <!-- StreamsFragment -->
+    <string name="streams_title">Streams</string>
+    <string name="add_stream">Stream hinzufügen</string>
+    <string name="edit_stream">Stream bearbeiten</string>
+    <string name="delete_stream">Stream löschen</string>
+
+    <!-- MetaHistoryFragment -->
+    <string name="meta_history_title">Meta-Verlauf</string>
+
+    <!-- SettingsFragment -->
+    <string name="settings_title">Einstellungen</string>
+
+    <!-- Sonstige Standardstrings -->
+    <string name="ok">OK</string>
+    <string name="cancel">Abbrechen</string>
+</resources>
