@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <!-- Kleiner Griff zum Hochziehen -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:background="@drawable/bottom_sheet_handle"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Titel / Überschrift -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Aktionen"
+        android:textAppearance="?attr/textAppearanceHeadline6"
+        android:paddingBottom="8dp"/>
+
+    <!-- Menüeinträge -->
+    <LinearLayout
+        android:id="@+id/StationSetup"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="12dp"
+        android:clickable="true"
+        android:foreground="?attr/selectableItemBackground">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_button_unmuted"
+            android:contentDescription="Zur Playlist hinzufügen"
+            android:tint="?attr/colorOnSurface"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingStart="16dp"
+            android:text="Zur Playlist das"
+            android:textAppearance="?attr/textAppearanceBody1"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/option_share"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="12dp"
+        android:clickable="true"
+        android:foreground="?attr/selectableItemBackground">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_button_share"
+            android:contentDescription="Teilen"
+            android:tint="?attr/colorOnSurface"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingStart="16dp"
+            android:text="Teilen"
+            android:textAppearance="?attr/textAppearanceBody1"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/option_delete"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="12dp"
+        android:clickable="true"
+        android:foreground="?attr/selectableItemBackground">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_button_share"
+            android:contentDescription="Löschen"
+            android:tint="?attr/colorOnSurface"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingStart="16dp"
+            android:text="Löschen"
+            android:textAppearance="?attr/textAppearanceBody1"/>
+    </LinearLayout>
+
+</LinearLayout>

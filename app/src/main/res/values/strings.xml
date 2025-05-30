@@ -1,29 +1,66 @@
 <resources>
     <string name="app_name">StreamPlay</string>
 
-    <!-- PlayerFragment -->
-    <string name="media_logo">Sender Logo</string>
-    <string name="button_play_pause">Play/Pause</string>
-    <string name="button_forward">Next</string>
-    <string name="button_back">Back</string>
+    <!-- media_item_view.xml -->
+    <string name="desc_media_cover">Media Cover</string>
+    <string name="desc_media_item_container">Media item container layout</string>
+    <string name="desc_guideline">Guideline for layout alignment</string>
+    <string name="desc_cover_image">Cover image of the media item</string>
+    <string name="desc_player_buttons_group">Player control buttons: back, play/pause, forward</string>
+    <string name="desc_button_back">Back button</string>
+    <string name="desc_button_play_pause">Play or pause button</string>
+    <string name="desc_button_forward">Forward button</string>
+    <string name="desc_shortcut_recycler_view">Shortcut list for quick actions</string>
+    <string name="desc_right_buttons_container">Container for right side vertical buttons</string>
+    <string name="desc_right_vertical_buttons">Vertical buttons: mute, share, menu</string>
+    <string name="desc_button_mute_unmute">Mute or unmute button</string>
+    <string name="desc_button_share">Share button</string>
+    <string name="desc_button_menu">Menu button</string>
 
-    <string name="open_streams">Streams verwalten</string>
-    <string name="open_meta_history">Meta-Verlauf</string>
-    <string name="open_settings">Einstellungen</string>
-<string name="manual_log">Manual Log</string>
+    <string name="desc_metainfo_overlay_container">Metainfo overlay container</string>
+    <string name="desc_metainfo_overlay_image">Meta image</string>
+    <string name="desc_metainfo_overlay_texts_container">Container for overlay texts</string>
+    <string name="desc_metainfo_overlay_text_title">Title overlay text</string>
+    <string name="desc_metainfo_overlay_text_artist">Artist overlay text</string>
+    <string name="desc_button_manual_log">Manual log button</string>
+    <string name="desc_station_overlay_container">Station overlay container</string>
+    <string name="desc_station_overlay_content">Content of the Station overlay</string>
+    <string name="desc_station_overlay_image">Image in the Station overlay</string>
+    <string name="desc_station_overlay_text">Text in the Station overlay</string>
+    <string name="placeholder_upper_overlay">Upper overlay text</string>
+
+    <string name="placeholder_Artist">Artist</string>
+    <string name="placeholder_Title">Title</string>
+    <string name="placeholder_Station">Station</string>
     <!-- StreamsFragment -->
     <string name="streams_title">Streams</string>
     <string name="add_stream">Stream hinzufügen</string>
     <string name="edit_stream">Stream bearbeiten</string>
     <string name="delete_stream">Stream löschen</string>
 
-    <!-- MetaHistoryFragment -->
-    <string name="meta_history_title">Meta-Verlauf</string>
-
-    <!-- SettingsFragment -->
-    <string name="settings_title">Einstellungen</string>
 
     <!-- Sonstige Standardstrings -->
     <string name="ok">OK</string>
     <string name="cancel">Abbrechen</string>
+
+    <!-- Sample Text -->
+    <string name="sample_text_station_metadata" translatable="false">David Bowie - The Man Who Sold The World</string>
+    <string name="sample_text_station_name" translatable="false">Byte FM</string>
+    <string name="sample_text_steam_url" translatable="false">http://bytefm.cast.addradio.de/bytefm/main/mid/stream</string>
+    <string name="sample_text_sleep_timer_remaining_time" translatable="false">00:00</string>
+
+    <!-- StreamService -->
+    <string name="streaming_service_notification_title">Streaming Service</string>
+    <string name="streaming_service_notification_text">Initializing.....</string>
+    <string name="streaming_service_channel_name">Streaming Service Channel</string>
+    <string name="streaming_service_channel_description">Channel for the Streaming Service</string>
+    <string name="streaming_service_refresh_playlist_log">🔁 refreshPlaylist() executed via Save button!</string>
+    <string name="streaming_service_media_item_changed_log">🔁 MediaItem changed: Index = %1$d</string>
+    <string name="streaming_service_timeline_changed_log">📻 Timeline Changed</string>
+    <string name="streaming_service_unknown_stream">Unknown Stream</string>
+    <string name="streaming_service_error_message">Error playing %1$s: %2$s\n%3$s: %4$s</string>
+
+
+
+
 </resources>
