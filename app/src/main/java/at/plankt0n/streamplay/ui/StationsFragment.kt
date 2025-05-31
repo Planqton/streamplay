@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.Switch
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -59,6 +60,7 @@ class StationsFragment : Fragment() {
         val editUrl = dialogView.findViewById<EditText>(R.id.editStreamUrl)
         val editIcon = dialogView.findViewById<EditText>(R.id.editIconUrl)
 
+
         AlertDialog.Builder(requireContext())
             .setTitle("Add Station")
             .setView(dialogView)
@@ -67,7 +69,8 @@ class StationsFragment : Fragment() {
                     uuid = UUID.randomUUID().toString(),
                     stationName = editName.text.toString(),
                     streamURL = editUrl.text.toString(),
-                    iconURL = editIcon.text.toString()
+                    iconURL = editIcon.text.toString(),
+
                 )
                 stationList.add(station)
                 PreferencesHelper.saveStations(requireContext(), stationList)
@@ -87,6 +90,7 @@ class StationsFragment : Fragment() {
         editUrl.setText(station.streamURL)
         editIcon.setText(station.iconURL)
 
+
         AlertDialog.Builder(requireContext())
             .setTitle("Edit Station")
             .setView(dialogView)
@@ -96,7 +100,7 @@ class StationsFragment : Fragment() {
                     stationList[index] = station.copy(
                         stationName = editName.text.toString(),
                         streamURL = editUrl.text.toString(),
-                        iconURL = editIcon.text.toString()
+                        iconURL = editIcon.text.toString(),
                     )
                     PreferencesHelper.saveStations(requireContext(), stationList)
                     adapter.notifyDataSetChanged()
@@ -105,4 +109,5 @@ class StationsFragment : Fragment() {
             .setNegativeButton("Cancel", null)
             .show()
     }
+
 }

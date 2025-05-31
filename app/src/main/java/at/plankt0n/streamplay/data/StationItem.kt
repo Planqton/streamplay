@@ -4,5 +4,5 @@ data class StationItem(
     val uuid: String,
     val stationName: String,
     val streamURL: String,
-    val iconURL: String
+    val iconURL: String,
 )

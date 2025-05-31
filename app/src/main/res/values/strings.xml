@@ -60,6 +60,9 @@
     <string name="streaming_service_unknown_stream">Unknown Stream</string>
     <string name="streaming_service_error_message">Error playing %1$s: %2$s\n%3$s: %4$s</string>
 
+    <!-- Spotify API -->
+    <string name="spotify_client_id">cc55a94b922c496a84c4a725242a313b</string>
+    <string name="spotify_client_secret">1893b26ecec74a4984152f0d86200b63</string>
 
 
 

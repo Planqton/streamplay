@@ -113,10 +113,10 @@ class MediaServiceController(private val context: Context) {
             val extras = metadata.extras
 
             val uuid = extras?.getString("EXTRA_UUID") ?: ""
-            val name = metadata.artist?.toString() ?: "Unnamed"
+
             val url = mediaItem.localConfiguration?.uri?.toString() ?: ""
             val iconUrl = extras?.getString("EXTRA_ICON_URL") ?: ""
-
+            val name = extras?.getString("EXTRA_STATION_NAME") ?: ""
             streams.add(
                 StationItem(
                     uuid = uuid,
