@@ -1,20 +1,20 @@
 package at.plankt0n.streamplay.ui
 
-import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.PreferencesHelper
-import com.google.android.material.textview.MaterialTextView
-import java.util.UUID
+import java.util.*
 
 class StationsFragment : Fragment() {
 
@@ -22,7 +22,7 @@ class StationsFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: StationListAdapter
     private lateinit var topbarBackButton: ImageButton
-    private lateinit var topbarTitleView: MaterialTextView
+    private lateinit var topbarTitle: TextView
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -30,29 +30,35 @@ class StationsFragment : Fragment() {
     ): View {
         val view = inflater.inflate(R.layout.fragment_stations, container, false)
 
-        // Topbar
         topbarBackButton = view.findViewById(R.id.arrow_back)
-        topbarTitleView = view.findViewById(R.id.topbar_title)
-        topbarTitleView.text = getString(R.string.fragment_stations_title)
+        topbarTitle = view.findViewById(R.id.topbar_title)
 
-        // Stationen laden
-        stationList = PreferencesHelper.getStations(requireContext())
+        // Direkt statisch PreferencesHelper verwenden
+        stationList = PreferencesHelper.getStations(requireContext()).toMutableList()
 
-        // RecyclerView vorbereiten
         recyclerView = view.findViewById(R.id.recyclerViewStations)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = StationListAdapter(
-            stationList,
-            onEdit = { station -> showEditDialog(station) },
-            onDelete = { station ->
-                stationList.remove(station)
-                PreferencesHelper.saveStations(requireContext(), stationList)
-                adapter.notifyDataSetChanged()
-            }
-        )
+        adapter = StationListAdapter(stationList)
         recyclerView.adapter = adapter
 
-        // Station hinzufügen
+        // Swipe-to-Delete
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean = false
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                stationList.removeAt(position)
+                PreferencesHelper.saveStations(requireContext(), stationList)
+                adapter.notifyItemRemoved(position)
+            }
+        })
+        itemTouchHelper.attachToRecyclerView(recyclerView)
+
+        // Hinzufügen
         view.findViewById<View>(R.id.buttonAddStation).setOnClickListener {
             showAddDialog()
         }
@@ -71,7 +77,7 @@ class StationsFragment : Fragment() {
         val editUrl = dialogView.findViewById<EditText>(R.id.editStreamUrl)
         val editIcon = dialogView.findViewById<EditText>(R.id.editIconUrl)
 
-        AlertDialog.Builder(requireContext())
+        android.app.AlertDialog.Builder(requireContext())
             .setTitle("Add Station")
             .setView(dialogView)
             .setPositiveButton("Save") { _, _ ->
@@ -79,40 +85,11 @@ class StationsFragment : Fragment() {
                     uuid = UUID.randomUUID().toString(),
                     stationName = editName.text.toString(),
                     streamURL = editUrl.text.toString(),
-                    iconURL = editIcon.text.toString()
+                    iconURL = editIcon.text.toString(),
                 )
                 stationList.add(station)
                 PreferencesHelper.saveStations(requireContext(), stationList)
-                adapter.notifyDataSetChanged()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun showEditDialog(station: StationItem) {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_station, null)
-        val editName = dialogView.findViewById<EditText>(R.id.editStationName)
-        val editUrl = dialogView.findViewById<EditText>(R.id.editStreamUrl)
-        val editIcon = dialogView.findViewById<EditText>(R.id.editIconUrl)
-
-        editName.setText(station.stationName)
-        editUrl.setText(station.streamURL)
-        editIcon.setText(station.iconURL)
-
-        AlertDialog.Builder(requireContext())
-            .setTitle("Edit Station")
-            .setView(dialogView)
-            .setPositiveButton("Save") { _, _ ->
-                val index = stationList.indexOfFirst { it.uuid == station.uuid }
-                if (index != -1) {
-                    stationList[index] = station.copy(
-                        stationName = editName.text.toString(),
-                        streamURL = editUrl.text.toString(),
-                        iconURL = editIcon.text.toString()
-                    )
-                    PreferencesHelper.saveStations(requireContext(), stationList)
-                    adapter.notifyDataSetChanged()
-                }
+                adapter.notifyItemInserted(stationList.size - 1)
             }
             .setNegativeButton("Cancel", null)
             .show()

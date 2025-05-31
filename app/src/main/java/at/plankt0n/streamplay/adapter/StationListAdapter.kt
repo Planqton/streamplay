@@ -3,28 +3,37 @@ package at.plankt0n.streamplay.ui
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.TextView
+import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.helper.PreferencesHelper
 
 class StationListAdapter(
-    private val stationList: List<StationItem>,
-    private val onEdit: (StationItem) -> Unit,
-    private val onDelete: (StationItem) -> Unit
+    private val stationList: MutableList<StationItem>
 ) : RecyclerView.Adapter<StationListAdapter.ViewHolder>() {
 
+    private var editingPosition: Int = -1
+
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        // Normale Ansicht
         val textName: TextView = itemView.findViewById(R.id.textStationName)
         val textUrl: TextView = itemView.findViewById(R.id.textStreamUrl)
-        val buttonEdit: Button = itemView.findViewById(R.id.buttonEdit)
-        val buttonDelete: Button = itemView.findViewById(R.id.buttonDelete)
+
+        // Editieransicht
+        val editLayout: LinearLayout = itemView.findViewById(R.id.editLayout)
+        val editName: EditText = itemView.findViewById(R.id.editTextStationName)
+        val editUrl: EditText = itemView.findViewById(R.id.editTextStationUrl)
+        val editIcon: EditText = itemView.findViewById(R.id.editTextStationIcon)
+        val buttonSave: Button = itemView.findViewById(R.id.buttonSaveChangesItem)
+        val buttonCancel: Button = itemView.findViewById(R.id.buttonCancelChangesItem)
+
+        val normalLayout: LinearLayout = itemView.findViewById(R.id.stationItemContainer)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_station, parent, false)
+            .inflate(R.layout.item_station_editable, parent, false)
         return ViewHolder(view)
     }
 
@@ -32,15 +41,45 @@ class StationListAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val station = stationList[position]
+
+        // Normale Ansicht
         holder.textName.text = station.stationName
         holder.textUrl.text = station.streamURL
 
-        holder.buttonEdit.setOnClickListener {
-            onEdit(station)
+        // Editieransicht füllen
+        holder.editName.setText(station.stationName)
+        holder.editUrl.setText(station.streamURL)
+        holder.editIcon.setText(station.iconURL)
+
+        // Sichtbarkeiten
+        val isEditing = (position == editingPosition)
+        holder.normalLayout.visibility = if (isEditing) View.GONE else View.VISIBLE
+        holder.editLayout.visibility = if (isEditing) View.VISIBLE else View.GONE
+
+        // Langes Drücken: In den Bearbeitungsmodus wechseln
+        holder.itemView.setOnLongClickListener {
+            editingPosition = if (isEditing) -1 else position
+            notifyDataSetChanged()
+            true
         }
 
-        holder.buttonDelete.setOnClickListener {
-            onDelete(station)
+        // Speichern
+        holder.buttonSave.setOnClickListener {
+            val updatedStation = station.copy(
+                stationName = holder.editName.text.toString(),
+                streamURL = holder.editUrl.text.toString(),
+                iconURL = holder.editIcon.text.toString()
+            )
+            stationList[position] = updatedStation
+            PreferencesHelper.saveStations(holder.itemView.context, stationList)
+            editingPosition = -1
+            notifyDataSetChanged()
+        }
+
+        // Abbrechen
+        holder.buttonCancel.setOnClickListener {
+            editingPosition = -1
+            notifyDataSetChanged()
         }
     }
 }

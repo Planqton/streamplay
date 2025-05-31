@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/item_station_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- Normale Ansicht -->
+    <LinearLayout
+        android:id="@+id/stationItemContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/textStationName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Station Name"
+            android:textStyle="bold"
+            android:textSize="16sp"/>
+
+        <TextView
+            android:id="@+id/textStreamUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Stream URL"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"/>
+    </LinearLayout>
+
+    <!-- Editieransicht -->
+    <LinearLayout
+        android:id="@+id/editLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/editTextStationName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Name"/>
+
+        <EditText
+            android:id="@+id/editTextStationUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Stream URL"/>
+
+        <EditText
+            android:id="@+id/editTextStationIcon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Icon URL"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <Button
+                android:id="@+id/buttonSaveChangesItem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Speichern" />
+
+            <Button
+                android:id="@+id/buttonCancelChangesItem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Abbrechen"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>
