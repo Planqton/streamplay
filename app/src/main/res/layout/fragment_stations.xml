@@ -3,31 +3,7 @@
     android:padding="8dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-    <!-- Header mit Zurück-Button -->
-    <LinearLayout
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <ImageButton
-            android:id="@+id/buttonBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_button_back"
-
-            android:background="?attr/selectableItemBackgroundBorderless" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Edit Stations"
-            android:textStyle="bold"
-            android:layout_marginStart="8dp"
-            android:textSize="18sp" />
-    </LinearLayout>
-
+    <include layout="@layout/topbar" />
     <Button
         android:id="@+id/buttonAddStation"
         android:layout_width="wrap_content"

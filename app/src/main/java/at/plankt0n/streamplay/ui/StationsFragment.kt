@@ -6,13 +6,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.Switch
+import android.widget.ImageButton
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.PreferencesHelper
+import com.google.android.material.textview.MaterialTextView
 import java.util.UUID
 
 class StationsFragment : Fragment() {
@@ -20,24 +21,28 @@ class StationsFragment : Fragment() {
     private lateinit var stationList: MutableList<StationItem>
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: StationListAdapter
+    private lateinit var topbarBackButton: ImageButton
+    private lateinit var topbarTitleView: MaterialTextView
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val view = inflater.inflate(R.layout.fragment_stations, container, false)
 
-        // Direkt statisch PreferencesHelper verwenden
+        // Topbar
+        topbarBackButton = view.findViewById(R.id.arrow_back)
+        topbarTitleView = view.findViewById(R.id.topbar_title)
+        topbarTitleView.text = getString(R.string.fragment_stations_title)
+
+        // Stationen laden
         stationList = PreferencesHelper.getStations(requireContext())
 
-        // Zurück-Button
-        view.findViewById<View>(R.id.buttonBack).setOnClickListener {
-            requireActivity().onBackPressedDispatcher.onBackPressed()
-        }
-
+        // RecyclerView vorbereiten
         recyclerView = view.findViewById(R.id.recyclerViewStations)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = StationListAdapter(stationList,
+        adapter = StationListAdapter(
+            stationList,
             onEdit = { station -> showEditDialog(station) },
             onDelete = { station ->
                 stationList.remove(station)
@@ -47,8 +52,14 @@ class StationsFragment : Fragment() {
         )
         recyclerView.adapter = adapter
 
+        // Station hinzufügen
         view.findViewById<View>(R.id.buttonAddStation).setOnClickListener {
             showAddDialog()
+        }
+
+        // Zurück-Button
+        topbarBackButton.setOnClickListener {
+            parentFragmentManager.popBackStack()
         }
 
         return view
@@ -60,7 +71,6 @@ class StationsFragment : Fragment() {
         val editUrl = dialogView.findViewById<EditText>(R.id.editStreamUrl)
         val editIcon = dialogView.findViewById<EditText>(R.id.editIconUrl)
 
-
         AlertDialog.Builder(requireContext())
             .setTitle("Add Station")
             .setView(dialogView)
@@ -69,8 +79,7 @@ class StationsFragment : Fragment() {
                     uuid = UUID.randomUUID().toString(),
                     stationName = editName.text.toString(),
                     streamURL = editUrl.text.toString(),
-                    iconURL = editIcon.text.toString(),
-
+                    iconURL = editIcon.text.toString()
                 )
                 stationList.add(station)
                 PreferencesHelper.saveStations(requireContext(), stationList)
@@ -90,7 +99,6 @@ class StationsFragment : Fragment() {
         editUrl.setText(station.streamURL)
         editIcon.setText(station.iconURL)
 
-
         AlertDialog.Builder(requireContext())
             .setTitle("Edit Station")
             .setView(dialogView)
@@ -100,7 +108,7 @@ class StationsFragment : Fragment() {
                     stationList[index] = station.copy(
                         stationName = editName.text.toString(),
                         streamURL = editUrl.text.toString(),
-                        iconURL = editIcon.text.toString(),
+                        iconURL = editIcon.text.toString()
                     )
                     PreferencesHelper.saveStations(requireContext(), stationList)
                     adapter.notifyDataSetChanged()
@@ -109,5 +117,4 @@ class StationsFragment : Fragment() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-
 }

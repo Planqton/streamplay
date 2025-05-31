@@ -18,9 +18,9 @@ import at.plankt0n.streamplay.data.StationItem
 
 class MediaServiceController(private val context: Context) {
 
-    private var mediaController: MediaController? = null
-    private var listener: Player.Listener? = null
-    private val handler = Handler(Looper.getMainLooper())
+     var mediaController: MediaController? = null
+    var listener: Player.Listener? = null
+     val handler = Handler(Looper.getMainLooper())
 
     fun initializeAndConnect(
         onConnected: (MediaController) -> Unit,
@@ -160,4 +160,6 @@ class MediaServiceController(private val context: Context) {
     }
 
     fun getCurrentStreamIndex(): Int = mediaController?.currentMediaItemIndex ?: 0
+
+
 }

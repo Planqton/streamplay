@@ -106,5 +106,7 @@
     <color name="tooltip_background_dark">#e6616161</color>
     <color name="tooltip_background_light">#e6ffffff</color>
 
+    <color name="default_background">#CCCCCC</color> <!-- Hellgrau -->
+    <color name="default_transparent">#00ffffff</color>
 
 </resources>

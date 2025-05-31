@@ -65,5 +65,8 @@
     <string name="spotify_client_secret">1893b26ecec74a4984152f0d86200b63</string>
 
 
+    <!-- Topbar -->
+    <string name="descr_back_icon">Navigate back</string>
+    <string name="fragment_stations_title">Stations</string>
 
 </resources>

@@ -26,62 +26,49 @@
         app:layout_constraintGuide_percent="0.65" />
 
     <!-- Cover Image -->
-    <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/cover_image"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="60dp"
-        android:layout_marginEnd="60dp"
-        android:scaleType="centerCrop"
-        android:src="@drawable/ic_placeholder_logo"
-        android:contentDescription="@string/desc_cover_image"
-        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerFamilyRounded"
-        app:layout_constraintBottom_toBottomOf="@id/guideline_middle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintDimensionRatio="1:1" />
 
     <!-- Player Buttons -->
     <LinearLayout
         android:id="@+id/player_buttons_group"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/cover_image"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:contentDescription="@string/desc_player_buttons_group">
+        android:layout_height="0dp"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:contentDescription="@string/desc_player_buttons_group"
+    android:background="@android:color/transparent"
+    app:layout_constraintTop_toBottomOf="@id/guideline_middle"
+    app:layout_constraintBottom_toTopOf="@id/guideline_upperGroup"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent">
 
         <ImageButton
             android:id="@+id/button_back"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_button_back"
             android:contentDescription="@string/desc_button_back"
+            android:src="@drawable/ic_button_back"
             app:tint="@color/primary_material_light" />
 
         <ImageButton
             android:id="@+id/button_play_pause"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:scaleType="fitXY"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_button_play"
-            android:contentDescription="@string/desc_button_play_pause"
-            app:tint="@color/primary_material_light"
             android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp" />
+            android:layout_marginEnd="16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/desc_button_play_pause"
+            android:scaleType="fitXY"
+            android:src="@drawable/ic_button_play"
+            app:tint="@color/primary_material_light" />
 
         <ImageButton
             android:id="@+id/button_forward"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_button_forward"
             android:contentDescription="@string/desc_button_forward"
+            android:src="@drawable/ic_button_forward"
             app:tint="@color/primary_material_light" />
     </LinearLayout>
 
@@ -179,6 +166,7 @@
 
             <ImageButton
                 android:id="@+id/button_menu"
+           
                 android:layout_width="24dp"
                 android:layout_height="0dp"
                 android:layout_weight="1"
