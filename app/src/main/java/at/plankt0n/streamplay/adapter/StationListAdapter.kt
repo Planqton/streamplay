@@ -1,4 +1,4 @@
-package at.plankt0n.streamplay.ui
+package at.plankt0n.streamplay.adapter
 
 import android.view.LayoutInflater
 import android.view.View

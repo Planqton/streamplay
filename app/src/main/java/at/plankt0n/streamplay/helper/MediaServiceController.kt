@@ -60,7 +60,12 @@ class MediaServiceController(private val context: Context) {
 
                     override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                         Log.d("MediaServiceController", "🔁 Timeline geändert! Grund: $reason")
-                        onTimelineChanged(reason)
+                        if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) {
+                            onTimelineChanged(reason)
+                        } else {
+                            Log.d("MediaServiceController", "ℹ️ Timeline-Änderung ignoriert (Grund: $reason)")
+                        }
+
                     }
 
                     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
@@ -143,11 +148,11 @@ class MediaServiceController(private val context: Context) {
     }
 
     fun skipToNext() {
-        mediaController?.seekToNextMediaItem()
+        mediaController?.seekToNext()
     }
 
     fun skipToPrevious() {
-        mediaController?.seekToPreviousMediaItem()
+        mediaController?.seekToPrevious()
     }
 
     fun togglePlayPause() {

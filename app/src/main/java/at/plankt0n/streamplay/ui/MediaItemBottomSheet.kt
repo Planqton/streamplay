@@ -1,12 +1,14 @@
 package at.plankt0n.streamplay.ui
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import androidx.fragment.app.Fragment
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import at.plankt0n.streamplay.R
-import android.widget.LinearLayout
 
 class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
 
@@ -20,14 +22,17 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
         // Klick-Listener für Optionen
         view.findViewById<LinearLayout>(R.id.StationSetup).setOnClickListener {
             dismiss()
+            Log.d("MediaItemOptions", "➡️ StationSetup-Button-Click erkannt!")
             openStationsFragment()
         }
+
         view.findViewById<LinearLayout>(R.id.option_share).setOnClickListener {
-            // Aktion
+            // Aktion (z. B. teilen)
             dismiss()
         }
+
         view.findViewById<LinearLayout>(R.id.option_delete).setOnClickListener {
-            // Aktion
+            // Aktion (z. B. löschen)
             dismiss()
         }
 
@@ -51,7 +56,8 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
 
     private fun openStationsFragment() {
         // Fragment starten
-        requireActivity().supportFragmentManager.beginTransaction()
+        parentFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
             .replace(R.id.fragment_container, StationsFragment())
             .addToBackStack(null)
             .commit()

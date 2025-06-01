@@ -1,4 +1,4 @@
-package at.plankt0n.streamplay.helper
+package at.plankt0n.streamplay
 
 object Keys {
     const val PREFS_NAME = "stream_prefs"

@@ -28,30 +28,73 @@ import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.SpotifyMetaReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 
 class StreamingService : MediaSessionService() {
 
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
-    private var lastArtist: String? = null
-    private var lastTitle: String? = null
 
     private var streams: List<StationItem> = emptyList()
-    private var mediaItems: List<MediaItem> = emptyList()  // Property ergänzt
+    private var mediaItems: List<MediaItem> = emptyList()
     private var currentIndex = 0
+    private var lastMetadata: MediaMetadata? = null
+    private var currentMetadata: MediaMetadata? = null
 
     companion object {
         const val CHANNEL_ID = "stream_service_channel"
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST") {
+            refreshPlaylist()
+        }
+        return super.onStartCommand(intent, flags, startId)
     }
 
     @androidx.media3.common.util.UnstableApi
     override fun onCreate() {
         super.onCreate()
 
+        // ⚠️ ZUERST player initialisieren!
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+            .setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(10_000)
+            .setReadTimeoutMs(10_000)
+
+        val mediaSourceFactory = DefaultMediaSourceFactory(this)
+            .setDataSourceFactory(DefaultDataSource.Factory(this, httpDataSourceFactory))
+
+        player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(mediaSourceFactory)
+            .build().apply {
+                repeatMode = Player.REPEAT_MODE_OFF
+                addListener(object : Player.Listener {
+                    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                        currentIndex = currentMediaItemIndex
+                        PreferencesHelper.setLastPlayedStreamIndex(this@StreamingService, currentIndex)
+                        Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
+                    }
+
+                    override fun onPlayerError(error: PlaybackException) {
+                        Log.e("StreamingService", "❌ ExoPlayer-Fehler: ${error.errorCodeName} - ${error.message}")
+                        Log.e("StreamingService", "Cause: ${error.cause?.message ?: "unbekannt"}")
+                        error.cause?.printStackTrace()
+                    }
+
+                    override fun onMediaMetadataChanged(metadata: MediaMetadata) {
+                        currentMetadata = metadata
+                        writeCurrentMetaData(metadata)
+                    }
+                })
+            }
+
+        // ⚠️ Dann Notification etc.
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.streaming_service_notification_title))
             .setContentText(getString(R.string.streaming_service_notification_text))
@@ -71,126 +114,6 @@ class StreamingService : MediaSessionService() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
-            .setAllowCrossProtocolRedirects(true)
-            .setConnectTimeoutMs(10_000)
-            .setReadTimeoutMs(10_000)
-
-        val mediaSourceFactory = DefaultMediaSourceFactory(this)
-            .setDataSourceFactory(DefaultDataSource.Factory(this, httpDataSourceFactory))
-
-        player = ExoPlayer.Builder(this)
-            .setMediaSourceFactory(mediaSourceFactory)
-            .build().apply {
-                repeatMode = Player.REPEAT_MODE_ALL
-
-                addListener(object : Player.Listener {
-                    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                        currentIndex = currentMediaItemIndex
-                        PreferencesHelper.setLastPlayedStreamIndex(this@StreamingService, currentIndex)
-                        Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
-                    }
-
-                    override fun onPlayerError(error: PlaybackException) {
-                        Log.e("StreamingService", "❌ ExoPlayer-Fehler: ${error.errorCodeName} - ${error.message}")
-                        Log.e("StreamingService", "Cause: ${error.cause?.message ?: "unbekannt"}")
-                        error.cause?.printStackTrace()
-                    }
-
-                    override fun onMediaMetadataChanged(metadata: MediaMetadata) {
-
-
-                        val rawTitle = metadata.title?.toString()?.trim().orEmpty()
-                        val rawArtist = metadata.artist?.toString()?.trim().orEmpty()
-
-                        var artist = rawArtist
-                        var title = rawTitle
-
-                        // Wenn kein Artist vorhanden ist, prüfen wir auf mögliche Trenner
-                        if (artist.isEmpty()) {
-                            // Liste der möglichen Trenner
-                            val delimiters = listOf(" - ", " / ")
-
-                            // Durch die Trenner iterieren
-                            for (delimiter in delimiters) {
-                                if (rawTitle.contains(delimiter)) {
-                                    val parts = rawTitle.split(delimiter, limit = 2)
-                                    if (parts.size == 2) {
-                                        artist = parts[0].trim()
-                                        title = parts[1].trim()
-                                        break // Sobald wir einen Treffer haben, stoppen
-                                    }
-                                }
-                            }
-                        }
-
-                        // Prüfen, ob Artist oder Title sich geändert haben
-                        if (artist == lastArtist && title == lastTitle) {
-                            Log.d("StreamingService", "ℹ️ Keine Änderung in Artist/Title – kein Spotify-Request nötig.")
-                            return
-                        }
-
-                        // Update lastArtist/lastTitle
-                        lastArtist = artist
-                        lastTitle = title
-
-                        Log.d("StreamingService", "🎶 MediaMetadataChanged - Artist: '$artist' | Title: '$title'")
-
-                        if (artist.isNotEmpty() && title.isNotEmpty()) {
-                            // Verwende GlobalScope für "Fire & Forget"
-                            GlobalScope.launch(Dispatchers.IO) {
-                                val extendedInfo = SpotifyMetaReader.getExtendedMetaInfo(this@StreamingService, artist, title)
-                                if (extendedInfo != null) {
-                                    Log.d("SpotifyMetaReader", "✅ Spotify-Infos gefunden:")
-                                    Log.d("SpotifyMetaReader", "🎵 Track: ${extendedInfo.trackName}")
-                                    Log.d("SpotifyMetaReader", "👤 Artist: ${extendedInfo.artistName}")
-                                    Log.d("SpotifyMetaReader", "💿 Album: ${extendedInfo.albumName}")
-                                    Log.d("SpotifyMetaReader", "📅 Release: ${extendedInfo.albumReleaseDate}")
-                                    Log.d("SpotifyMetaReader", "🔗 Spotify-URL: ${extendedInfo.spotifyUrl}")
-                                    Log.d("SpotifyMetaReader", "🖼️ Cover-URL: ${extendedInfo.bestCoverUrl}")
-                                    Log.d("SpotifyMetaReader", "⏱️ Dauer: ${extendedInfo.durationMs / 1000} Sekunden")
-                                    Log.d("SpotifyMetaReader", "⭐ Popularität: ${extendedInfo.popularity}")
-
-                                    withContext(Dispatchers.Main) {
-                                        updateMediaItemMetadata(
-                                            title = extendedInfo.trackName,
-                                            artist = extendedInfo.artistName,
-                                            artworkUri = extendedInfo.bestCoverUrl ?: ""
-                                        )
-                                    }
-                                    val extendedInfo = SpotifyMetaReader.getExtendedMetaInfo(this@StreamingService, artist, title)
-                                    if (extendedInfo != null) {
-                                        // ViewModel holen
-                                        val viewModel = ViewModelProvider(
-                                            ViewModelStore(), // Für Service: keinen LifecycleOwner – ViewModel lebt bis Service lebt
-                                            ViewModelProvider.NewInstanceFactory()
-                                        )[SpotifyMetaViewModel::class.java]
-
-                                        viewModel.updateMetaInfo(extendedInfo)
-                                    }
-                                } else {
-                                    Log.w("SpotifyMetaReader", "❌ Keine Spotify-Daten gefunden für: $artist - $title")
-
-
-                                }
-                            }
-                        } else {
-                            Log.d(
-                                "StreamingService", "⚠️ Artist oder Title fehlen – kein Spotify-Request.")
-                            val currentMediaItem = player.currentMediaItem
-                            val iconUrl = currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
-                            GlobalScope.launch(Dispatchers.Main) {
-                                updateMediaItemMetadata(
-                                    metadata.title?.toString()?.trim().orEmpty(),
-                                    metadata.artist?.toString()?.trim().orEmpty(),
-                                    currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
-                                )
-                            }
-                        }
-                    }
-                })
-            }
-
         setupPlaylist()
 
         val sessionIntent = PendingIntent.getActivity(
@@ -205,7 +128,6 @@ class StreamingService : MediaSessionService() {
 
     private fun setupPlaylist() {
         streams = PreferencesHelper.getStations(this)
-
         if (streams.isEmpty()) {
             stopSelf()
             return
@@ -225,11 +147,11 @@ class StreamingService : MediaSessionService() {
             }
 
             val metadata = MediaMetadata.Builder()
-             //   .setArtist(it.stationName)
                 .setExtras(extras)
                 .build()
 
             MediaItem.Builder()
+
                 .setUri(it.streamURL)
                 .setMediaMetadata(metadata)
                 .build()
@@ -241,9 +163,7 @@ class StreamingService : MediaSessionService() {
 
     private fun refreshPlaylist() {
         val wasPlaying = player.isPlaying
-        if (wasPlaying) {
-            player.pause()
-        }
+        if (wasPlaying) player.pause()
 
         streams = PreferencesHelper.getStations(this)
         if (streams.isEmpty()) {
@@ -265,7 +185,6 @@ class StreamingService : MediaSessionService() {
             }
 
             val metadata = MediaMetadata.Builder()
-             //   .setArtist(it.stationName)
                 .setExtras(extras)
                 .build()
 
@@ -278,9 +197,7 @@ class StreamingService : MediaSessionService() {
         player.setMediaItems(mediaItems, currentIndex, 0L)
         player.prepare()
 
-        if (wasPlaying) {
-            player.play()
-        }
+        if (wasPlaying) player.play()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession {
@@ -297,17 +214,71 @@ class StreamingService : MediaSessionService() {
         stopSelf()
     }
 
+    fun writeCurrentMetaData(metadata: MediaMetadata)
+    {
+        val rawTitle = metadata.title?.toString()?.trim().orEmpty()
+        val rawArtist = metadata.artist?.toString()?.trim().orEmpty()
+        val fallbackArtwork = metadata.extras?.getString("EXTRA_ICON_URL") //fallback falls wir später über die Spotify API kein ICON bekommen oder Gar kein Spotify Track gefunden wird
+
+        //Fürs Splitten! Wenn artist leer ist wird der title mit den Trennzeichen gesplittet
+        //Dies hat den Hintergrund dass die Meisten ICY META die exoplayer weiterleitet den Artist unt Titel nicht getrennt ausgeben sondern so Titel - Artist (was natürlich getrennt werden muss)
+        //Dies ist eigentlich nur ein fallback so oder so haben wir am ende artist und title getrennt ->
+        var artist = rawArtist
+        var title = rawTitle
+        if (artist.isEmpty()) {
+            val delimiters = listOf(" - ", " / ")
+            for (delimiter in delimiters) {
+                if (rawTitle.contains(delimiter)) {
+                    val parts = rawTitle.split(delimiter, limit = 2)
+                    if (parts.size == 2) {
+                        artist = parts[0].trim()
+                        title = parts[1].trim()
+                        break
+                    }
+                }
+            }
+        }
+
+
+        if (lastMetadata == metadata) {
+            Log.d("StreamingService", "ℹ️ Keine Änderung in der Metadata.")
+            return
+        }
+        lastMetadata = metadata
+        Log.d("StreamingService", "🎶 MediaMetadataChanged - Artist: '$artist' | Title: '$title'")
+
+        if (artist.isNotEmpty() && title.isNotEmpty()) {
+            GlobalScope.launch(Dispatchers.IO) {
+                val extendedInfo = SpotifyMetaReader.getExtendedMetaInfo(this@StreamingService, artist, title)
+                if (extendedInfo != null) {
+                    Log.d("SpotifyMetaReader", "✅ Spotify-Infos gefunden: ${extendedInfo.trackName}")
+                    withContext(Dispatchers.Main) {
+                        updateMediaItemMetadata(
+                            title = extendedInfo.trackName,
+                            artist = extendedInfo.artistName,
+                            artworkUri = extendedInfo.bestCoverUrl ?: ""
+                        )
+                    }
+                } else {
+                    Log.w("SpotifyMetaReader", "❌ Keine Spotify-Daten gefunden für: $artist - $title")
+
+                }
+            }
+        } else {
+            Log.d("StreamingService", "⚠️ Artist oder Title fehlen – kein Spotify-Request.")
+        }
+    }
+
 
     fun updateMediaItemMetadata(title: String, artist: String, artworkUri: String) {
         player.currentMediaItem?.let { mediaItem ->
-            val currentMetadata = mediaItem.mediaMetadata
-            val extras = currentMetadata.extras ?: Bundle()  // Vorhandene Extras behalten!
-
+            val currentMediaItemMetadata = mediaItem.mediaMetadata
+            val extras = currentMediaItemMetadata.extras ?: Bundle()
             val updatedMetadata = MediaMetadata.Builder()
                 .setTitle(title)
                 .setArtist(artist)
                 .setArtworkUri(Uri.parse(artworkUri))
-                .setExtras(extras)  // Ursprüngliche Extras wieder mitgeben
+                .setExtras(extras)
                 .build()
 
             val updatedMediaItem = MediaItem.Builder()
@@ -316,9 +287,24 @@ class StreamingService : MediaSessionService() {
                 .build()
 
             player.replaceMediaItem(player.currentMediaItemIndex, updatedMediaItem)
-
-            Log.d("StreamingService", "🔄 Nur Metadaten aktualisiert, Extras erhalten: $title - $artist")
+            Log.d("StreamingService", "🔄 Nur Metadaten aktualisiert: $title - $artist")
         }
     }
+
+    fun isPlaylistDifferent(current: List<StationItem>, new: List<StationItem>): Boolean {
+        if (current.size != new.size) return true
+        for (i in current.indices) {
+            val oldItem = current[i]
+            val newItem = new[i]
+            if (oldItem.uuid != newItem.uuid ||
+                oldItem.stationName != newItem.stationName ||
+                oldItem.streamURL != newItem.streamURL ||
+                oldItem.iconURL != newItem.iconURL) {
+                return true
+            }
+        }
+        return false
+    }
+
 
 }

@@ -28,32 +28,27 @@ class PlayerFragment : Fragment() {
     private lateinit var stationNameTextView: TextView
     private lateinit var stationIconImageView: ImageView
 
-    // Neue Button-Referenzen
     private lateinit var playPauseButton: ImageButton
     private lateinit var buttonBack: ImageButton
     private lateinit var buttonForward: ImageButton
-private lateinit var buttonMenu: ImageButton
+    private lateinit var buttonMenu: ImageButton
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        return inflater.inflate(R.layout.fragment_player, container, false)
-    }
+    ): View = inflater.inflate(R.layout.fragment_player, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         buttonMenu = view.findViewById(R.id.button_menu)
-
         viewPager = view.findViewById(R.id.view_pager)
-        dotsIndicator = view.findViewById(R.id.dots_indicator)
+        viewPager.offscreenPageLimit = 2 // 2 Seiten links + 2 Seiten rechts vorab laden
 
-        // Station Info Overlay Elemente
+        dotsIndicator = view.findViewById(R.id.dots_indicator)
         stationNameTextView = view.findViewById(R.id.station_overlay_stationname)
         stationIconImageView = view.findViewById(R.id.station_overlay_stationIcon)
-
-        // Buttons einbinden
         playPauseButton = view.findViewById(R.id.button_play_pause)
         buttonBack = view.findViewById(R.id.button_back)
         buttonForward = view.findViewById(R.id.button_forward)
@@ -63,8 +58,6 @@ private lateinit var buttonMenu: ImageButton
         mediaServiceController = MediaServiceController(requireContext())
         mediaServiceController.initializeAndConnect(
             onConnected = { controller ->
-
-                // 🚀 Prüfen ob die MediaSession leer ist
                 if (controller.mediaItemCount == 0) {
                     Log.w("PlayerFragment", "⚠️ MediaSession ist leer! Wechsel ins StationsFragment.")
                     parentFragmentManager.beginTransaction()
@@ -76,23 +69,22 @@ private lateinit var buttonMenu: ImageButton
                     return@initializeAndConnect
                 }
 
-
-
-
-
                 val coverPageAdapter = CoverPageAdapter(mediaServiceController)
                 viewPager.adapter = coverPageAdapter
                 dotsIndicator.setViewPager2(viewPager)
 
-                // Initial das aktuelle MediaItem setzen
+                // Preload Cover-Bilder für flüssiges Scrollen!
+                coverPageAdapter.mediaItems.forEach { item ->
+                    Glide.with(requireContext())
+                        .load(item.iconURL)
+                        .preload()
+                }
+
                 val currentIndex = controller.currentMediaItemIndex
                 viewPager.setCurrentItem(currentIndex, false)
                 updateOverlayUI(currentIndex)
-
-                // Play/Pause-Icon initial setzen
                 updatePlayPauseIcon(controller.isPlaying)
 
-                // HÖRE AUF PAGER-BEWEGUNG → STREAM UPDATEN!
                 viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
@@ -100,41 +92,23 @@ private lateinit var buttonMenu: ImageButton
                     }
                 })
 
-                // Buttons verknüpfen
-                playPauseButton.setOnClickListener {
-                    mediaServiceController.togglePlayPause()
-                }
-                buttonBack.setOnClickListener {
-                    mediaServiceController.skipToPrevious()
-                }
-                buttonForward.setOnClickListener {
-                    mediaServiceController.skipToNext()
-                }
+                playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
+                buttonBack.setOnClickListener { mediaServiceController.skipToPrevious() }
+                buttonForward.setOnClickListener { mediaServiceController.skipToNext() }
                 buttonMenu.setOnClickListener {
-                    Log.d("PlayerFragment", "➡️ Button-Click erkannt!")
-                    parentFragmentManager.beginTransaction()
-                        .setReorderingAllowed(true)
-                        .hide(this@PlayerFragment)
-                        .add(R.id.fragment_container, StationsFragment())
-                        .addToBackStack(null)
-                        .commit()
+                 showBottomSheet()
                 }
-
-
-
-
-
             },
-            onPlaybackChanged = { isPlaying ->
-                // Play/Pause-Icon live updaten
-                updatePlayPauseIcon(isPlaying)
-            },
+            onPlaybackChanged = { updatePlayPauseIcon(it) },
             onStreamIndexChanged = { index ->
                 viewPager.setCurrentItem(index, true)
                 updateOverlayUI(index)
             },
             onMetadataChanged = { /* optional */ },
-            onTimelineChanged = { /* optional */ }
+            onTimelineChanged = {
+                Log.d("PlayerFragment", "🔁 Timeline geändert! Grund: $it")
+                reloadPlaylist()
+            }
         )
     }
 
@@ -157,6 +131,23 @@ private lateinit var buttonMenu: ImageButton
     private fun updatePlayPauseIcon(isPlaying: Boolean) {
         val iconRes = if (isPlaying) R.drawable.ic_button_pause else R.drawable.ic_button_play
         playPauseButton.setImageResource(iconRes)
+    }
+
+    private fun reloadPlaylist() {
+        val coverPageAdapter = CoverPageAdapter(mediaServiceController)
+        viewPager.adapter = coverPageAdapter
+        dotsIndicator.setViewPager2(viewPager)
+
+        // Preload Cover-Bilder erneut!
+        coverPageAdapter.mediaItems.forEach { item ->
+            Glide.with(requireContext())
+                .load(item.iconURL)
+                .preload()
+        }
+
+        val currentIndex = mediaServiceController.getCurrentStreamIndex()
+        viewPager.setCurrentItem(currentIndex, false)
+        updateOverlayUI(currentIndex)
     }
 
     override fun onDestroyView() {
