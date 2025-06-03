@@ -54,7 +54,7 @@ dependencies {
     implementation("androidx.media:media:1.7.0")
 
         // Media3 (aktuellste stabile Version 1.3.0 im Mai 2025 – Stand: 2025-05)
-        val mediaVersion = "1.5.1"
+        val mediaVersion = "1.6.1"
         implementation("androidx.media3:media3-exoplayer:$mediaVersion")
         implementation("androidx.media3:media3-exoplayer-hls:$mediaVersion")
         implementation("androidx.media3:media3-session:$mediaVersion")

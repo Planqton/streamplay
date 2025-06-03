@@ -25,6 +25,7 @@ import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.search.RadioBrowserHelper
 import kotlinx.coroutines.launch
 import java.util.*
+import at.plankt0n.streamplay.helper.StateHelper
 
 class StationsFragment : Fragment() {
 
@@ -76,6 +77,7 @@ class StationsFragment : Fragment() {
         // Zurück-Button
         topbarBackButton.setOnClickListener {
             // 1️⃣ Playlist im StreamingService aktualisieren
+            StateHelper.isPlaylistChangePending = true
             val intent = Intent(requireContext(), StreamingService::class.java)
             intent.action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
             requireContext().startService(intent)

@@ -28,6 +28,11 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
 
         view.findViewById<LinearLayout>(R.id.option_share).setOnClickListener {
             // Aktion (z. B. teilen)
+            // Neues Fragment öffnen
+            activity?.supportFragmentManager?.beginTransaction()
+                ?.replace(R.id.fragment_container, IcyReadTestFragment())
+                ?.addToBackStack(null)
+                ?.commit()
             dismiss()
         }
 

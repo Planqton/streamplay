@@ -1,10 +1,12 @@
 package at.plankt0n.streamplay
 
+import android.app.ActivityManager
 import at.plankt0n.streamplay.viewmodel.SpotifyMetaViewModel
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -24,6 +26,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.helper.IcyStreamReader
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.SpotifyMetaReader
 import kotlinx.coroutines.Dispatchers
@@ -36,16 +39,19 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 class StreamingService : MediaSessionService() {
-
+    private var icyStreamReader: IcyStreamReader? = null
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
 
     private var streams: List<StationItem> = emptyList()
     private var mediaItems: List<MediaItem> = emptyList()
     private var currentIndex = 0
-    private var lastMetadata: MediaMetadata? = null
-    private var currentMetadata: MediaMetadata? = null
 
+    var lasttitle: String? = null
+    var lastartist: String? = null
+    private var currentrawMetadata: MediaMetadata? = null
+    private var lastshowedMetadata: MediaMetadata? = null
+    private var lastArtworkUri: String? = null
     companion object {
         const val CHANNEL_ID = "stream_service_channel"
     }
@@ -60,6 +66,8 @@ class StreamingService : MediaSessionService() {
     @androidx.media3.common.util.UnstableApi
     override fun onCreate() {
         super.onCreate()
+
+
 
         // ⚠️ ZUERST player initialisieren!
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
@@ -77,8 +85,35 @@ class StreamingService : MediaSessionService() {
                 addListener(object : Player.Listener {
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         currentIndex = currentMediaItemIndex
+
+
                         PreferencesHelper.setLastPlayedStreamIndex(this@StreamingService, currentIndex)
                         Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
+
+                        val newUrl = mediaItem?.localConfiguration?.uri?.toString()
+                        if (!newUrl.isNullOrEmpty()) {
+                            // Falls schon ein Reader läuft -> stoppen
+                            icyStreamReader?.stop()
+
+                            // Neuen Reader starten
+                        icyStreamReader = IcyStreamReader(
+                            context = this@StreamingService,
+                            streamUrl = newUrl,
+                            onMetadataReceived = { title, artist ->
+                                Log.d("IcyStreamReader", "🎵 Neuer Titel empfangen: $title - $artist")
+                                writeCurrentMetaData(
+                                    title ?: "",
+                                    artist ?: "",
+                                    mediaItem.mediaMetadata.extras?.getString("EXTRA_ICON_URL") ?: ""
+                                    )
+                            }
+                        ).apply {
+                            start()
+                        }
+                    } else {
+                        Log.w("StreamingService", "⚠️ Keine gültige URL gefunden, IcyStreamReader nicht gestartet.")
+                    }
+
                     }
 
                     override fun onPlayerError(error: PlaybackException) {
@@ -88,10 +123,11 @@ class StreamingService : MediaSessionService() {
                     }
 
                     override fun onMediaMetadataChanged(metadata: MediaMetadata) {
-                        currentMetadata = metadata
-                        writeCurrentMetaData(metadata)
+                        currentrawMetadata = metadata //noch keine verwendung
                     }
                 })
+
+
             }
 
         // ⚠️ Dann Notification etc.
@@ -214,11 +250,19 @@ class StreamingService : MediaSessionService() {
         stopSelf()
     }
 
-    fun writeCurrentMetaData(metadata: MediaMetadata)
-    {
-        val rawTitle = metadata.title?.toString()?.trim().orEmpty()
-        val rawArtist = metadata.artist?.toString()?.trim().orEmpty()
-        val fallbackArtwork = metadata.extras?.getString("EXTRA_ICON_URL") //fallback falls wir später über die Spotify API kein ICON bekommen oder Gar kein Spotify Track gefunden wird
+    fun writeCurrentMetaData(artist: String, title: String, artworkUri: String) {
+        val builder = StringBuilder()
+        builder.append("🎶 MediaMetadata:\n")
+        builder.append("Title: ${artist}\n")
+        builder.append("Artist: ${title}\n")
+        builder.append("Artwork URL: ${artworkUri}\n")
+
+        Log.d("StreamingService", builder.toString())
+
+
+        val rawTitle = title
+        val rawArtist = artist
+        val fallbackArtwork = artworkUri
 
         //Fürs Splitten! Wenn artist leer ist wird der title mit den Trennzeichen gesplittet
         //Dies hat den Hintergrund dass die Meisten ICY META die exoplayer weiterleitet den Artist unt Titel nicht getrennt ausgeben sondern so Titel - Artist (was natürlich getrennt werden muss)
@@ -240,56 +284,151 @@ class StreamingService : MediaSessionService() {
         }
 
 
-        if (lastMetadata == metadata) {
+        if (artist == lastartist && title == lasttitle) {
             Log.d("StreamingService", "ℹ️ Keine Änderung in der Metadata.")
             return
         }
-        lastMetadata = metadata
+
+        lasttitle = title
+        lastartist = artist
+        lastArtworkUri = artworkUri
+
         Log.d("StreamingService", "🎶 MediaMetadataChanged - Artist: '$artist' | Title: '$title'")
 
         if (artist.isNotEmpty() && title.isNotEmpty()) {
             GlobalScope.launch(Dispatchers.IO) {
-                val extendedInfo = SpotifyMetaReader.getExtendedMetaInfo(this@StreamingService, artist, title)
-                if (extendedInfo != null) {
-                    Log.d("SpotifyMetaReader", "✅ Spotify-Infos gefunden: ${extendedInfo.trackName}")
-                    withContext(Dispatchers.Main) {
+                val extendedInfo =
+                    SpotifyMetaReader.getExtendedMetaInfo(this@StreamingService, artist, title)
+                withContext(Dispatchers.Main) {
+                    if (extendedInfo != null) {
+                        Log.d(
+                            "SpotifyMetaReader",
+                            "✅ Spotify-Infos gefunden: ${extendedInfo.trackName}"
+                        )
                         updateMediaItemMetadata(
                             title = extendedInfo.trackName,
                             artist = extendedInfo.artistName,
                             artworkUri = extendedInfo.bestCoverUrl ?: ""
-                        )
-                    }
-                } else {
-                    Log.w("SpotifyMetaReader", "❌ Keine Spotify-Daten gefunden für: $artist - $title")
 
+                        )
+                    } else {
+                        Log.w(
+                            "SpotifyMetaReader",
+                            "❌ Keine Spotify-Daten gefunden für: $artist - $title"
+                        )
+                        updateMediaItemMetadata(title, artist, artworkUri)
+                    }
                 }
             }
         } else {
-            Log.d("StreamingService", "⚠️ Artist oder Title fehlen – kein Spotify-Request.")
+            Log.d(
+                "StreamingService",
+                "⚠️ Artist oder Title fehlen – kein Spotify-Request. Fallback auf alte meta"
+            )
+            // Sicherstellen, dass auch dieser Aufruf im Main-Thread läuft!
+            GlobalScope.launch(Dispatchers.Main) {
+                updateMediaItemMetadata(title, artist, artworkUri)
+            }
         }
+
+
     }
+        fun updateMediaItemMetadata(title: String, artist: String, artworkUri: String) {
+
+        val isInForeground = isAppInForeground()
+        lastArtworkUri = artworkUri
+
+        val updateartist: String
+        val updatetitle: String
+
+        if (isInForeground) {
+            updateartist = artist
+            updatetitle = title
+            Log.d("StreamingService", "App im Vordergrund: bleibt so")
+        } else {
+            updatetitle = "$artist - $title"
+            updateartist = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "Sendername nicht Gesetzt"
+            Log.d("StreamingService", "App ist im Hinterrgund: updateartist=$updateartist, updatetitle=$updatetitle")
+        }
 
 
-    fun updateMediaItemMetadata(title: String, artist: String, artworkUri: String) {
         player.currentMediaItem?.let { mediaItem ->
-            val currentMediaItemMetadata = mediaItem.mediaMetadata
-            val extras = currentMediaItemMetadata.extras ?: Bundle()
-            val updatedMetadata = MediaMetadata.Builder()
-                .setTitle(title)
-                .setArtist(artist)
+            val updatedMetadata = mediaItem.mediaMetadata
+                .buildUpon()
+                .setTitle(updatetitle)
+                .setArtist(updateartist)
                 .setArtworkUri(Uri.parse(artworkUri))
-                .setExtras(extras)
                 .build()
 
-            val updatedMediaItem = MediaItem.Builder()
-                .setUri(mediaItem.localConfiguration?.uri ?: mediaItem.requestMetadata.mediaUri)
+            val updatedMediaItem = mediaItem.buildUpon()
                 .setMediaMetadata(updatedMetadata)
                 .build()
 
             player.replaceMediaItem(player.currentMediaItemIndex, updatedMediaItem)
             Log.d("StreamingService", "🔄 Nur Metadaten aktualisiert: $title - $artist")
+            lastshowedMetadata = updatedMetadata // 🟢 Hier speichern!
+
         }
     }
+
+
+    fun refreshMediaItemMetadata() {
+        val artworkUri = lastArtworkUri ?: ""
+        val artist = lastartist ?: "null"
+        val title = lasttitle ?: "null"
+
+
+        val isInForeground = isAppInForeground()
+        lastArtworkUri = artworkUri
+
+        val updateartist: String
+        val updatetitle: String
+
+        if (isInForeground) {
+            updateartist = artist
+            updatetitle = title
+            Log.d("StreamingService", "App im Vordergrund: bleibt so")
+        } else {
+            updatetitle = "$artist - $title"
+            updateartist = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "Sendername nicht Gesetzt"
+            Log.d("StreamingService", "App ist im Hinterrgund: updateartist=$updateartist, updatetitle=$updatetitle")
+        }
+
+
+        player.currentMediaItem?.let { mediaItem ->
+            val updatedMetadata = mediaItem.mediaMetadata
+                .buildUpon()
+                .setTitle(updatetitle)
+                .setArtist(updateartist)
+                .setArtworkUri(Uri.parse(artworkUri))
+                .build()
+
+            val updatedMediaItem = mediaItem.buildUpon()
+                .setMediaMetadata(updatedMetadata)
+                .build()
+
+            player.replaceMediaItem(player.currentMediaItemIndex, updatedMediaItem)
+            Log.d("StreamingService", "🔄 Nur Metadaten aktualisiert: $title - $artist")
+            lastshowedMetadata = updatedMetadata // 🟢 Hier speichern!
+
+        }
+    } //zur anpassung wenn PlayerFragment Minimiert ist damit der sende rin der Medaisesion angzeigt wird
+
+
+    private fun isAppInForeground(): Boolean {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val appProcesses = activityManager.runningAppProcesses ?: return false
+
+        val packageName = packageName
+        for (appProcess in appProcesses) {
+            if (appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+                && appProcess.processName == packageName) {
+                return true
+            }
+        }
+        return false
+    }
+
 
     fun isPlaylistDifferent(current: List<StationItem>, new: List<StationItem>): Boolean {
         if (current.size != new.size) return true

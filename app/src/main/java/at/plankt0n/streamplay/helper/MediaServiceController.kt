@@ -15,6 +15,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.data.StationItem
+import java.lang.Thread.State
 
 class MediaServiceController(private val context: Context) {
 
@@ -60,8 +61,10 @@ class MediaServiceController(private val context: Context) {
 
                     override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                         Log.d("MediaServiceController", "🔁 Timeline geändert! Grund: $reason")
-                        if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) {
+
+                        if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED && StateHelper.isPlaylistChangePending) {
                             onTimelineChanged(reason)
+                            StateHelper.isPlaylistChangePending = false
                         } else {
                             Log.d("MediaServiceController", "ℹ️ Timeline-Änderung ignoriert (Grund: $reason)")
                         }

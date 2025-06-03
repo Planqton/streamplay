@@ -51,7 +51,7 @@ object SpotifyMetaReader {
         }
     }
 
-    suspend fun getExtendedMetaInfo(context: Context, artist: String, title: String): ExtendedMetaInfo? =
+    suspend fun getExtendedMetaInfo(context: Context, artist: String, title: String,): ExtendedMetaInfo? =
         withContext(Dispatchers.IO) {
             val token = getAccessToken(context)
             val client = OkHttpClient()
