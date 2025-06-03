@@ -5,25 +5,25 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <!-- Kleiner Griff zum Hochziehen -->
+    <!-- Griff -->
     <View
         android:layout_width="40dp"
         android:layout_height="4dp"
         android:background="@drawable/bottom_sheet_handle"
         android:layout_gravity="center"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp" />
 
-    <!-- Titel / Überschrift -->
+    <!-- Überschrift -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Aktionen"
+        android:text="@string/bottom_sheet_title"
         android:textAppearance="?attr/textAppearanceHeadline6"
-        android:paddingBottom="8dp"/>
+        android:paddingBottom="8dp" />
 
-    <!-- Menüeinträge -->
+    <!-- Eintrag 1: Station Setup -->
     <LinearLayout
-        android:id="@+id/StationSetup"
+        android:id="@+id/option_stations"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -34,21 +34,22 @@
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@drawable/ic_button_unmuted"
-            android:contentDescription="Zur Playlist hinzufügen"
-            android:tint="?attr/colorOnSurface"/>
+            android:src="@drawable/ic_sheet_stations"
+            android:contentDescription="@string/bottom_sheet_station_content_desc"
+            android:tint="?attr/colorOnSurface" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:paddingStart="16dp"
-            android:text="Zur Playlist das"
-            android:textAppearance="?attr/textAppearanceBody1"/>
+            android:text="@string/bottom_sheet_station_text"
+            android:textAppearance="?attr/textAppearanceBody1" />
     </LinearLayout>
 
+    <!-- Eintrag 2: Settings -->
     <LinearLayout
-        android:id="@+id/option_share"
+        android:id="@+id/option_settings"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -59,42 +60,46 @@
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@drawable/ic_button_share"
-            android:contentDescription="Teilen"
-            android:tint="?attr/colorOnSurface"/>
+            android:src="@drawable/ic_sheet_settings"
+            android:contentDescription="@string/bottom_sheet_settings_content_desc"
+            android:tint="?attr/colorOnSurface" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:paddingStart="16dp"
-            android:text="Teilen"
-            android:textAppearance="?attr/textAppearanceBody1"/>
+            android:text="@string/bottom_sheet_settings_text"
+            android:textAppearance="?attr/textAppearanceBody1" />
     </LinearLayout>
 
+    <!-- Eintrag 3: Abstandhalter -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="16dp" />
+
+    <!-- Eintrag 4: Autostart Switch -->
     <LinearLayout
-        android:id="@+id/option_delete"
+        android:id="@+id/option_autostart"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingVertical="12dp"
-        android:clickable="true"
-        android:foreground="?attr/selectableItemBackground">
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_button_share"
-            android:contentDescription="Löschen"
-            android:tint="?attr/colorOnSurface"/>
+        android:paddingVertical="12dp">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:paddingStart="16dp"
-            android:text="Löschen"
-            android:textAppearance="?attr/textAppearanceBody1"/>
+            android:text="@string/bottom_sheet_autostart"
+            android:textAppearance="?attr/textAppearanceBody1"
+            android:paddingStart="8dp"
+            android:gravity="center_vertical" />
+
+        <Switch
+            android:id="@+id/switch_autostart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false" />
     </LinearLayout>
 
 </LinearLayout>

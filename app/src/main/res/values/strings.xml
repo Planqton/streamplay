@@ -29,9 +29,7 @@
     <string name="desc_station_overlay_text">Text in the Station overlay</string>
     <string name="placeholder_upper_overlay">Upper overlay text</string>
 
-    <string name="placeholder_Artist">Artist</string>
-    <string name="placeholder_Title">Title</string>
-    <string name="placeholder_Station">Station</string>
+
     <!-- StreamsFragment -->
     <string name="streams_title">Streams</string>
     <string name="add_stream">Stream hinzufügen</string>
@@ -69,4 +67,25 @@
     <string name="descr_back_icon">Navigate back</string>
     <string name="fragment_stations_title">Stations</string>
 
+    <!-- Player Fragment -->
+    <string name="unknown_title">Unbekannter Titel</string>
+    <string name="unknown_artist">Unbekannter Artist</string>
+    <string name="unknown_station">Unbekannter Sender</string>
+    <string name="unknown_album">Unbekanntes Album</string>
+    <string name="album_prefix">Album: %1$s</string>
+    <string name="share_text">Hey! Ich höre gerade: %1$s von %2$s\nHör’s dir mal an: %3$s</string>
+    <string name="share_chooser_title">Teilen mit…</string>
+
+
+    <!-- Sheet Menu -->
+    !-- Bottom Sheet -->
+    <string name="bottom_sheet_title">Aktionen</string>
+    <!-- Option 1: Station Setup -->
+    <string name="bottom_sheet_station_text">Zur Playlist das</string>
+    <string name="bottom_sheet_station_content_desc">Zur Playlist hinzufügen</string>
+    <!-- Option 2: Einstellungen -->
+    <string name="bottom_sheet_settings_text">Einstellungen</string>
+    <string name="bottom_sheet_settings_content_desc">Einstellungen öffnen</string>
+    <!-- Option 4: Autostart -->
+    <string name="bottom_sheet_autostart">Autostart</string>
 </resources>

@@ -1,7 +1,6 @@
 package at.plankt0n.streamplay
 
 import android.app.ActivityManager
-import at.plankt0n.streamplay.viewmodel.SpotifyMetaViewModel
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -29,6 +28,8 @@ import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.IcyStreamReader
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.SpotifyMetaReader
+import at.plankt0n.streamplay.viewmodel.UITrackViewModel
+import at.plankt0n.streamplay.viewmodel.UITrackInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -85,7 +86,7 @@ class StreamingService : MediaSessionService() {
                 addListener(object : Player.Listener {
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         currentIndex = currentMediaItemIndex
-
+                        UITrackViewModel.clearTrackInfo()
 
                         PreferencesHelper.setLastPlayedStreamIndex(this@StreamingService, currentIndex)
                         Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
@@ -251,6 +252,10 @@ class StreamingService : MediaSessionService() {
     }
 
     fun writeCurrentMetaData(artist: String, title: String, artworkUri: String) {
+
+        UITrackViewModel.clearTrackInfo() //reset SpotifyTrackViewModel damit UI nicht falsche Infos anzeigt
+
+
         val builder = StringBuilder()
         builder.append("🎶 MediaMetadata:\n")
         builder.append("Title: ${artist}\n")
@@ -305,6 +310,22 @@ class StreamingService : MediaSessionService() {
                             "SpotifyMetaReader",
                             "✅ Spotify-Infos gefunden: ${extendedInfo.trackName}"
                         )
+
+
+                        UITrackViewModel.updateTrackInfo(
+                            UITrackInfo(
+                                trackName = extendedInfo.trackName,
+                                artistName = extendedInfo.artistName,
+                                bestCoverUrl = extendedInfo.bestCoverUrl,
+                                albumName = extendedInfo.albumName,
+                                durationMs = extendedInfo.durationMs,
+                                albumReleaseDate = extendedInfo.albumReleaseDate,
+                                popularity = extendedInfo.popularity,
+                                spotifyUrl = extendedInfo.spotifyUrl
+                            )
+                        )
+
+
                         updateMediaItemMetadata(
                             title = extendedInfo.trackName,
                             artist = extendedInfo.artistName,
@@ -317,6 +338,13 @@ class StreamingService : MediaSessionService() {
                             "❌ Keine Spotify-Daten gefunden für: $artist - $title"
                         )
                         updateMediaItemMetadata(title, artist, artworkUri)
+                        UITrackViewModel.updateTrackInfo(
+                            UITrackInfo(
+                                trackName = title,
+                                artistName = artist,
+                                bestCoverUrl = artworkUri
+                            )
+                        )
                     }
                 }
             }
@@ -329,6 +357,13 @@ class StreamingService : MediaSessionService() {
             GlobalScope.launch(Dispatchers.Main) {
                 updateMediaItemMetadata(title, artist, artworkUri)
             }
+            UITrackViewModel.updateTrackInfo(
+                UITrackInfo(
+                    trackName = title,
+                    artistName = artist,
+                    bestCoverUrl = artworkUri
+                )
+            )
         }
 
 

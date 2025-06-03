@@ -112,7 +112,7 @@
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/placeholder_upper_overlay"
+                android:text="@string/unknown_station"
                 android:textSize="12sp"
                 android:textColor="@color/primary_text_default_material_dark"/>
         </LinearLayout>
@@ -247,27 +247,83 @@
                 android:orientation="vertical"
                 android:layout_marginStart="8dp">
 
-                <TextView
-                    android:id="@+id/meta_overlay_Title"
+                <ViewFlipper
+                    android:id="@+id/meta_flipper"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/primary_text_default_material_dark"
-                    android:text="@string/placeholder_Title"
-                    android:textSize="14sp"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
+                    android:inAnimation="@android:anim/slide_in_left"
+                    android:outAnimation="@android:anim/slide_out_right"
+                    android:autoStart="false"
+                    android:flipInterval="10000">
 
-                <TextView
-                    android:id="@+id/meta_overlay_Artist"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/primary_text_default_material_dark"
-                    android:text="@string/placeholder_Artist"
-                    android:textSize="12sp"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
+                    <!-- Seite 1: Titel + Artist -->
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/meta_overlay_Title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/primary_text_default_material_dark"
+                            android:text="@string/unknown_title"
+                            android:textSize="14sp"
+                            android:maxLines="1"
+                            android:ellipsize="marquee"
+                            android:marqueeRepeatLimit="marquee_forever"
+                            android:singleLine="true"
+                            android:focusable="false"
+                            android:focusableInTouchMode="false"
+                            android:scrollHorizontally="true" />
+
+                        <TextView
+                            android:id="@+id/meta_overlay_Artist"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/primary_text_default_material_dark"
+                            android:text="@string/unknown_artist"
+                            android:textSize="12sp"
+                            android:maxLines="1"
+                            android:ellipsize="marquee"
+                            android:marqueeRepeatLimit="marquee_forever"
+                            android:singleLine="true"
+                            android:focusable="false"
+                            android:focusableInTouchMode="false"
+                            android:scrollHorizontally="true" />
+                    </LinearLayout>
+
+                    <!-- Seite 2: Kombinierter Text -->
+                    <TextView
+                        android:id="@+id/meta_overlay_Album"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="marquee"
+                        android:marqueeRepeatLimit="marquee_forever"
+                        android:singleLine="true"
+                        android:scrollHorizontally="true"
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:textColor="@color/primary_text_default_material_dark"
+                        android:text="@string/unknown_album"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:maxLines="1" />
+
+                </ViewFlipper>
+
             </LinearLayout>
-
+            <ImageButton
+                android:id="@+id/button_spotify"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="5dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="0dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_button_spotify"
+                android:contentDescription="@string/desc_button_manual_log"
+                app:tint="@color/primary_dark_material_dark" />
             <ImageButton
                 android:id="@+id/button_manual_log"
                 android:layout_width="24dp"

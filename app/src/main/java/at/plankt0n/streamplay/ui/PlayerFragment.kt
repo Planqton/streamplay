@@ -1,5 +1,11 @@
 package at.plankt0n.streamplay.ui
 
+import android.app.AlertDialog
+import android.content.Context
+import android.content.Intent
+import android.graphics.drawable.ColorDrawable
+import android.media.AudioManager
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -8,14 +14,20 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.ViewFlipper
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.adapter.CoverPageAdapter
+import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.MediaServiceController
-import at.plankt0n.streamplay.viewmodel.SpotifyMetaViewModel
+
+import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import com.bumptech.glide.Glide
+import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
 
 class PlayerFragment : Fragment() {
@@ -23,7 +35,6 @@ class PlayerFragment : Fragment() {
     private lateinit var viewPager: ViewPager2
     private lateinit var dotsIndicator: WormDotsIndicator
     private lateinit var mediaServiceController: MediaServiceController
-    private lateinit var spotifyMetaViewModel: SpotifyMetaViewModel
 
     private lateinit var stationNameTextView: TextView
     private lateinit var stationIconImageView: ImageView
@@ -32,7 +43,11 @@ class PlayerFragment : Fragment() {
     private lateinit var buttonBack: ImageButton
     private lateinit var buttonForward: ImageButton
     private lateinit var buttonMenu: ImageButton
+    private lateinit var buttonSpotify: ImageButton
+    private lateinit var buttonMute: ImageButton
+    private lateinit var buttonShare : ImageButton
 
+    var isMuted = false
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -52,9 +67,9 @@ class PlayerFragment : Fragment() {
         playPauseButton = view.findViewById(R.id.button_play_pause)
         buttonBack = view.findViewById(R.id.button_back)
         buttonForward = view.findViewById(R.id.button_forward)
-
-        spotifyMetaViewModel = ViewModelProvider(requireActivity())[SpotifyMetaViewModel::class.java]
-
+        buttonSpotify = view.findViewById(R.id.button_spotify)
+        buttonMute = view.findViewById(R.id.button_mute_unmute)
+        buttonShare = view.findViewById(R.id.button_share)
         mediaServiceController = MediaServiceController(requireContext())
         mediaServiceController.initializeAndConnect(
             onConnected = { controller ->
@@ -110,6 +125,145 @@ class PlayerFragment : Fragment() {
                 reloadPlaylist()
             }
         )
+
+        //Live Anzeige der Spotify-Trackinformationen
+        val spotifyTrackViewModel = ViewModelProvider(requireActivity())[UITrackViewModel::class.java]
+
+        spotifyTrackViewModel.trackInfo.observe(viewLifecycleOwner) { trackInfo ->
+            val recyclerView = viewPager.getChildAt(0) as? RecyclerView
+            val holder = recyclerView
+                ?.findViewHolderForAdapterPosition(viewPager.currentItem)
+                    as? CoverPageAdapter.CoverViewHolder ?: return@observe
+
+            // Fallback auf Originalbild aus Playlist
+            val defaultIconUrl = mediaServiceController.mediaController
+                ?.getMediaItemAt(viewPager.currentItem)
+                ?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
+
+            val imageUrlToLoad = trackInfo?.bestCoverUrl?.takeIf { it.isNotBlank() } ?: defaultIconUrl
+
+            // ⬇️ Bild & Hintergrund setzen via Helper
+            LiveCoverHelper.loadCoverWithBackgroundFade(
+                context = requireContext(),
+                imageUrl = imageUrlToLoad,
+                imageView = holder.coverImage,
+                backgroundTarget = holder.itemView,
+                defaultColor = requireContext().getColor(R.color.default_background),
+                lastColor = holder.lastColor,
+                onNewColor = { holder.lastColor = it }
+            )
+
+            // ⬇️ Texte aktualisieren
+            val flipper = view?.findViewById<ViewFlipper>(R.id.meta_flipper)
+            val titleTextView = view?.findViewById<TextView>(R.id.meta_overlay_Title)
+            val artistTextView = view?.findViewById<TextView>(R.id.meta_overlay_Artist)
+            val albumTextView = view?.findViewById<TextView>(R.id.meta_overlay_Album)
+            val albumText = trackInfo?.albumName?.takeIf { it.isNotBlank() }
+
+            if (albumText != null) {
+
+                albumTextView?.text = getString(R.string.album_prefix  , albumText)
+
+                if (flipper?.displayedChild != 0) {
+                    flipper?.setDisplayedChild(0) // Zurücksetzen auf Start
+                }
+                flipper?.startFlipping()
+            } else {
+                flipper?.stopFlipping()
+                flipper?.setDisplayedChild(0)
+                albumTextView?.text = getString(R.string.unknown_album)
+            }
+
+            titleTextView?.text = trackInfo?.trackName?.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_title)
+            artistTextView?.text = trackInfo?.artistName?.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_artist)
+
+
+
+            // ➕ station_overlay_stationIcon aktualisieren
+            val stationIconView = view?.findViewById<ShapeableImageView>(R.id.meta_cover_image)
+            if (!trackInfo?.bestCoverUrl.isNullOrBlank()) {
+                Glide.with(requireContext())
+                    .load(trackInfo?.bestCoverUrl)
+                    .placeholder(R.drawable.ic_placeholder_logo)
+                    .error(R.drawable.ic_stationcover_placeholder)
+                    .into(stationIconView!!)
+            } else {
+                // Bild entfernen → Hintergrundfarbe beibehalten
+                stationIconView?.setImageDrawable(null)
+            }
+
+            enableMarquee()
+        }
+        //listener für Spotify Mediainfo Buttons
+        buttonSpotify.setOnClickListener {
+            val trackInfo = spotifyTrackViewModel.trackInfo.value
+            val spotifyUrl = trackInfo?.spotifyUrl
+
+            if (spotifyUrl.isNullOrBlank()) {
+                return@setOnClickListener
+            }
+
+            // Bestätigungsdialog anzeigen
+            AlertDialog.Builder(requireContext())
+                .setTitle("Spotify-Link öffnen?")
+                .setMessage("Möchtest du diesen Song in Spotify öffnen?")
+                .setPositiveButton("Ja") { _, _ ->
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(spotifyUrl))
+                    startActivity(intent)
+                }
+                .setNegativeButton("Abbrechen", null)
+                .show()
+        }
+
+        buttonShare.setOnClickListener {
+            val trackInfo = spotifyTrackViewModel.trackInfo.value
+            val spotifyUrl = trackInfo?.spotifyUrl
+            val spotifyTitle = trackInfo?.trackName
+            val spotifyArtist = trackInfo?.artistName
+
+            if (spotifyUrl.isNullOrBlank() || spotifyTitle.isNullOrBlank() || spotifyArtist.isNullOrBlank()) {
+                return@setOnClickListener
+            }
+
+            val textToShare = getString(
+                R.string.share_text,
+                spotifyTitle,
+                spotifyArtist,
+                spotifyUrl
+            )
+
+            val chooserTitle = getString(R.string.share_chooser_title)
+
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, textToShare)
+            }
+
+            startActivity(Intent.createChooser(intent, chooserTitle))
+        }
+        buttonMute.setOnClickListener {
+            val context = requireContext()
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            if (isMuted) {
+                // Unmute
+                audioManager.adjustStreamVolume(
+                    AudioManager.STREAM_MUSIC,
+                    AudioManager.ADJUST_UNMUTE,
+                    0
+                )
+                buttonMute.setImageResource(R.drawable.ic_button_unmuted)
+            } else {
+                // Mute
+                audioManager.adjustStreamVolume(
+                    AudioManager.STREAM_MUSIC,
+                    AudioManager.ADJUST_MUTE,
+                    0
+                )
+                buttonMute.setImageResource(R.drawable.ic_button_muted)
+            }
+
+            isMuted = !isMuted
+        }
     }
 
     private fun updateOverlayUI(index: Int) {
@@ -159,4 +313,9 @@ class PlayerFragment : Fragment() {
         val bottomSheet = MediaItemOptionsBottomSheet()
         bottomSheet.show(parentFragmentManager, bottomSheet.tag)
     }
+
+    fun enableMarquee(vararg views: TextView) {
+        views.forEach { it.isSelected = true }
+    }
+
 }
