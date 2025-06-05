@@ -24,7 +24,6 @@ import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.adapter.CoverPageAdapter
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.MediaServiceController
-
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
@@ -35,6 +34,7 @@ class PlayerFragment : Fragment() {
     private lateinit var viewPager: ViewPager2
     private lateinit var dotsIndicator: WormDotsIndicator
     private lateinit var mediaServiceController: MediaServiceController
+    private lateinit var spotifyTrackViewModel: UITrackViewModel
 
     private lateinit var stationNameTextView: TextView
     private lateinit var stationIconImageView: ImageView
@@ -48,6 +48,7 @@ class PlayerFragment : Fragment() {
     private lateinit var buttonShare : ImageButton
 
     var isMuted = false
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -59,7 +60,7 @@ class PlayerFragment : Fragment() {
 
         buttonMenu = view.findViewById(R.id.button_menu)
         viewPager = view.findViewById(R.id.view_pager)
-        viewPager.offscreenPageLimit = 2 // 2 Seiten links + 2 Seiten rechts vorab laden
+        viewPager.offscreenPageLimit = 2
 
         dotsIndicator = view.findViewById(R.id.dots_indicator)
         stationNameTextView = view.findViewById(R.id.station_overlay_stationname)
@@ -70,6 +71,7 @@ class PlayerFragment : Fragment() {
         buttonSpotify = view.findViewById(R.id.button_spotify)
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
+
         mediaServiceController = MediaServiceController(requireContext())
         mediaServiceController.initializeAndConnect(
             onConnected = { controller ->
@@ -88,7 +90,6 @@ class PlayerFragment : Fragment() {
                 viewPager.adapter = coverPageAdapter
                 dotsIndicator.setViewPager2(viewPager)
 
-                // Preload Cover-Bilder für flüssiges Scrollen!
                 coverPageAdapter.mediaItems.forEach { item ->
                     Glide.with(requireContext())
                         .load(item.iconURL)
@@ -110,100 +111,27 @@ class PlayerFragment : Fragment() {
                 playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
                 buttonBack.setOnClickListener { mediaServiceController.skipToPrevious() }
                 buttonForward.setOnClickListener { mediaServiceController.skipToNext() }
-                buttonMenu.setOnClickListener {
-                 showBottomSheet()
-                }
+                buttonMenu.setOnClickListener { showBottomSheet() }
             },
             onPlaybackChanged = { updatePlayPauseIcon(it) },
             onStreamIndexChanged = { index ->
                 viewPager.setCurrentItem(index, true)
                 updateOverlayUI(index)
             },
-            onMetadataChanged = { /* optional */ },
+            onMetadataChanged = {},
             onTimelineChanged = {
                 Log.d("PlayerFragment", "🔁 Timeline geändert! Grund: $it")
                 reloadPlaylist()
             }
         )
 
-        //Live Anzeige der Spotify-Trackinformationen
-        val spotifyTrackViewModel = ViewModelProvider(requireActivity())[UITrackViewModel::class.java]
+        spotifyTrackViewModel = ViewModelProvider(requireActivity())[UITrackViewModel::class.java]
+        observeSpotifyTrackInfo()
 
-        spotifyTrackViewModel.trackInfo.observe(viewLifecycleOwner) { trackInfo ->
-            val recyclerView = viewPager.getChildAt(0) as? RecyclerView
-            val holder = recyclerView
-                ?.findViewHolderForAdapterPosition(viewPager.currentItem)
-                    as? CoverPageAdapter.CoverViewHolder ?: return@observe
-
-            // Fallback auf Originalbild aus Playlist
-            val defaultIconUrl = mediaServiceController.mediaController
-                ?.getMediaItemAt(viewPager.currentItem)
-                ?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
-
-            val imageUrlToLoad = trackInfo?.bestCoverUrl?.takeIf { it.isNotBlank() } ?: defaultIconUrl
-
-            // ⬇️ Bild & Hintergrund setzen via Helper
-            LiveCoverHelper.loadCoverWithBackgroundFade(
-                context = requireContext(),
-                imageUrl = imageUrlToLoad,
-                imageView = holder.coverImage,
-                backgroundTarget = holder.itemView,
-                defaultColor = requireContext().getColor(R.color.default_background),
-                lastColor = holder.lastColor,
-                onNewColor = { holder.lastColor = it }
-            )
-
-            // ⬇️ Texte aktualisieren
-            val flipper = view?.findViewById<ViewFlipper>(R.id.meta_flipper)
-            val titleTextView = view?.findViewById<TextView>(R.id.meta_overlay_Title)
-            val artistTextView = view?.findViewById<TextView>(R.id.meta_overlay_Artist)
-            val albumTextView = view?.findViewById<TextView>(R.id.meta_overlay_Album)
-            val albumText = trackInfo?.albumName?.takeIf { it.isNotBlank() }
-
-            if (albumText != null) {
-
-                albumTextView?.text = getString(R.string.album_prefix  , albumText)
-
-                if (flipper?.displayedChild != 0) {
-                    flipper?.setDisplayedChild(0) // Zurücksetzen auf Start
-                }
-                flipper?.startFlipping()
-            } else {
-                flipper?.stopFlipping()
-                flipper?.setDisplayedChild(0)
-                albumTextView?.text = getString(R.string.unknown_album)
-            }
-
-            titleTextView?.text = trackInfo?.trackName?.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_title)
-            artistTextView?.text = trackInfo?.artistName?.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_artist)
-
-
-
-            // ➕ station_overlay_stationIcon aktualisieren
-            val stationIconView = view?.findViewById<ShapeableImageView>(R.id.meta_cover_image)
-            if (!trackInfo?.bestCoverUrl.isNullOrBlank()) {
-                Glide.with(requireContext())
-                    .load(trackInfo?.bestCoverUrl)
-                    .placeholder(R.drawable.ic_placeholder_logo)
-                    .error(R.drawable.ic_stationcover_placeholder)
-                    .into(stationIconView!!)
-            } else {
-                // Bild entfernen → Hintergrundfarbe beibehalten
-                stationIconView?.setImageDrawable(null)
-            }
-
-            enableMarquee()
-        }
-        //listener für Spotify Mediainfo Buttons
         buttonSpotify.setOnClickListener {
             val trackInfo = spotifyTrackViewModel.trackInfo.value
-            val spotifyUrl = trackInfo?.spotifyUrl
+            val spotifyUrl = trackInfo?.spotifyUrl ?: return@setOnClickListener
 
-            if (spotifyUrl.isNullOrBlank()) {
-                return@setOnClickListener
-            }
-
-            // Bestätigungsdialog anzeigen
             AlertDialog.Builder(requireContext())
                 .setTitle("Spotify-Link öffnen?")
                 .setMessage("Möchtest du diesen Song in Spotify öffnen?")
@@ -221,17 +149,9 @@ class PlayerFragment : Fragment() {
             val spotifyTitle = trackInfo?.trackName
             val spotifyArtist = trackInfo?.artistName
 
-            if (spotifyUrl.isNullOrBlank() || spotifyTitle.isNullOrBlank() || spotifyArtist.isNullOrBlank()) {
-                return@setOnClickListener
-            }
+            if (spotifyUrl.isNullOrBlank() || spotifyTitle.isNullOrBlank() || spotifyArtist.isNullOrBlank()) return@setOnClickListener
 
-            val textToShare = getString(
-                R.string.share_text,
-                spotifyTitle,
-                spotifyArtist,
-                spotifyUrl
-            )
-
+            val textToShare = getString(R.string.share_text, spotifyTitle, spotifyArtist, spotifyUrl)
             val chooserTitle = getString(R.string.share_chooser_title)
 
             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -241,28 +161,82 @@ class PlayerFragment : Fragment() {
 
             startActivity(Intent.createChooser(intent, chooserTitle))
         }
+
         buttonMute.setOnClickListener {
             val context = requireContext()
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
             if (isMuted) {
-                // Unmute
-                audioManager.adjustStreamVolume(
-                    AudioManager.STREAM_MUSIC,
-                    AudioManager.ADJUST_UNMUTE,
-                    0
-                )
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
                 buttonMute.setImageResource(R.drawable.ic_button_unmuted)
             } else {
-                // Mute
-                audioManager.adjustStreamVolume(
-                    AudioManager.STREAM_MUSIC,
-                    AudioManager.ADJUST_MUTE,
-                    0
-                )
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
                 buttonMute.setImageResource(R.drawable.ic_button_muted)
             }
-
             isMuted = !isMuted
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        observeSpotifyTrackInfo()
+    }
+
+    private fun observeSpotifyTrackInfo() {
+        spotifyTrackViewModel.trackInfo.removeObservers(viewLifecycleOwner)
+        spotifyTrackViewModel.trackInfo.observe(viewLifecycleOwner) { trackInfo ->
+            val recyclerView = viewPager.getChildAt(0) as? RecyclerView
+            val holder = recyclerView?.findViewHolderForAdapterPosition(viewPager.currentItem)
+                    as? CoverPageAdapter.CoverViewHolder ?: return@observe
+
+            val defaultIconUrl = mediaServiceController.mediaController
+                ?.getMediaItemAt(viewPager.currentItem)
+                ?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
+
+            val imageUrlToLoad = trackInfo?.bestCoverUrl?.takeIf { it.isNotBlank() } ?: defaultIconUrl
+
+            LiveCoverHelper.loadCoverWithBackgroundFade(
+                context = requireContext(),
+                imageUrl = imageUrlToLoad,
+                imageView = holder.coverImage,
+                backgroundTarget = holder.itemView,
+                defaultColor = requireContext().getColor(R.color.default_background),
+                lastColor = holder.lastColor,
+                onNewColor = { holder.lastColor = it }
+            )
+
+            val flipper = view?.findViewById<ViewFlipper>(R.id.meta_flipper)
+            val titleTextView = view?.findViewById<TextView>(R.id.meta_overlay_Title)
+            val artistTextView = view?.findViewById<TextView>(R.id.meta_overlay_Artist)
+            val albumTextView = view?.findViewById<TextView>(R.id.meta_overlay_Album)
+            val albumText = trackInfo?.albumName?.takeIf { it.isNotBlank() }
+
+            if (albumText != null) {
+                albumTextView?.text = getString(R.string.album_prefix, albumText)
+                if (flipper?.displayedChild != 0) flipper?.setDisplayedChild(0)
+                flipper?.startFlipping()
+            } else {
+                flipper?.stopFlipping()
+                flipper?.setDisplayedChild(0)
+                albumTextView?.text = getString(R.string.unknown_album)
+            }
+
+            titleTextView?.text = trackInfo?.trackName?.takeIf { it.isNotBlank() }
+                ?: getString(R.string.unknown_title)
+            artistTextView?.text = trackInfo?.artistName?.takeIf { it.isNotBlank() }
+                ?: getString(R.string.unknown_artist)
+
+            val stationIconView = view?.findViewById<ShapeableImageView>(R.id.meta_cover_image)
+            if (!trackInfo?.bestCoverUrl.isNullOrBlank()) {
+                Glide.with(requireContext())
+                    .load(trackInfo?.bestCoverUrl)
+                    .placeholder(R.drawable.ic_placeholder_logo)
+                    .error(R.drawable.ic_stationcover_placeholder)
+                    .into(stationIconView!!)
+            } else {
+                stationIconView?.setImageDrawable(null)
+            }
+
+            enableMarquee()
         }
     }
 
@@ -292,7 +266,6 @@ class PlayerFragment : Fragment() {
         viewPager.adapter = coverPageAdapter
         dotsIndicator.setViewPager2(viewPager)
 
-        // Preload Cover-Bilder erneut!
         coverPageAdapter.mediaItems.forEach { item ->
             Glide.with(requireContext())
                 .load(item.iconURL)
@@ -317,5 +290,4 @@ class PlayerFragment : Fragment() {
     fun enableMarquee(vararg views: TextView) {
         views.forEach { it.isSelected = true }
     }
-
 }

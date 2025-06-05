@@ -58,6 +58,7 @@ dependencies {
         implementation("androidx.media3:media3-exoplayer:$mediaVersion")
         implementation("androidx.media3:media3-exoplayer-hls:$mediaVersion")
         implementation("androidx.media3:media3-session:$mediaVersion")
+        implementation("androidx.media3:media3-common:$mediaVersion")
 
         // Navigation
         val navigationVersion = "2.8.0"

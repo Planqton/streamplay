@@ -16,12 +16,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Metadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.extractor.metadata.icy.IcyInfo
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import at.plankt0n.streamplay.data.StationItem
@@ -81,20 +83,39 @@ class StreamingService : MediaSessionService() {
 
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(mediaSourceFactory)
+
             .build().apply {
                 repeatMode = Player.REPEAT_MODE_OFF
                 addListener(object : Player.Listener {
+                    override fun onMetadata(metadata: Metadata) {
+                        for (i in 0 until metadata.length()) {
+                            val entry = metadata[i]
+                            val builder = MediaMetadata.Builder()
+                            entry.populateMediaMetadata(builder)
+                            val mediaMetadata = builder.build()
+
+                            val title = mediaMetadata.title
+                            val artist = mediaMetadata.artist
+                            val raw = title?.toString() ?: ""
+
+                            // Beispiel: Titel und Künstler ausgeben
+                            Log.d("RadioMeta", "Title: $title | Artist: $artist")
+                        }
+                    }
+
+
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         currentIndex = currentMediaItemIndex
                         UITrackViewModel.clearTrackInfo()
 
                         PreferencesHelper.setLastPlayedStreamIndex(this@StreamingService, currentIndex)
                         Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
+                        // Falls schon ein Reader läuft -> stoppen
+                        icyStreamReader?.stop()
 
                         val newUrl = mediaItem?.localConfiguration?.uri?.toString()
                         if (!newUrl.isNullOrEmpty()) {
-                            // Falls schon ein Reader läuft -> stoppen
-                            icyStreamReader?.stop()
+
 
                             // Neuen Reader starten
                         icyStreamReader = IcyStreamReader(
@@ -126,6 +147,7 @@ class StreamingService : MediaSessionService() {
                     override fun onMediaMetadataChanged(metadata: MediaMetadata) {
                         currentrawMetadata = metadata //noch keine verwendung
                     }
+
                 })
 
 
