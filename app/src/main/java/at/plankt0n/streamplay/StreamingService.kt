@@ -95,20 +95,28 @@ class StreamingService : MediaSessionService() {
                     //Listener für wechsel der Streams
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         currentIndex = currentMediaItemIndex
+
+                        Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
                         UITrackViewModel.clearTrackInfo()
+
 
                         PreferencesHelper.setLastPlayedStreamIndex(
                             this@StreamingService,
                             currentIndex
                         )
 
-                        Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
                     }
                     //Listener für errors
                     override fun onPlayerError(error: PlaybackException) {
                         Log.e("StreamingService", "❌ ExoPlayer-Fehler: ${error.errorCodeName} - ${error.message}")
                         Log.e("StreamingService", "Cause: ${error.cause?.message ?: "unbekannt"}")
                         error.cause?.printStackTrace()
+
+                        updateMediaItemMetadata(
+                            "Error",
+                            error.cause?.message ?: "unbekannt",
+                    lastArtworkUri ?: ""
+                        )
                     }
 
                     override fun onMediaMetadataChanged(metadata: MediaMetadata) {
@@ -242,7 +250,7 @@ class StreamingService : MediaSessionService() {
 
     fun fetchMetadata(metadata: Metadata) {
 
-        val fallbackartworkUri = player.currentMediaItem?.mediaMetadata?.artworkUri?.toString() ?: ""
+        val fallbackartworkUri = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL")
         var title = ""
         var artist = ""
 
@@ -324,7 +332,7 @@ class StreamingService : MediaSessionService() {
                             "SpotifyMetaReader",
                             "❌ Keine Spotify-Daten gefunden für: $artist - $title"
                         )
-                        updateMediaItemMetadata(title, artist, fallbackartworkUri )
+                        updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
                         UITrackViewModel.updateTrackInfo(
                             UITrackInfo(
                                 trackName = title,
@@ -342,7 +350,7 @@ class StreamingService : MediaSessionService() {
             )
             // Sicherstellen, dass auch dieser Aufruf im Main-Thread läuft!
             GlobalScope.launch(Dispatchers.Main) {
-                updateMediaItemMetadata(title, artist, fallbackartworkUri)
+                updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
             }
             UITrackViewModel.updateTrackInfo(
                 UITrackInfo(

@@ -3,7 +3,6 @@ package at.plankt0n.streamplay.ui
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.graphics.drawable.ColorDrawable
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Bundle
@@ -15,7 +14,6 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.ViewFlipper
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
@@ -163,8 +161,7 @@ class PlayerFragment : Fragment() {
         }
 
         buttonMute.setOnClickListener {
-            val context = requireContext()
-            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val audioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as AudioManager
             if (isMuted) {
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
                 buttonMute.setImageResource(R.drawable.ic_button_unmuted)
@@ -184,6 +181,32 @@ class PlayerFragment : Fragment() {
     private fun observeSpotifyTrackInfo() {
         spotifyTrackViewModel.trackInfo.removeObservers(viewLifecycleOwner)
         spotifyTrackViewModel.trackInfo.observe(viewLifecycleOwner) { trackInfo ->
+            val flipper = view?.findViewById<ViewFlipper>(R.id.meta_flipper)
+            val titleTextView = view?.findViewById<TextView>(R.id.meta_overlay_Title)
+            val artistTextView = view?.findViewById<TextView>(R.id.meta_overlay_Artist)
+            val albumTextView = view?.findViewById<TextView>(R.id.meta_overlay_Album)
+            val stationIconView = view?.findViewById<ShapeableImageView>(R.id.meta_cover_image)
+
+            if (trackInfo == null) {
+                titleTextView?.text = getString(R.string.unknown_title)
+                artistTextView?.text = getString(R.string.unknown_artist)
+                albumTextView?.text = getString(R.string.unknown_album)
+                flipper?.stopFlipping()
+                flipper?.setDisplayedChild(0)
+
+                val fallbackUrl = mediaServiceController.mediaController
+                    ?.getMediaItemAt(viewPager.currentItem)
+                    ?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL")
+
+                Glide.with(requireContext())
+                    .load(R.drawable.placeholder_spotify_dark)
+                    .placeholder(R.drawable.placeholder_spotify_dark)
+                    .error(R.drawable.placeholder_spotify_dark)
+                    .into(stationIconView!!)
+
+                return@observe
+            }
+
             val recyclerView = viewPager.getChildAt(0) as? RecyclerView
             val holder = recyclerView?.findViewHolderForAdapterPosition(viewPager.currentItem)
                     as? CoverPageAdapter.CoverViewHolder ?: return@observe
@@ -192,7 +215,7 @@ class PlayerFragment : Fragment() {
                 ?.getMediaItemAt(viewPager.currentItem)
                 ?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
 
-            val imageUrlToLoad = trackInfo?.bestCoverUrl?.takeIf { it.isNotBlank() } ?: defaultIconUrl
+            val imageUrlToLoad = trackInfo.bestCoverUrl?.takeIf { it.isNotBlank() } ?: defaultIconUrl
 
             LiveCoverHelper.loadCoverWithBackgroundFade(
                 context = requireContext(),
@@ -204,14 +227,11 @@ class PlayerFragment : Fragment() {
                 onNewColor = { holder.lastColor = it }
             )
 
-            val flipper = view?.findViewById<ViewFlipper>(R.id.meta_flipper)
-            val titleTextView = view?.findViewById<TextView>(R.id.meta_overlay_Title)
-            val artistTextView = view?.findViewById<TextView>(R.id.meta_overlay_Artist)
-            val albumTextView = view?.findViewById<TextView>(R.id.meta_overlay_Album)
-            val albumText = trackInfo?.albumName?.takeIf { it.isNotBlank() }
+            titleTextView?.text = trackInfo.trackName.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_title)
+            artistTextView?.text = trackInfo.artistName.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_artist)
 
-            if (albumText != null) {
-                albumTextView?.text = getString(R.string.album_prefix, albumText)
+            if (trackInfo.albumName.isNotBlank()) {
+                albumTextView?.text = getString(R.string.album_prefix, trackInfo.albumName)
                 if (flipper?.displayedChild != 0) flipper?.setDisplayedChild(0)
                 flipper?.startFlipping()
             } else {
@@ -220,23 +240,19 @@ class PlayerFragment : Fragment() {
                 albumTextView?.text = getString(R.string.unknown_album)
             }
 
-            titleTextView?.text = trackInfo?.trackName?.takeIf { it.isNotBlank() }
-                ?: getString(R.string.unknown_title)
-            artistTextView?.text = trackInfo?.artistName?.takeIf { it.isNotBlank() }
-                ?: getString(R.string.unknown_artist)
-
-            val stationIconView = view?.findViewById<ShapeableImageView>(R.id.meta_cover_image)
-            if (!trackInfo?.bestCoverUrl.isNullOrBlank()) {
+            if (!trackInfo.bestCoverUrl.isNullOrBlank()) {
                 Glide.with(requireContext())
-                    .load(trackInfo?.bestCoverUrl)
+                    .load(trackInfo.bestCoverUrl)
                     .placeholder(R.drawable.ic_placeholder_logo)
                     .error(R.drawable.ic_stationcover_placeholder)
                     .into(stationIconView!!)
             } else {
-                stationIconView?.setImageDrawable(null)
+                Glide.with(requireContext())
+                    .clear(stationIconView!!)
+                stationIconView!!.setImageDrawable(null)
             }
 
-            enableMarquee()
+            enableMarquee(titleTextView!!, artistTextView!!, albumTextView!!)
         }
     }
 
@@ -251,8 +267,8 @@ class PlayerFragment : Fragment() {
         stationNameTextView.text = stationName
         Glide.with(stationIconImageView)
             .load(iconUrl)
-            .placeholder(R.drawable.ic_placeholder_logo)
-            .error(R.drawable.ic_stationcover_placeholder)
+            .placeholder(R.drawable.placeholder_spotify_dark)
+            .error(R.drawable.placeholder_spotify_dark)
             .into(stationIconImageView)
     }
 

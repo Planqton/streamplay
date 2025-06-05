@@ -1,5 +1,6 @@
 package at.plankt0n.streamplay.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -17,8 +18,8 @@ data class UITrackInfo(
 
 object  UITrackViewModel : ViewModel() {
 
-    private val _trackInfo = MutableLiveData<UITrackInfo>()
-    val trackInfo: LiveData<UITrackInfo> get() = _trackInfo
+    private val _trackInfo = MutableLiveData<UITrackInfo?>()
+    val trackInfo: LiveData<UITrackInfo?> get() = _trackInfo
 
     fun updateTrackInfo(info: UITrackInfo) {
         _trackInfo.postValue(info)
@@ -26,5 +27,6 @@ object  UITrackViewModel : ViewModel() {
 
     fun clearTrackInfo() {
         _trackInfo.postValue(null)
+        Log.d("UITrackinfo", "Trackinfo cleared")
     }
 }
