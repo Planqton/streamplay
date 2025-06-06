@@ -68,13 +68,13 @@
     <string name="fragment_stations_title">Stations</string>
 
     <!-- Player Fragment -->
-    <string name="unknown_title">Unbekannter Titel</string>
-    <string name="unknown_artist">Unbekannter Artist</string>
-    <string name="unknown_station">Unbekannter Sender</string>
-    <string name="unknown_album">Unbekanntes Album</string>
+    <string name="unknown_title">No Title Information</string>
+    <string name="unknown_artist">No Artist Information</string>
+    <string name="unknown_station">Unknown Statio</string>
+    <string name="unknown_album">Unknown Album</string>
     <string name="album_prefix">Album: %1$s</string>
-    <string name="share_text">Hey! Ich höre gerade: %1$s von %2$s\nHör’s dir mal an: %3$s</string>
-    <string name="share_chooser_title">Teilen mit…</string>
+    <string name="share_text">Hey! I am listening: %1$s from %2$s\nCheck it out: %3$s</string>
+    <string name="share_chooser_title">Share with…</string>
 
 
     <!-- Sheet Menu -->

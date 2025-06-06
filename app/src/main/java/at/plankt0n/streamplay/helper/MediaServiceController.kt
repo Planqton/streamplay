@@ -169,5 +169,13 @@ class MediaServiceController(private val context: Context) {
 
     fun getCurrentStreamIndex(): Int = mediaController?.currentMediaItemIndex ?: 0
 
+    fun findIndexByMediaId(mediaId: String): Int {
+        return mediaController?.mediaItemCount?.let { count ->
+            (0 until count).firstOrNull { i ->
+                mediaController?.getMediaItemAt(i)?.mediaId == mediaId
+            } ?: -1
+        } ?: -1
+    }
+
 
 }

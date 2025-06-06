@@ -16,10 +16,13 @@ import android.widget.TextView
 import android.widget.ViewFlipper
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.adapter.CoverPageAdapter
+import at.plankt0n.streamplay.adapter.ShortcutAdapter
+import at.plankt0n.streamplay.data.ShortcutItem
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
@@ -34,9 +37,10 @@ class PlayerFragment : Fragment() {
     private lateinit var mediaServiceController: MediaServiceController
     private lateinit var spotifyTrackViewModel: UITrackViewModel
 
+
+    //UI Elemente definieren
     private lateinit var stationNameTextView: TextView
     private lateinit var stationIconImageView: ImageView
-
     private lateinit var playPauseButton: ImageButton
     private lateinit var buttonBack: ImageButton
     private lateinit var buttonForward: ImageButton
@@ -44,6 +48,9 @@ class PlayerFragment : Fragment() {
     private lateinit var buttonSpotify: ImageButton
     private lateinit var buttonMute: ImageButton
     private lateinit var buttonShare : ImageButton
+    private lateinit var shortcutRecyclerView: RecyclerView
+    private lateinit var shortcutAdapter: ShortcutAdapter
+
 
     var isMuted = false
 
@@ -60,6 +67,18 @@ class PlayerFragment : Fragment() {
         viewPager = view.findViewById(R.id.view_pager)
         viewPager.offscreenPageLimit = 2
 
+        shortcutRecyclerView = view.findViewById(R.id.shortcut_recycler_view)
+        shortcutAdapter = ShortcutAdapter { item ->
+            mediaServiceController.playAtIndex(item.index)
+           // viewPager.setCurrentItem(item.index, false)//
+            //updateOverlayUI(item.index)//
+        }
+
+        shortcutRecyclerView.adapter = shortcutAdapter
+        shortcutRecyclerView.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+
+
         dotsIndicator = view.findViewById(R.id.dots_indicator)
         stationNameTextView = view.findViewById(R.id.station_overlay_stationname)
         stationIconImageView = view.findViewById(R.id.station_overlay_stationIcon)
@@ -73,6 +92,17 @@ class PlayerFragment : Fragment() {
         mediaServiceController = MediaServiceController(requireContext())
         mediaServiceController.initializeAndConnect(
             onConnected = { controller ->
+
+                val shortcuts = (0 until controller.mediaItemCount).mapNotNull { i ->
+                    val mediaItem = controller.getMediaItemAt(i)
+                    val extras = mediaItem.mediaMetadata.extras ?: return@mapNotNull null
+                    val label = extras.getString("EXTRA_STATION_NAME") ?: return@mapNotNull null
+                    val iconUrl = extras.getString("EXTRA_ICON_URL") ?: ""
+                    val mediaId = mediaItem.mediaId
+                    ShortcutItem(label, iconUrl, mediaId, i)
+                }
+                shortcutAdapter.setItems(shortcuts)
+
                 if (controller.mediaItemCount == 0) {
                     Log.w("PlayerFragment", "⚠️ MediaSession ist leer! Wechsel ins StationsFragment.")
                     parentFragmentManager.beginTransaction()
@@ -171,6 +201,7 @@ class PlayerFragment : Fragment() {
             }
             isMuted = !isMuted
         }
+
     }
 
     override fun onStart() {
