@@ -62,6 +62,8 @@
     <!-- Topbar -->
     <string name="descr_back_icon">Navigate back</string>
     <string name="fragment_stations_title">Stations</string>
+    <string name="fragment_radio_browser_title">Radio Browser</string>
+    <string name="radio_browser_search_hint">Search…</string>
 
     <!-- Player Fragment -->
     <string name="unknown_title">No Title Information</string>
@@ -82,6 +84,8 @@
     <!-- Option 2: Einstellungen -->
     <string name="bottom_sheet_settings_text">Einstellungen</string>
     <string name="bottom_sheet_settings_content_desc">Einstellungen öffnen</string>
+    <string name="bottom_sheet_radio_browser_text">Browse Stations</string>
+    <string name="bottom_sheet_radio_browser_desc">Browse online stations</string>
     <!-- Option 4: Autostart -->
     <string name="bottom_sheet_autostart">Autostart</string>
 </resources>

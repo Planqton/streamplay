@@ -10,11 +10,11 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object RadioBrowserHelper {
-    private const val BASE_URL = "https://de1.api.radio-browser.info/json/stations/byname/"
+    private const val BASE_URL = "https://de1.api.radio-browser.info"
 
-    suspend fun searchStations(query: String): List<RadioBrowserResult> = withContext(Dispatchers.IO) {
+    private suspend fun performRequest(endpoint: String): List<RadioBrowserResult> = withContext(Dispatchers.IO) {
         try {
-            val apiUrl = "$BASE_URL$query"
+            val apiUrl = "$BASE_URL$endpoint"
             val url = URL(apiUrl)
             val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
@@ -25,7 +25,7 @@ object RadioBrowserHelper {
                 val inputStream = connection.inputStream
                 val json = inputStream.bufferedReader().use { it.readText() }
                 val type = object : TypeToken<List<RadioBrowserResult>>() {}.type
-                Gson().fromJson(json, type)
+                Gson().fromJson<List<RadioBrowserResult>>(json, type)
             } else {
                 Log.e("RadioBrowserHelper", "HTTP error: ${connection.responseCode}")
                 emptyList()
@@ -34,6 +34,14 @@ object RadioBrowserHelper {
             Log.e("RadioBrowserHelper", "Error: ${e.localizedMessage}")
             emptyList()
         }
+    }
+
+    suspend fun searchStations(query: String): List<RadioBrowserResult> {
+        return performRequest("/json/stations/byname/$query")
+    }
+
+    suspend fun getTopStations(limit: Int): List<RadioBrowserResult> {
+        return performRequest("/json/stations/topclick/$limit")
     }
 }
     
