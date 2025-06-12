@@ -37,8 +37,6 @@ class PlayerFragment : Fragment() {
     private lateinit var mediaServiceController: MediaServiceController
     private lateinit var spotifyTrackViewModel: UITrackViewModel
 
-
-    //UI Elemente definieren
     private lateinit var stationNameTextView: TextView
     private lateinit var stationIconImageView: ImageView
     private lateinit var playPauseButton: ImageButton
@@ -47,10 +45,9 @@ class PlayerFragment : Fragment() {
     private lateinit var buttonMenu: ImageButton
     private lateinit var buttonSpotify: ImageButton
     private lateinit var buttonMute: ImageButton
-    private lateinit var buttonShare : ImageButton
+    private lateinit var buttonShare: ImageButton
     private lateinit var shortcutRecyclerView: RecyclerView
     private lateinit var shortcutAdapter: ShortcutAdapter
-
 
     var isMuted = false
 
@@ -70,14 +67,10 @@ class PlayerFragment : Fragment() {
         shortcutRecyclerView = view.findViewById(R.id.shortcut_recycler_view)
         shortcutAdapter = ShortcutAdapter { item ->
             mediaServiceController.playAtIndex(item.index)
-           // viewPager.setCurrentItem(item.index, false)//
-            //updateOverlayUI(item.index)//
         }
-
         shortcutRecyclerView.adapter = shortcutAdapter
         shortcutRecyclerView.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-
 
         dotsIndicator = view.findViewById(R.id.dots_indicator)
         stationNameTextView = view.findViewById(R.id.station_overlay_stationname)
@@ -92,7 +85,6 @@ class PlayerFragment : Fragment() {
         mediaServiceController = MediaServiceController(requireContext())
         mediaServiceController.initializeAndConnect(
             onConnected = { controller ->
-
                 val shortcuts = (0 until controller.mediaItemCount).mapNotNull { i ->
                     val mediaItem = controller.getMediaItemAt(i)
                     val extras = mediaItem.mediaMetadata.extras ?: return@mapNotNull null
@@ -104,7 +96,7 @@ class PlayerFragment : Fragment() {
                 shortcutAdapter.setItems(shortcuts)
 
                 if (controller.mediaItemCount == 0) {
-                    Log.w("PlayerFragment", "⚠️ MediaSession ist leer! Wechsel ins StationsFragment.")
+                    Log.w("PlayerFragment", "\u26a0\ufe0f MediaSession ist leer! Wechsel ins StationsFragment.")
                     parentFragmentManager.beginTransaction()
                         .setReorderingAllowed(true)
                         .hide(this@PlayerFragment)
@@ -148,7 +140,7 @@ class PlayerFragment : Fragment() {
             },
             onMetadataChanged = {},
             onTimelineChanged = {
-                Log.d("PlayerFragment", "🔁 Timeline geändert! Grund: $it")
+                Log.d("PlayerFragment", "\ud83d\udd01 Timeline ge\u00e4ndert! Grund: $it")
                 reloadPlaylist()
             }
         )
@@ -161,8 +153,8 @@ class PlayerFragment : Fragment() {
             val spotifyUrl = trackInfo?.spotifyUrl ?: return@setOnClickListener
 
             AlertDialog.Builder(requireContext())
-                .setTitle("Spotify-Link öffnen?")
-                .setMessage("Möchtest du diesen Song in Spotify öffnen?")
+                .setTitle("Spotify-Link \u00f6ffnen?")
+                .setMessage("M\u00f6chtest du diesen Song in Spotify \u00f6ffnen?")
                 .setPositiveButton("Ja") { _, _ ->
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(spotifyUrl))
                     startActivity(intent)
@@ -201,7 +193,6 @@ class PlayerFragment : Fragment() {
             }
             isMuted = !isMuted
         }
-
     }
 
     override fun onStart() {
@@ -218,16 +209,21 @@ class PlayerFragment : Fragment() {
             val albumTextView = view?.findViewById<TextView>(R.id.meta_overlay_Album)
             val stationIconView = view?.findViewById<ShapeableImageView>(R.id.meta_cover_image)
 
+            val spotifyUrl = trackInfo?.spotifyUrl
+            val spotifyAvailable = !spotifyUrl.isNullOrBlank()
+            buttonSpotify.isEnabled = spotifyAvailable
+            buttonSpotify.alpha = if (spotifyAvailable) 1.0f else 0.5f
+            buttonSpotify.setColorFilter(
+                if (spotifyAvailable) requireContext().getColor(R.color.black)
+                else requireContext().getColor(R.color.colorAccent)
+            )
+
             if (trackInfo == null) {
                 titleTextView?.text = getString(R.string.unknown_title)
                 artistTextView?.text = getString(R.string.unknown_artist)
                 albumTextView?.text = getString(R.string.unknown_album)
                 flipper?.stopFlipping()
                 flipper?.setDisplayedChild(0)
-
-                val fallbackUrl = mediaServiceController.mediaController
-                    ?.getMediaItemAt(viewPager.currentItem)
-                    ?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL")
 
                 Glide.with(requireContext())
                     .load(R.drawable.placeholder_spotify_dark)
@@ -278,8 +274,7 @@ class PlayerFragment : Fragment() {
                     .error(R.drawable.ic_stationcover_placeholder)
                     .into(stationIconView!!)
             } else {
-                Glide.with(requireContext())
-                    .clear(stationIconView!!)
+                Glide.with(requireContext()).clear(stationIconView!!)
                 stationIconView!!.setImageDrawable(null)
             }
 
@@ -314,9 +309,7 @@ class PlayerFragment : Fragment() {
         dotsIndicator.setViewPager2(viewPager)
 
         coverPageAdapter.mediaItems.forEach { item ->
-            Glide.with(requireContext())
-                .load(item.iconURL)
-                .preload()
+            Glide.with(requireContext()).load(item.iconURL).preload()
         }
 
         val currentIndex = mediaServiceController.getCurrentStreamIndex()

@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Binder
 import android.os.Build
 import android.os.Bundle
+import android.text.Html
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.ViewModelProvider
@@ -261,8 +262,9 @@ class StreamingService : MediaSessionService() {
                 entry.populateMediaMetadata(this)
             }.build()
 
-            title = mediaMetadata.title?.toString().orEmpty()
-            artist = mediaMetadata.artist?.toString().orEmpty()
+            title = decodeHtmlEntities(mediaMetadata.title?.toString().orEmpty())
+            artist = decodeHtmlEntities(mediaMetadata.artist?.toString().orEmpty())
+
 
             Log.d("RadioMeta", "🎵 Title: $title | 👤 Artist: $artist")
         }
@@ -473,6 +475,15 @@ val title = refreshMetaData?.title?.toString().orEmpty()
             }
         }
         return false
+    }
+
+
+    fun decodeHtmlEntities(text: String): String {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
+        } else {
+            Html.fromHtml(text).toString()
+        }
     }
 
 
