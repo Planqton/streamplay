@@ -61,6 +61,7 @@
 
     <!-- Topbar -->
     <string name="descr_back_icon">Navigate back</string>
+    <string name="desc_drag_handle">Reihenfolge ändern</string>
     <string name="fragment_stations_title">Stations</string>
 
     <!-- Player Fragment -->

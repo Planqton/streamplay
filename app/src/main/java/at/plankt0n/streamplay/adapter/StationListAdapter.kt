@@ -3,6 +3,7 @@ package at.plankt0n.streamplay.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.MotionEvent
 import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
@@ -10,7 +11,8 @@ import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.PreferencesHelper
 
 class StationListAdapter(
-    private val stationList: MutableList<StationItem>
+    private val stationList: MutableList<StationItem>,
+    private val startDrag: (RecyclerView.ViewHolder) -> Unit,
 ) : RecyclerView.Adapter<StationListAdapter.ViewHolder>() {
 
     private var editingPosition: Int = -1
@@ -19,6 +21,7 @@ class StationListAdapter(
         // Normale Ansicht
         val textName: TextView = itemView.findViewById(R.id.textStationName)
         val textUrl: TextView = itemView.findViewById(R.id.textStreamUrl)
+        val dragHandle: ImageView = itemView.findViewById(R.id.dragHandle)
 
         // Editieransicht
         val editLayout: LinearLayout = itemView.findViewById(R.id.editLayout)
@@ -61,6 +64,13 @@ class StationListAdapter(
             editingPosition = if (isEditing) -1 else position
             notifyDataSetChanged()
             true
+        }
+
+        holder.dragHandle.setOnTouchListener { _, event ->
+            if (event.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
+                startDrag(holder)
+            }
+            false
         }
 
         // Speichern

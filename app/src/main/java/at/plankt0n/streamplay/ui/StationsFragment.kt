@@ -57,15 +57,23 @@ class StationsFragment : Fragment() {
 
         recyclerView = view.findViewById(R.id.recyclerViewStations)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = StationListAdapter(stationList)
-        recyclerView.adapter = adapter
 
-        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+            ItemTouchHelper.UP or ItemTouchHelper.DOWN,
+            ItemTouchHelper.LEFT
+        ) {
             override fun onMove(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
-            ) = false
+            ): Boolean {
+                val from = viewHolder.adapterPosition
+                val to = target.adapterPosition
+                Collections.swap(stationList, from, to)
+                adapter.notifyItemMoved(from, to)
+                PreferencesHelper.saveStations(requireContext(), stationList)
+                return true
+            }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.adapterPosition
@@ -75,6 +83,11 @@ class StationsFragment : Fragment() {
             }
         })
         itemTouchHelper.attachToRecyclerView(recyclerView)
+
+        adapter = StationListAdapter(stationList) { vh ->
+            itemTouchHelper.startDrag(vh)
+        }
+        recyclerView.adapter = adapter
 
         view.findViewById<View>(R.id.buttonAddStation).setOnClickListener {
             showSearchDialog()
