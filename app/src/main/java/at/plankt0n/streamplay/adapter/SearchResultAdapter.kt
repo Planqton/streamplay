@@ -8,12 +8,12 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
-import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.data.Station
 import com.bumptech.glide.Glide
 
 class SearchResultAdapter(
-    private val searchResults: List<StationItem>,
-    private val onClick: (StationItem) -> Unit
+    private val searchResults: List<Station>,
+    private val onClick: (Station) -> Unit
 ) : RecyclerView.Adapter<SearchResultAdapter.ViewHolder>() {
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -32,11 +32,11 @@ class SearchResultAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val result = searchResults[position]
-        holder.textStationName.text = result.stationName
-        holder.textStreamUrl.text = result.streamURL
+        holder.textStationName.text = result.name
+        holder.textStreamUrl.text = result.getStreamUri()
 
         Glide.with(holder.imageLogo.context)
-            .load(result.iconURL)
+            .load(result.image)
             .placeholder(R.drawable.ic_stationcover_placeholder)
             .into(holder.imageLogo)
 

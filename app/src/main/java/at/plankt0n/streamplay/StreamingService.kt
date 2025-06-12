@@ -28,7 +28,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.metadata.icy.IcyInfo
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.data.Station
 import at.plankt0n.streamplay.helper.IcyStreamReader
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.SpotifyMetaReader
@@ -49,7 +49,7 @@ class StreamingService : MediaSessionService() {
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
 
-    private var streams: List<StationItem> = emptyList()
+    private var streams: List<Station> = emptyList()
     private var mediaItems: List<MediaItem> = emptyList()
     private var currentIndex = 0
 
@@ -176,9 +176,9 @@ class StreamingService : MediaSessionService() {
 
         mediaItems = streams.map {
             val extras = Bundle().apply {
-                putString("EXTRA_ICON_URL", it.iconURL)
+                putString("EXTRA_ICON_URL", it.image)
                 putString("EXTRA_UUID", it.uuid)
-                putString("EXTRA_STATION_NAME", it.stationName)
+                putString("EXTRA_STATION_NAME", it.name)
             }
 
             val metadata = MediaMetadata.Builder()
@@ -187,7 +187,7 @@ class StreamingService : MediaSessionService() {
 
             MediaItem.Builder()
 
-                .setUri(it.streamURL)
+                .setUri(it.getStreamUri())
                 .setMediaMetadata(metadata)
                 .build()
         }
@@ -214,9 +214,9 @@ class StreamingService : MediaSessionService() {
 
         mediaItems = streams.map {
             val extras = Bundle().apply {
-                putString("EXTRA_ICON_URL", it.iconURL)
+                putString("EXTRA_ICON_URL", it.image)
                 putString("EXTRA_UUID", it.uuid)
-                putString("EXTRA_STATION_NAME", it.stationName)
+                putString("EXTRA_STATION_NAME", it.name)
             }
 
             val metadata = MediaMetadata.Builder()
@@ -224,7 +224,7 @@ class StreamingService : MediaSessionService() {
                 .build()
 
             MediaItem.Builder()
-                .setUri(it.streamURL)
+                .setUri(it.getStreamUri())
                 .setMediaMetadata(metadata)
                 .build()
         }
@@ -462,15 +462,15 @@ val title = refreshMetaData?.title?.toString().orEmpty()
     }
 
 
-    fun isPlaylistDifferent(current: List<StationItem>, new: List<StationItem>): Boolean {
+    fun isPlaylistDifferent(current: List<Station>, new: List<Station>): Boolean {
         if (current.size != new.size) return true
         for (i in current.indices) {
             val oldItem = current[i]
             val newItem = new[i]
             if (oldItem.uuid != newItem.uuid ||
-                oldItem.stationName != newItem.stationName ||
-                oldItem.streamURL != newItem.streamURL ||
-                oldItem.iconURL != newItem.iconURL) {
+                oldItem.name != newItem.name ||
+                oldItem.getStreamUri() != newItem.getStreamUri() ||
+                oldItem.image != newItem.image) {
                 return true
             }
         }

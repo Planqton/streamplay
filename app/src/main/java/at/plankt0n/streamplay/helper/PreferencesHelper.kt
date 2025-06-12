@@ -3,7 +3,7 @@ package at.plankt0n.streamplay.helper
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
-import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.data.Station
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -17,17 +17,17 @@ object PreferencesHelper {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
-    fun getStations(context: Context): MutableList<StationItem> {
+    fun getStations(context: Context): MutableList<Station> {
         val json = getPrefs(context).getString(KEY_STATIONS, null)
         return if (json != null) {
-            val type = object : TypeToken<MutableList<StationItem>>() {}.type
+            val type = object : TypeToken<MutableList<Station>>() {}.type
             Gson().fromJson(json, type)
         } else {
             mutableListOf()
         }
     }
 
-    fun saveStations(context: Context, stationList: List<StationItem>) {
+    fun saveStations(context: Context, stationList: List<Station>) {
         val json = Gson().toJson(stationList)
         getPrefs(context).edit().putString(KEY_STATIONS, json).apply()
     }

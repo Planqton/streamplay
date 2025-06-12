@@ -16,7 +16,7 @@ package at.plankt0n.streamplay.search
 
 import com.google.gson.annotations.Expose
 import at.plankt0n.streamplay.Keys
-import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.data.Station
 import java.util.GregorianCalendar
 
 
@@ -34,12 +34,19 @@ data class RadioBrowserResult(
     @Expose val codec: String,
     @Expose val bitrate: Int
 ) {
-    /* Converts RadioBrowserResult to StationItem */
-    fun toStationItem(): StationItem = StationItem(
+    /* Converts RadioBrowserResult to Station */
+    fun toStation(): Station = Station(
         uuid = stationuuid,
-        stationName = name,
-        streamURL = url,
-        iconURL = favicon
+        name = name,
+        streamUris = mutableListOf(url),
+        image = favicon,
+        smallImage = favicon,
+        modificationDate = GregorianCalendar().time,
+        codec = codec,
+        bitrate = bitrate,
+        radioBrowserStationUuid = stationuuid,
+        radioBrowserChangeUuid = changeuuid,
+        homepage = homepage
     )
 }
 

@@ -6,11 +6,11 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
-import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.data.Station
 import at.plankt0n.streamplay.helper.PreferencesHelper
 
 class StationListAdapter(
-    private val stationList: MutableList<StationItem>
+    private val stationList: MutableList<Station>
 ) : RecyclerView.Adapter<StationListAdapter.ViewHolder>() {
 
     private var editingPosition: Int = -1
@@ -43,13 +43,13 @@ class StationListAdapter(
         val station = stationList[position]
 
         // Normale Ansicht
-        holder.textName.text = station.stationName
-        holder.textUrl.text = station.streamURL
+        holder.textName.text = station.name
+        holder.textUrl.text = station.getStreamUri()
 
         // Editieransicht füllen
-        holder.editName.setText(station.stationName)
-        holder.editUrl.setText(station.streamURL)
-        holder.editIcon.setText(station.iconURL)
+        holder.editName.setText(station.name)
+        holder.editUrl.setText(station.getStreamUri())
+        holder.editIcon.setText(station.image)
 
         // Sichtbarkeiten
         val isEditing = (position == editingPosition)
@@ -66,9 +66,10 @@ class StationListAdapter(
         // Speichern
         holder.buttonSave.setOnClickListener {
             val updatedStation = station.copy(
-                stationName = holder.editName.text.toString(),
-                streamURL = holder.editUrl.text.toString(),
-                iconURL = holder.editIcon.text.toString()
+                name = holder.editName.text.toString(),
+                streamUris = mutableListOf(holder.editUrl.text.toString()),
+                image = holder.editIcon.text.toString(),
+                smallImage = holder.editIcon.text.toString()
             )
             stationList[position] = updatedStation
             PreferencesHelper.saveStations(holder.itemView.context, stationList)

@@ -13,6 +13,7 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.Button
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -22,7 +23,7 @@ import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.adapter.SearchResultAdapter
 import at.plankt0n.streamplay.adapter.StationListAdapter
-import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.data.Station
 import at.plankt0n.streamplay.helper.PlaylistURLHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StateHelper
@@ -31,10 +32,11 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.launch
 import java.util.*
+import java.util.Collections
 
 class StationsFragment : Fragment() {
 
-    private lateinit var stationList: MutableList<StationItem>
+    private lateinit var stationList: MutableList<Station>
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: StationListAdapter
     private lateinit var topbarBackButton: ImageButton
@@ -60,12 +62,19 @@ class StationsFragment : Fragment() {
         adapter = StationListAdapter(stationList)
         recyclerView.adapter = adapter
 
-        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, ItemTouchHelper.LEFT) {
             override fun onMove(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
-            ) = false
+            ): Boolean {
+                val fromPos = viewHolder.adapterPosition
+                val toPos = target.adapterPosition
+                Collections.swap(stationList, fromPos, toPos)
+                adapter.notifyItemMoved(fromPos, toPos)
+                PreferencesHelper.saveStations(requireContext(), stationList)
+                return true
+            }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.adapterPosition
@@ -111,6 +120,7 @@ class StationsFragment : Fragment() {
             .inflate(R.layout.dialog_search_station, null)
         val editSearch = dialogView.findViewById<EditText>(R.id.editSearchQuery)
         val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerViewSearchResults)
+        val buttonManualAdd = dialogView.findViewById<Button>(R.id.buttonManualAdd)
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
@@ -134,16 +144,16 @@ class StationsFragment : Fragment() {
                 } else if (query.length >= 3) {
                     lifecycleScope.launch {
                         val results = RadioBrowserHelper.searchStations(query)
-                        val stationItems = results.map { it.toStationItem() }
+                        val stationItems = results.map { it.toStation() }
                         recyclerView.adapter = SearchResultAdapter(stationItems) { selected ->
                             lifecycleScope.launch {
-                                val finalUrl = if (selected.streamURL.endsWith(".m3u", true) || selected.streamURL.endsWith(".pls", true)) {
-                                    PlaylistURLHelper.resolvePlaylistUrl(selected.streamURL) ?: selected.streamURL
+                                val finalUrl = if (selected.getStreamUri().endsWith(".m3u", true) || selected.getStreamUri().endsWith(".pls", true)) {
+                                    PlaylistURLHelper.resolvePlaylistUrl(selected.getStreamUri()) ?: selected.getStreamUri()
                                 } else {
-                                    selected.streamURL
+                                    selected.getStreamUri()
                                 }
 
-                                val station = selected.copy(streamURL = finalUrl)
+                                val station = selected.copy(streamUris = mutableListOf(finalUrl))
                                 stationList.add(station)
                                 PreferencesHelper.saveStations(requireContext(), stationList)
                                 adapter.notifyItemInserted(stationList.size - 1)
@@ -155,7 +165,43 @@ class StationsFragment : Fragment() {
             }
         })
 
+        buttonManualAdd.setOnClickListener {
+            dialog.dismiss()
+            showManualAddDialog()
+        }
+
         dialog.show()
+    }
+
+    private fun showManualAddDialog() {
+        val view = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_add_station, null)
+
+        val editName = view.findViewById<EditText>(R.id.editStationName)
+        val editUrl = view.findViewById<EditText>(R.id.editStreamUrl)
+        val editIcon = view.findViewById<EditText>(R.id.editIconUrl)
+
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Manuell hinzufügen")
+            .setView(view)
+            .setPositiveButton("Hinzufügen") { _, _ ->
+                val name = editName.text.toString()
+                val url = editUrl.text.toString()
+                val icon = editIcon.text.toString()
+                val station = Station(
+                    uuid = UUID.randomUUID().toString(),
+                    name = name,
+                    streamUris = mutableListOf(url),
+                    image = icon,
+                    smallImage = icon,
+                    modificationDate = Date()
+                )
+                stationList.add(station)
+                PreferencesHelper.saveStations(requireContext(), stationList)
+                adapter.notifyItemInserted(stationList.size - 1)
+            }
+            .setNegativeButton("Abbrechen", null)
+            .show()
     }
 
     private suspend fun resolveAndAddStation(url: String) {
@@ -165,11 +211,13 @@ class StationsFragment : Fragment() {
             url
         }
 
-        val station = StationItem(
+        val station = Station(
             uuid = UUID.randomUUID().toString(),
-            stationName = finalUrl,
-            streamURL = finalUrl,
-            iconURL = ""
+            name = finalUrl,
+            streamUris = mutableListOf(finalUrl),
+            image = "",
+            smallImage = "",
+            modificationDate = Date()
         )
         stationList.add(station)
         PreferencesHelper.saveStations(requireContext(), stationList)
@@ -189,23 +237,26 @@ class StationsFragment : Fragment() {
             var added = 0
 
             for (imported in importedList) {
-                val index = stationList.indexOfFirst { it.stationName.equals(imported.name, ignoreCase = true) }
+                val index = stationList.indexOfFirst { it.name.equals(imported.name, ignoreCase = true) }
                 if (index >= 0) {
                     val old = stationList[index]
-                    stationList[index] = StationItem(
-                        uuid = old.uuid,
-                        stationName = imported.name,
-                        streamURL = imported.url,
-                        iconURL = imported.iconUrl
+                    stationList[index] = old.copy(
+                        name = imported.name,
+                        streamUris = mutableListOf(imported.url),
+                        image = imported.iconUrl,
+                        smallImage = imported.iconUrl,
+                        modificationDate = Date()
                     )
                     updated++
                 } else {
                     stationList.add(
-                        StationItem(
+                        Station(
                             uuid = UUID.randomUUID().toString(),
-                            stationName = imported.name,
-                            streamURL = imported.url,
-                            iconURL = imported.iconUrl
+                            name = imported.name,
+                            streamUris = mutableListOf(imported.url),
+                            image = imported.iconUrl,
+                            smallImage = imported.iconUrl,
+                            modificationDate = Date()
                         )
                     )
                     added++

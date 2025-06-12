@@ -14,7 +14,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import at.plankt0n.streamplay.StreamingService
-import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.data.Station
 import java.lang.Thread.State
 
 class MediaServiceController(private val context: Context) {
@@ -110,10 +110,10 @@ class MediaServiceController(private val context: Context) {
             controller.play()
         }
     }
-    fun getCurrentPlaylist(): List<StationItem> {
+    fun getCurrentPlaylist(): List<Station> {
         val controller = mediaController ?: return emptyList()
         val itemCount = controller.mediaItemCount
-        val streams = mutableListOf<StationItem>()
+        val streams = mutableListOf<Station>()
 
         for (i in 0 until itemCount) {
             val mediaItem = controller.getMediaItemAt(i)
@@ -126,11 +126,12 @@ class MediaServiceController(private val context: Context) {
             val iconUrl = extras?.getString("EXTRA_ICON_URL") ?: ""
             val name = extras?.getString("EXTRA_STATION_NAME") ?: ""
             streams.add(
-                StationItem(
+                Station(
                     uuid = uuid,
-                    stationName = name,
-                    streamURL = url,
-                    iconURL = iconUrl
+                    name = name,
+                    streamUris = mutableListOf(url),
+                    image = iconUrl,
+                    smallImage = iconUrl
                 )
             )
         }

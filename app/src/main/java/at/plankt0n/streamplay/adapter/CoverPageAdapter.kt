@@ -11,7 +11,7 @@ import android.view.ViewGroup
 import androidx.palette.graphics.Palette
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
-import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.data.Station
 import at.plankt0n.streamplay.helper.MediaServiceController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.BitmapImageViewTarget
@@ -21,7 +21,7 @@ class CoverPageAdapter(
     private val mediaServiceController: MediaServiceController
 ) : RecyclerView.Adapter<CoverPageAdapter.CoverViewHolder>() {
 
-    val mediaItems: List<StationItem> = mediaServiceController.getCurrentPlaylist()
+    val mediaItems: List<Station> = mediaServiceController.getCurrentPlaylist()
 
     inner class CoverViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val coverImage: ShapeableImageView = itemView.findViewById(R.id.cover_image)
@@ -39,7 +39,7 @@ class CoverPageAdapter(
 
         Glide.with(holder.itemView)
             .asBitmap()
-            .load(item.iconURL)
+            .load(item.image)
             .placeholder(R.drawable.ic_placeholder_logo)
             .error(R.drawable.ic_stationcover_placeholder)
             .into(object : BitmapImageViewTarget(holder.coverImage) {
