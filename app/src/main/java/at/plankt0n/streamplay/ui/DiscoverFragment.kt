@@ -15,8 +15,10 @@ import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.adapter.DiscoverAdapter
 import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.helper.PlaylistURLHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
+import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.search.RadioBrowserHelper
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -104,5 +106,11 @@ class DiscoverFragment : Fragment() {
         val station = item.copy(uuid = UUID.randomUUID().toString(), streamURL = finalUrl)
         list.add(station)
         PreferencesHelper.saveStations(requireContext(), list)
+
+        // trigger playlist reload in service and update UI
+        StateHelper.isPlaylistChangePending = true
+        val intent = android.content.Intent(requireContext(), StreamingService::class.java)
+        intent.action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
+        requireContext().startService(intent)
     }
 }

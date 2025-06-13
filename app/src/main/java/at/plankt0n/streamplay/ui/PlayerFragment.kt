@@ -304,6 +304,18 @@ class PlayerFragment : Fragment() {
     }
 
     private fun reloadPlaylist() {
+        val controller = mediaServiceController.mediaController ?: return
+
+        val shortcuts = (0 until controller.mediaItemCount).mapNotNull { i ->
+            val mediaItem = controller.getMediaItemAt(i)
+            val extras = mediaItem.mediaMetadata.extras ?: return@mapNotNull null
+            val label = extras.getString("EXTRA_STATION_NAME") ?: return@mapNotNull null
+            val iconUrl = extras.getString("EXTRA_ICON_URL") ?: ""
+            val mediaId = mediaItem.mediaId
+            ShortcutItem(label, iconUrl, mediaId, i)
+        }
+        shortcutAdapter.setItems(shortcuts)
+
         val coverPageAdapter = CoverPageAdapter(mediaServiceController)
         viewPager.adapter = coverPageAdapter
         dotsIndicator.setViewPager2(viewPager)
