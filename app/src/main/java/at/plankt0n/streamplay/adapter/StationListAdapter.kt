@@ -10,7 +10,8 @@ import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.PreferencesHelper
 
 class StationListAdapter(
-    private val stationList: MutableList<StationItem>
+    private val stationList: MutableList<StationItem>,
+    private val onDataChanged: () -> Unit
 ) : RecyclerView.Adapter<StationListAdapter.ViewHolder>() {
 
     private var editingPosition: Int = -1
@@ -74,6 +75,7 @@ class StationListAdapter(
             PreferencesHelper.saveStations(holder.itemView.context, stationList)
             editingPosition = -1
             notifyDataSetChanged()
+            onDataChanged()
         }
 
         // Abbrechen
@@ -81,5 +83,12 @@ class StationListAdapter(
             editingPosition = -1
             notifyDataSetChanged()
         }
+    }
+
+    fun moveItem(from: Int, to: Int) {
+        if (from == to) return
+        java.util.Collections.swap(stationList, from, to)
+        notifyItemMoved(from, to)
+        onDataChanged()
     }
 }

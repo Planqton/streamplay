@@ -4,8 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,13 +18,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.StreamingService
-import at.plankt0n.streamplay.adapter.SearchResultAdapter
 import at.plankt0n.streamplay.adapter.StationListAdapter
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.PlaylistURLHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StateHelper
-import at.plankt0n.streamplay.search.RadioBrowserHelper
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.launch
@@ -57,27 +53,44 @@ class StationsFragment : Fragment() {
 
         recyclerView = view.findViewById(R.id.recyclerViewStations)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = StationListAdapter(stationList)
+        adapter = StationListAdapter(stationList) {
+            refreshPlaylist()
+        }
         recyclerView.adapter = adapter
 
-        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+            ItemTouchHelper.UP or ItemTouchHelper.DOWN,
+            ItemTouchHelper.LEFT
+        ) {
             override fun onMove(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
-            ) = false
+            ): Boolean {
+                val from = viewHolder.adapterPosition
+                val to = target.adapterPosition
+                adapter.moveItem(from, to)
+                return true
+            }
+
+            override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+                super.clearView(recyclerView, viewHolder)
+                PreferencesHelper.saveStations(requireContext(), stationList)
+                refreshPlaylist()
+            }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.adapterPosition
                 stationList.removeAt(position)
                 PreferencesHelper.saveStations(requireContext(), stationList)
                 adapter.notifyItemRemoved(position)
+                refreshPlaylist()
             }
         })
         itemTouchHelper.attachToRecyclerView(recyclerView)
 
         view.findViewById<View>(R.id.buttonAddStation).setOnClickListener {
-            showSearchDialog()
+            showAddDialog()
         }
 
         view.findViewById<View>(R.id.buttonImportStations).setOnClickListener {
@@ -89,10 +102,7 @@ class StationsFragment : Fragment() {
         }
 
         topbarBackButton.setOnClickListener {
-            StateHelper.isPlaylistChangePending = true
-            val intent = Intent(requireContext(), StreamingService::class.java)
-            intent.action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
-            requireContext().startService(intent)
+            refreshPlaylist()
             parentFragmentManager.popBackStack()
         }
 
@@ -106,75 +116,55 @@ class StationsFragment : Fragment() {
         }
     }
 
-    private fun showSearchDialog() {
+    private fun showAddDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_search_station, null)
-        val editSearch = dialogView.findViewById<EditText>(R.id.editSearchQuery)
-        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerViewSearchResults)
-
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+            .inflate(R.layout.dialog_add_station, null)
+        val editName = dialogView.findViewById<EditText>(R.id.editStationName)
+        val editUrl = dialogView.findViewById<EditText>(R.id.editStreamUrl)
+        val editIcon = dialogView.findViewById<EditText>(R.id.editIconUrl)
 
         val dialog = android.app.AlertDialog.Builder(requireContext())
-            .setTitle("Station suchen oder URL eingeben")
+            .setTitle("Add Station")
             .setView(dialogView)
-            .setNegativeButton("Abbrechen", null)
-            .create()
+            .setPositiveButton("Add") { _, _ ->
+                val name = editName.text.toString().ifBlank { editUrl.text.toString() }
+                val url = editUrl.text.toString().trim()
+                val icon = editIcon.text.toString().trim()
+                if (url.isBlank()) {
+                    Toast.makeText(requireContext(), "URL erforderlich", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                lifecycleScope.launch {
+                    val finalUrl = if (url.endsWith(".m3u", true) || url.endsWith(".pls", true)) {
+                        PlaylistURLHelper.resolvePlaylistUrl(url) ?: url
+                    } else url
 
-        editSearch.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {}
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val query = s.toString().trim()
-                if (query.startsWith("http://") || query.startsWith("https://")) {
-                    lifecycleScope.launch {
-                        resolveAndAddStation(query)
-                        dialog.dismiss()
-                    }
-                } else if (query.length >= 3) {
-                    lifecycleScope.launch {
-                        val results = RadioBrowserHelper.searchStations(query)
-                        val stationItems = results.map { it.toStationItem() }
-                        recyclerView.adapter = SearchResultAdapter(stationItems) { selected ->
-                            lifecycleScope.launch {
-                                val finalUrl = if (selected.streamURL.endsWith(".m3u", true) || selected.streamURL.endsWith(".pls", true)) {
-                                    PlaylistURLHelper.resolvePlaylistUrl(selected.streamURL) ?: selected.streamURL
-                                } else {
-                                    selected.streamURL
-                                }
-
-                                val station = selected.copy(streamURL = finalUrl)
-                                stationList.add(station)
-                                PreferencesHelper.saveStations(requireContext(), stationList)
-                                adapter.notifyItemInserted(stationList.size - 1)
-                                dialog.dismiss()
-                            }
-                        }
-                    }
+                    val station = StationItem(
+                        uuid = UUID.randomUUID().toString(),
+                        stationName = name,
+                        streamURL = finalUrl,
+                        iconURL = icon
+                    )
+                    stationList.add(station)
+                    PreferencesHelper.saveStations(requireContext(), stationList)
+                    adapter.notifyItemInserted(stationList.size - 1)
+                    refreshPlaylist()
                 }
             }
-        })
+            .setNegativeButton("Cancel", null)
+            .create()
 
         dialog.show()
     }
 
-    private suspend fun resolveAndAddStation(url: String) {
-        val finalUrl = if (url.endsWith(".m3u", true) || url.endsWith(".pls", true)) {
-            PlaylistURLHelper.resolvePlaylistUrl(url) ?: url
-        } else {
-            url
+    private fun refreshPlaylist() {
+        StateHelper.isPlaylistChangePending = true
+        val intent = Intent(requireContext(), StreamingService::class.java).apply {
+            action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
         }
-
-        val station = StationItem(
-            uuid = UUID.randomUUID().toString(),
-            stationName = finalUrl,
-            streamURL = finalUrl,
-            iconURL = ""
-        )
-        stationList.add(station)
-        PreferencesHelper.saveStations(requireContext(), stationList)
-        adapter.notifyItemInserted(stationList.size - 1)
+        requireContext().startService(intent)
     }
+
 
     private fun importStationsFromUri(uri: Uri) {
         try {
