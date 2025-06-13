@@ -91,7 +91,7 @@ class StationsFragment : Fragment() {
         topbarBackButton.setOnClickListener {
             StateHelper.isPlaylistChangePending = true
             val intent = Intent(requireContext(), StreamingService::class.java)
-            intent.action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
+            intent.action = StreamingService.ACTION_REFRESH_PLAYLIST
             requireContext().startService(intent)
             parentFragmentManager.popBackStack()
         }

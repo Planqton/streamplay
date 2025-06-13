@@ -1,6 +1,7 @@
 package at.plankt0n.streamplay
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import at.plankt0n.streamplay.ui.PlayerFragment
 
@@ -21,6 +22,25 @@ class MainActivity : AppCompatActivity() {
             playerFragment =
                 supportFragmentManager.findFragmentById(R.id.fragment_container) as? PlayerFragment
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        sendRefreshMetadataCommand()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (!isFinishing) {
+            sendRefreshMetadataCommand()
+        }
+    }
+
+    private fun sendRefreshMetadataCommand() {
+        val intent = Intent(this, StreamingService::class.java).apply {
+            action = StreamingService.ACTION_REFRESH_METADATA
+        }
+        startService(intent)
     }
 
     fun showPlayerFragment() {

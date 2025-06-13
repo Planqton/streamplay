@@ -59,12 +59,15 @@ class StreamingService : MediaSessionService() {
 
     companion object {
         const val CHANNEL_ID = "stream_service_channel"
+        const val ACTION_REFRESH_PLAYLIST = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
+        const val ACTION_REFRESH_METADATA = "at.plankt0n.streamplay.ACTION_REFRESH_METADATA"
     }
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST") {
-            refreshPlaylist()
+        when (intent?.action) {
+            ACTION_REFRESH_PLAYLIST -> refreshPlaylist()
+            ACTION_REFRESH_METADATA -> refreshMediaItemMetadata()
         }
         return super.onStartCommand(intent, flags, startId)
     }
