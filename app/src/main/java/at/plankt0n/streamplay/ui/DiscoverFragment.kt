@@ -39,7 +39,9 @@ class DiscoverFragment : Fragment() {
         searchField = view.findViewById(R.id.editSearchRadio)
         searchButton = view.findViewById(R.id.buttonSearchRadio)
 
-        adapter = DiscoverAdapter(stations) { addStation(it) }
+        adapter = DiscoverAdapter(stations) { station ->
+            lifecycleScope.launch { addStation(station) }
+        }
         val recycler = view.findViewById<RecyclerView>(R.id.recyclerViewDiscover)
         recycler.adapter = adapter
         recycler.layoutManager = GridLayoutManager(requireContext(), 2)
@@ -68,7 +70,7 @@ class DiscoverFragment : Fragment() {
         }
     }
 
-    private fun addStation(item: StationItem) {
+    private suspend fun addStation(item: StationItem) {
         val list = PreferencesHelper.getStations(requireContext()).toMutableList()
         val finalUrl = if (item.streamURL.endsWith(".m3u", true) || item.streamURL.endsWith(".pls", true)) {
             PlaylistURLHelper.resolvePlaylistUrl(item.streamURL) ?: item.streamURL
