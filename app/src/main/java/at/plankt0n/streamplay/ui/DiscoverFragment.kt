@@ -42,11 +42,18 @@ class DiscoverFragment : Fragment() {
         searchButton = view.findViewById(R.id.buttonSearchRadio)
 
         adapter = DiscoverAdapter(stations) { station ->
-            lifecycleScope.launch { addStation(station) }
+            android.app.AlertDialog.Builder(requireContext())
+                .setTitle(getString(R.string.confirm_add_title))
+                .setMessage(getString(R.string.confirm_add_message, station.stationName))
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    lifecycleScope.launch { addStation(station) }
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
         }
         val recycler = view.findViewById<RecyclerView>(R.id.recyclerViewDiscover)
         recycler.adapter = adapter
-        recycler.layoutManager = GridLayoutManager(requireContext(), 2)
+        recycler.layoutManager = GridLayoutManager(requireContext(), 3)
 
         searchButton.setOnClickListener { performSearch(searchField.text.toString()) }
 
