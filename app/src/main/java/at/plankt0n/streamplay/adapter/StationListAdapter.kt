@@ -11,6 +11,7 @@ import at.plankt0n.streamplay.helper.PreferencesHelper
 
 class StationListAdapter(
     private val stationList: MutableList<StationItem>,
+    private val startDrag: (RecyclerView.ViewHolder) -> Unit,
     private val onDataChanged: () -> Unit
 ) : RecyclerView.Adapter<StationListAdapter.ViewHolder>() {
 
@@ -20,6 +21,7 @@ class StationListAdapter(
         // Normale Ansicht
         val textName: TextView = itemView.findViewById(R.id.textStationName)
         val textUrl: TextView = itemView.findViewById(R.id.textStreamUrl)
+        val dragHandle: ImageView = itemView.findViewById(R.id.dragHandle)
 
         // Editieransicht
         val editLayout: LinearLayout = itemView.findViewById(R.id.editLayout)
@@ -29,7 +31,7 @@ class StationListAdapter(
         val buttonSave: Button = itemView.findViewById(R.id.buttonSaveChangesItem)
         val buttonCancel: Button = itemView.findViewById(R.id.buttonCancelChangesItem)
 
-        val normalLayout: LinearLayout = itemView.findViewById(R.id.stationItemContainer)
+        val normalLayout: ViewGroup = itemView.findViewById(R.id.stationItemContainer)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -62,6 +64,13 @@ class StationListAdapter(
             editingPosition = if (isEditing) -1 else position
             notifyDataSetChanged()
             true
+        }
+
+        holder.dragHandle.setOnTouchListener { _, event ->
+            if (event.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
+                startDrag(holder)
+            }
+            false
         }
 
         // Speichern

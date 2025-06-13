@@ -88,6 +88,8 @@
     <string name="bottom_sheet_discover_text">Discover Stations</string>
     <string name="bottom_sheet_discover_content_desc">Browse online stations</string>
 
+    <string name="drag_handle_desc">Move station</string>
+
     <!-- Discover Fragment -->
     <string name="discover_title">Discover</string>
     <string name="search_hint">Search stations</string>

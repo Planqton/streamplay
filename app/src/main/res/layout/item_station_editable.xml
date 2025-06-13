@@ -7,11 +7,19 @@
     android:padding="8dp">
 
     <!-- Normale Ansicht -->
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/stationItemContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:id="@+id/stationTexts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
+            android:layout_toStartOf="@+id/dragHandle">
 
         <TextView
             android:id="@+id/textStationName"
@@ -29,6 +37,17 @@
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray"/>
     </LinearLayout>
+
+        <ImageView
+            android:id="@+id/dragHandle"
+            android:layout_width="24dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="8dp"
+            android:contentDescription="@string/drag_handle_desc"
+            android:src="@drawable/ic_drag_handle"/>
+
+    </RelativeLayout>
 
     <!-- Editieransicht -->
     <LinearLayout

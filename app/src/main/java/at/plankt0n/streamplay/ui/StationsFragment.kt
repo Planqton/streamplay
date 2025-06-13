@@ -57,12 +57,7 @@ class StationsFragment : Fragment() {
 
         recyclerView = view.findViewById(R.id.recyclerViewStations)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = StationListAdapter(stationList) {
-            refreshPlaylist()
-        }
-        recyclerView.adapter = adapter
-
-        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+        val simpleCallback = object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.UP or ItemTouchHelper.DOWN,
             ItemTouchHelper.LEFT
         ) {
@@ -124,7 +119,16 @@ class StationsFragment : Fragment() {
                 }
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
             }
-        })
+        }
+
+        val itemTouchHelper = ItemTouchHelper(simpleCallback)
+
+        adapter = StationListAdapter(stationList, { holder ->
+            itemTouchHelper.startDrag(holder)
+        }) {
+            refreshPlaylist()
+        }
+        recyclerView.adapter = adapter
         itemTouchHelper.attachToRecyclerView(recyclerView)
 
         view.findViewById<View>(R.id.buttonAddStation).setOnClickListener {
