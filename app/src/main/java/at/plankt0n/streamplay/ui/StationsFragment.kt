@@ -16,6 +16,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.content.ContextCompat
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.adapter.StationListAdapter
@@ -85,6 +89,40 @@ class StationsFragment : Fragment() {
                 PreferencesHelper.saveStations(requireContext(), stationList)
                 adapter.notifyItemRemoved(position)
                 refreshPlaylist()
+            }
+
+            override fun onChildDraw(
+                c: Canvas,
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                dX: Float,
+                dY: Float,
+                actionState: Int,
+                isCurrentlyActive: Boolean
+            ) {
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE && dX < 0) {
+                    val itemView = viewHolder.itemView
+                    val icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_delete)
+                    val background = ColorDrawable(Color.RED)
+                    background.setBounds(
+                        itemView.right + dX.toInt(),
+                        itemView.top,
+                        itemView.right,
+                        itemView.bottom
+                    )
+                    background.draw(c)
+
+                    icon?.let {
+                        val iconMargin = (itemView.height - it.intrinsicHeight) / 2
+                        val iconTop = itemView.top + iconMargin
+                        val iconLeft = itemView.right - iconMargin - it.intrinsicWidth
+                        val iconRight = itemView.right - iconMargin
+                        val iconBottom = iconTop + it.intrinsicHeight
+                        it.setBounds(iconLeft, iconTop, iconRight, iconBottom)
+                        it.draw(c)
+                    }
+                }
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
             }
         })
         itemTouchHelper.attachToRecyclerView(recyclerView)
