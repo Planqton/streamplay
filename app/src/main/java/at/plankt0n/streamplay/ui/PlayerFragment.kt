@@ -29,6 +29,7 @@ import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
+import at.plankt0n.streamplay.ui.StationsBottomSheet
 
 class PlayerFragment : Fragment() {
 
@@ -96,13 +97,8 @@ class PlayerFragment : Fragment() {
                 shortcutAdapter.setItems(shortcuts)
 
                 if (controller.mediaItemCount == 0) {
-                    Log.w("PlayerFragment", "\u26a0\ufe0f MediaSession ist leer! Wechsel ins StationsFragment.")
-                    parentFragmentManager.beginTransaction()
-                        .setReorderingAllowed(true)
-                        .hide(this@PlayerFragment)
-                        .add(R.id.fragment_container, StationsFragment())
-                        .addToBackStack(null)
-                        .commit()
+                    Log.w("PlayerFragment", "\u26a0\ufe0f MediaSession ist leer! StationsBottomSheet wird geöffnet.")
+                    StationsBottomSheet().show(parentFragmentManager, "stations")
                     return@initializeAndConnect
                 }
 
@@ -323,7 +319,7 @@ class PlayerFragment : Fragment() {
     }
 
     private fun showBottomSheet() {
-        val bottomSheet = MediaItemOptionsBottomSheet()
+        val bottomSheet = StationsBottomSheet()
         bottomSheet.show(parentFragmentManager, bottomSheet.tag)
     }
 

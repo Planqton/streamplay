@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- Handle -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bottom_sheet_handle" />
+
+    <include layout="@layout/topbar" />
+
+    <Button
+        android:id="@+id/buttonAddStation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add Station" />
+    <Button
+        android:id="@+id/buttonImportStations"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Import Stations" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewStations"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</LinearLayout>
