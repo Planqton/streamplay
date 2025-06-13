@@ -10,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.Switch
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import at.plankt0n.streamplay.R
+import at.plankt0n.streamplay.ui.DiscoverFragment
 
 class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
 
@@ -40,6 +41,12 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
             openStationsFragment()
         }
 
+        // Discover Stations
+        view.findViewById<LinearLayout>(R.id.option_discover).setOnClickListener {
+            dismiss()
+            openDiscoverFragment()
+        }
+
         // Einstellungen (Settings)
         view.findViewById<LinearLayout>(R.id.option_settings).setOnClickListener {
             dismiss()
@@ -66,6 +73,14 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
         parentFragmentManager.beginTransaction()
             .setReorderingAllowed(true)
             .replace(R.id.fragment_container, StationsFragment())
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun openDiscoverFragment() {
+        parentFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .replace(R.id.fragment_container, DiscoverFragment())
             .addToBackStack(null)
             .commit()
     }

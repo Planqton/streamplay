@@ -44,6 +44,32 @@
             android:layout_weight="1"
             android:paddingStart="16dp"
             android:text="@string/bottom_sheet_station_text"
+        android:textAppearance="?attr/textAppearanceBody1" />
+    </LinearLayout>
+
+    <!-- Eintrag 1b: Discover -->
+    <LinearLayout
+        android:id="@+id/option_discover"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="12dp"
+        android:clickable="true"
+        android:foreground="?attr/selectableItemBackground">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_sheet_discover"
+            android:contentDescription="@string/bottom_sheet_discover_content_desc"
+            android:tint="?attr/colorOnSurface" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingStart="16dp"
+            android:text="@string/bottom_sheet_discover_text"
             android:textAppearance="?attr/textAppearanceBody1" />
     </LinearLayout>
 
