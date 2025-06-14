@@ -16,6 +16,9 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Metadata
@@ -61,6 +64,23 @@ class StreamingService : MediaSessionService() {
         const val CHANNEL_ID = "stream_service_channel"
     }
 
+    private var hasSeenForeground = false
+    private val lifecycleObserver = object : DefaultLifecycleObserver {
+        override fun onStart(owner: LifecycleOwner) {
+            if (hasSeenForeground) {
+                refreshMediaItemMetadata()
+            } else {
+                hasSeenForeground = true
+            }
+        }
+
+        override fun onStop(owner: LifecycleOwner) {
+            if (hasSeenForeground) {
+                refreshMediaItemMetadata()
+            }
+        }
+    }
+
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST") {
@@ -72,6 +92,8 @@ class StreamingService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
+
+        ProcessLifecycleOwner.get().lifecycle.addObserver(lifecycleObserver)
 
         // ⚠️ ZUERST player initialisieren!
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
@@ -240,6 +262,7 @@ class StreamingService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
         mediaSession.release()
         player.release()
         super.onDestroy()

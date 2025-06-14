@@ -52,6 +52,7 @@ dependencies {
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation("androidx.media:media:1.7.0")
+    implementation("androidx.lifecycle:lifecycle-process:2.8.0")
 
         // Media3 (aktuellste stabile Version 1.3.0 im Mai 2025 – Stand: 2025-05)
         val mediaVersion = "1.6.1"
