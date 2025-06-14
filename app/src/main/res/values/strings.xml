@@ -77,7 +77,7 @@
     !-- Bottom Sheet -->
     <string name="bottom_sheet_title">Aktionen</string>
     <!-- Option 1: Station Setup -->
-    <string name="bottom_sheet_station_text">Zur Playlist das</string>
+    <string name="bottom_sheet_station_text">Stations öffnen</string>
     <string name="bottom_sheet_station_content_desc">Zur Playlist hinzufügen</string>
     <!-- Option 2: Einstellungen -->
     <string name="bottom_sheet_settings_text">Einstellungen</string>
@@ -98,4 +98,11 @@
     <string name="search_hint">Search stations</string>
     <string name="confirm_add_title">Add Station</string>
     <string name="confirm_add_message">Add %1$s to your playlist?</string>
+
+    <!-- Settings Fragment -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_autoplay">Autoplay</string>
+    <string name="settings_delay">Autoplay Delay</string>
+    <string name="settings_delay_seconds">%1$d s</string>
+    <string name="settings_minimize">Minimize after Autoplay</string>
 </resources>

@@ -7,11 +7,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.Switch
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.ui.DiscoverFragment
 import at.plankt0n.streamplay.MainActivity
+import at.plankt0n.streamplay.ui.SettingsFragment
 
 class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
 
@@ -29,7 +31,7 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
         switchAutostart = view.findViewById(R.id.switch_autostart)
 
         // Autostart-Wert setzen
-        switchAutostart.isChecked = sharedPreferences.getBoolean("autostart_enabled", false)
+        switchAutostart.isChecked = sharedPreferences.getBoolean("autoplay_enabled", false)
 
         // Listener für Autoplay
         switchAutostart.setOnCheckedChangeListener { _, isChecked ->
@@ -38,6 +40,10 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
 
         // Station Setup
         view.findViewById<LinearLayout>(R.id.option_stations).setOnClickListener {
+            dismiss()
+            openStationsFragment()
+        }
+        view.findViewById<ImageView>(R.id.icon_stations).setOnClickListener {
             dismiss()
             openStationsFragment()
         }
@@ -83,6 +89,10 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun openSettingsFragment() {
-
+        parentFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .replace(R.id.fragment_container, SettingsFragment())
+            .addToBackStack(null)
+            .commit()
     }
 }
