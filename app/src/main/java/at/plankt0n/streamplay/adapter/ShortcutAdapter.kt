@@ -40,7 +40,9 @@ class ShortcutAdapter(
         holder.labelTextView.text = item.label
         Glide.with(holder.itemView)
             .load(item.iconUrl)
+            .centerCrop()
             .placeholder(R.drawable.ic_placeholder_logo)
+            .error(R.drawable.ic_placeholder_logo)
             .into(holder.iconImageView)
 
         holder.itemView.setOnClickListener { onClick(item) }
