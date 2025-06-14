@@ -26,6 +26,7 @@ import at.plankt0n.streamplay.adapter.StationListAdapter
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.PlaylistURLHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
+import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.StateHelper
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -37,6 +38,7 @@ class StationsFragment : Fragment() {
     private lateinit var stationList: MutableList<StationItem>
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: StationListAdapter
+    private lateinit var mediaServiceController: MediaServiceController
     private lateinit var topbarBackButton: ImageButton
     private lateinit var topbarTitle: TextView
 
@@ -123,13 +125,27 @@ class StationsFragment : Fragment() {
 
         val itemTouchHelper = ItemTouchHelper(simpleCallback)
 
+        mediaServiceController = MediaServiceController(requireContext())
+
         adapter = StationListAdapter(stationList, { holder ->
             itemTouchHelper.startDrag(holder)
-        }) {
+        }, {
             refreshPlaylist()
+        }) { index ->
+            mediaServiceController.playAtIndex(index)
         }
         recyclerView.adapter = adapter
         itemTouchHelper.attachToRecyclerView(recyclerView)
+
+        mediaServiceController.initializeAndConnect(
+            onConnected = { controller ->
+                adapter.setCurrentPlayingIndex(controller.currentMediaItemIndex)
+            },
+            onPlaybackChanged = {},
+            onStreamIndexChanged = { idx -> adapter.setCurrentPlayingIndex(idx) },
+            onMetadataChanged = {},
+            onTimelineChanged = {}
+        )
 
         view.findViewById<View>(R.id.buttonAddStation).setOnClickListener {
             showAddDialog()
@@ -259,4 +275,9 @@ class StationsFragment : Fragment() {
         val url: String,
         val iconUrl: String
     )
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        mediaServiceController.disconnect()
+    }
 }

@@ -12,13 +12,22 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <ImageButton
+            android:id="@+id/buttonPlayStation"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/desc_button_play_station"
+            android:src="@drawable/ic_button_play"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true" />
+
         <LinearLayout
             android:id="@+id/stationTexts"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentLeft="true"
+            android:layout_toEndOf="@id/buttonPlayStation"
             android:layout_toStartOf="@+id/dragHandle">
 
         <TextView
