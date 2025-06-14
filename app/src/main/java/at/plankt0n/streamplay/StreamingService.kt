@@ -122,11 +122,20 @@ class StreamingService : MediaSessionService() {
                         Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
                         UITrackViewModel.clearTrackInfo()
 
-
                         PreferencesHelper.setLastPlayedStreamIndex(
                             this@StreamingService,
                             currentIndex
                         )
+
+                        // Force metadata update for the new stream
+                        lastIcyMetadata = null
+                        val mm = player.mediaMetadata
+                        if (mm != MediaMetadata.EMPTY) {
+                            val icy = IcyInfo.Builder()
+                                .setTitle("${mm.artist ?: ""} - ${mm.title ?: ""}")
+                                .build()
+                            fetchMetadata(Metadata(icy))
+                        }
 
                     }
                     //Listener für errors
