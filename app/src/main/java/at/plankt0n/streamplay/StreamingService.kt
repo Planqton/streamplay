@@ -129,13 +129,13 @@ class StreamingService : MediaSessionService() {
 
                         // Force metadata update for the new stream
                         lastIcyMetadata = null
-                        val mm = player.mediaMetadata
-                        if (mm != MediaMetadata.EMPTY) {
-                            val icy = IcyInfo.Builder()
-                                .setTitle("${mm.artist ?: ""} - ${mm.title ?: ""}")
-                                .build()
-                            fetchMetadata(Metadata(icy))
-                        }
+                        fetchMetadata(
+                            Metadata(
+                                IcyInfo.Builder()
+                                    .setTitle("${player.mediaMetadata.artist ?: ""} - ${player.mediaMetadata.title ?: ""}")
+                                    .build()
+                            )
+                        )
 
                     }
                     //Listener für errors
