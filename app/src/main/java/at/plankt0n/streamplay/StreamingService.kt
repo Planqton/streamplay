@@ -408,6 +408,7 @@ class StreamingService : MediaSessionService() {
 
 
     fun refreshMediaItemMetadata() {
+        Log.d("StreamingService", "refreshMediaItemMetadata called")
 
     val refreshMetaData = lastshowedMetadata
         val isInForeground = isAppInForeground()
