@@ -8,6 +8,18 @@
     android:layout_height="match_parent"
     android:contentDescription="@string/desc_media_item_container">
 
+    <!-- Swipe handle hint for opening stations page -->
+    <ImageView
+        android:id="@+id/swipe_up_hint"
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_marginTop="8dp"
+        android:contentDescription="@string/hint_swipe_up_stations"
+        android:src="@drawable/bottom_sheet_handle"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <!-- Guidelines -->
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_middle"

@@ -12,16 +12,19 @@ import at.plankt0n.streamplay.helper.PreferencesHelper
 class StationListAdapter(
     private val stationList: MutableList<StationItem>,
     private val startDrag: (RecyclerView.ViewHolder) -> Unit,
-    private val onDataChanged: () -> Unit
+    private val onDataChanged: () -> Unit,
+    private val onPlayClick: (Int) -> Unit
 ) : RecyclerView.Adapter<StationListAdapter.ViewHolder>() {
 
     private var editingPosition: Int = -1
+    private var currentPlayingIndex: Int = -1
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         // Normale Ansicht
         val textName: TextView = itemView.findViewById(R.id.textStationName)
         val textUrl: TextView = itemView.findViewById(R.id.textStreamUrl)
         val dragHandle: ImageView = itemView.findViewById(R.id.dragHandle)
+        val playButton: ImageButton = itemView.findViewById(R.id.buttonPlayStation)
 
         // Editieransicht
         val editLayout: LinearLayout = itemView.findViewById(R.id.editLayout)
@@ -58,6 +61,16 @@ class StationListAdapter(
         val isEditing = (position == editingPosition)
         holder.normalLayout.visibility = if (isEditing) View.GONE else View.VISIBLE
         holder.editLayout.visibility = if (isEditing) View.VISIBLE else View.GONE
+
+        holder.playButton.visibility = if (isEditing) View.GONE else View.VISIBLE
+        holder.playButton.setOnClickListener { onPlayClick(position) }
+
+        val context = holder.itemView.context
+        if (position == currentPlayingIndex) {
+            holder.itemView.setBackgroundColor(context.getColor(R.color.highlight))
+        } else {
+            holder.itemView.setBackgroundColor(context.getColor(android.R.color.transparent))
+        }
 
         // Langes Drücken: In den Bearbeitungsmodus wechseln
         holder.itemView.setOnLongClickListener {
@@ -99,5 +112,10 @@ class StationListAdapter(
         java.util.Collections.swap(stationList, from, to)
         notifyItemMoved(from, to)
         onDataChanged()
+    }
+
+    fun setCurrentPlayingIndex(index: Int) {
+        currentPlayingIndex = index
+        notifyDataSetChanged()
     }
 }

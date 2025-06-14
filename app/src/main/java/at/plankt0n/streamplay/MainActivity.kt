@@ -2,11 +2,11 @@ package at.plankt0n.streamplay
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import at.plankt0n.streamplay.ui.PlayerFragment
+import at.plankt0n.streamplay.ui.MainPagerFragment
 
 class MainActivity : AppCompatActivity() {
 
-    private var playerFragment: PlayerFragment? = null
+    private var mainPagerFragment: MainPagerFragment? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -14,24 +14,20 @@ class MainActivity : AppCompatActivity() {
 
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                .add(R.id.fragment_container, PlayerFragment(), "playerFragment")
+                .add(R.id.fragment_container, MainPagerFragment(), "mainPager")
                 .commit()
 
         } else {
-            playerFragment =
-                supportFragmentManager.findFragmentById(R.id.fragment_container) as? PlayerFragment
+            mainPagerFragment =
+                supportFragmentManager.findFragmentById(R.id.fragment_container) as? MainPagerFragment
         }
     }
 
-    fun showPlayerFragment() {
-        supportFragmentManager.beginTransaction()
-            .show(playerFragment!!)
-            .commit()
+    fun showPlayerPage() {
+        mainPagerFragment?.showPlayer()
     }
 
-    fun hidePlayerFragment() {
-        supportFragmentManager.beginTransaction()
-            .hide(playerFragment!!)
-            .commit()
+    fun showStationsPage() {
+        mainPagerFragment?.showStations()
     }
 }
