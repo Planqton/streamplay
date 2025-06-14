@@ -56,6 +56,9 @@ class StationsFragment : Fragment() {
         topbarBackButton = view.findViewById(R.id.arrow_back)
         topbarTitle = view.findViewById(R.id.topbar_title)
 
+        // Hide the back arrow since paging handles navigation
+        topbarBackButton.visibility = View.INVISIBLE
+
         stationList = PreferencesHelper.getStations(requireContext()).toMutableList()
 
         recyclerView = view.findViewById(R.id.recyclerViewStations)

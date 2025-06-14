@@ -90,6 +90,9 @@
 
     <string name="drag_handle_desc">Move station</string>
 
+    <!-- Hint to open stations page -->
+    <string name="hint_swipe_up_stations">Swipe up for stations</string>
+
     <!-- Stations Fragment play button -->
     <string name="desc_button_play_station">Play this station</string>
 
