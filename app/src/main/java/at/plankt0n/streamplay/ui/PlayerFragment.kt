@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import at.plankt0n.streamplay.R
+import at.plankt0n.streamplay.MainActivity
 import at.plankt0n.streamplay.adapter.CoverPageAdapter
 import at.plankt0n.streamplay.adapter.ShortcutAdapter
 import at.plankt0n.streamplay.data.ShortcutItem
@@ -97,12 +98,7 @@ class PlayerFragment : Fragment() {
 
                 if (controller.mediaItemCount == 0) {
                     Log.w("PlayerFragment", "\u26a0\ufe0f MediaSession ist leer! Wechsel ins StationsFragment.")
-                    parentFragmentManager.beginTransaction()
-                        .setReorderingAllowed(true)
-                        .hide(this@PlayerFragment)
-                        .add(R.id.fragment_container, StationsFragment())
-                        .addToBackStack(null)
-                        .commit()
+                    (activity as? MainActivity)?.showStationsPage()
                     return@initializeAndConnect
                 }
 

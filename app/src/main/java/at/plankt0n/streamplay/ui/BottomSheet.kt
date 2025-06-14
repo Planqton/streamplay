@@ -11,6 +11,7 @@ import android.widget.Switch
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.ui.DiscoverFragment
+import at.plankt0n.streamplay.MainActivity
 
 class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
 
@@ -70,11 +71,7 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun openStationsFragment() {
-        parentFragmentManager.beginTransaction()
-            .setReorderingAllowed(true)
-            .replace(R.id.fragment_container, StationsFragment())
-            .addToBackStack(null)
-            .commit()
+        (activity as? MainActivity)?.showStationsPage()
     }
 
     private fun openDiscoverFragment() {

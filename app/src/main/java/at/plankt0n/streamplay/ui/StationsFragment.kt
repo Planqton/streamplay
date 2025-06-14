@@ -28,6 +28,7 @@ import at.plankt0n.streamplay.helper.PlaylistURLHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.StateHelper
+import at.plankt0n.streamplay.MainActivity
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.launch
@@ -161,7 +162,7 @@ class StationsFragment : Fragment() {
 
         topbarBackButton.setOnClickListener {
             refreshPlaylist()
-            parentFragmentManager.popBackStack()
+            (activity as? MainActivity)?.showPlayerPage()
         }
 
         return view
