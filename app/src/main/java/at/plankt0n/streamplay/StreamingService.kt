@@ -128,6 +128,8 @@ class StreamingService : MediaSessionService() {
                             currentIndex
                         )
 
+                        lastIcyMetadata?.let { fetchMetadata(it) }
+
                     }
                     //Listener für errors
                     override fun onPlayerError(error: PlaybackException) {
