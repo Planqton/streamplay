@@ -11,6 +11,8 @@ import android.net.Uri
 import android.os.Binder
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.Html
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -216,6 +218,7 @@ class StreamingService : MediaSessionService() {
 
         player.setMediaItems(mediaItems, currentIndex, 0L)
         player.prepare()
+        maybeAutoplay()
     }
 
     private fun refreshPlaylist() {
@@ -253,8 +256,38 @@ class StreamingService : MediaSessionService() {
 
         player.setMediaItems(mediaItems, currentIndex, 0L)
         player.prepare()
+        maybeAutoplay(wasPlaying)
 
         if (wasPlaying) player.play()
+    }
+
+    private fun maybeAutoplay(ignoreIfWasPlaying: Boolean = false) {
+        val prefs = getSharedPreferences("StreamPlayPrefs", Context.MODE_PRIVATE)
+        val autoplay = prefs.getBoolean("autoplay_enabled", false)
+        if (!autoplay) return
+        if (ignoreIfWasPlaying) return
+
+        val delay = prefs.getInt("autoplay_delay", 0)
+        val minimize = prefs.getBoolean("minimize_after_autoplay", false)
+
+        val action = Runnable {
+            player.play()
+            if (minimize) minimizeApp()
+        }
+
+        if (delay > 0) {
+            Handler(Looper.getMainLooper()).postDelayed(action, delay * 1000L)
+        } else {
+            action.run()
+        }
+    }
+
+    private fun minimizeApp() {
+        val intent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        startActivity(intent)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession {
