@@ -12,7 +12,7 @@
  */
 
 
-package at.plankt0n.streamplay
+package at.plankt0n.streamplay.data
 
 import android.os.Parcelable
 import androidx.annotation.Keep
