@@ -64,7 +64,6 @@ class MediaServiceController(private val context: Context) {
 
                         if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED && StateHelper.isPlaylistChangePending) {
                             onTimelineChanged(reason)
-                            StateHelper.isPlaylistChangePending = false
                         } else {
                             Log.d("MediaServiceController", "ℹ️ Timeline-Änderung ignoriert (Grund: $reason)")
                         }

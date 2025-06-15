@@ -31,6 +31,7 @@ import at.plankt0n.streamplay.adapter.ShortcutAdapter
 import at.plankt0n.streamplay.data.ShortcutItem
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.MediaServiceController
+import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.Keys
 import com.bumptech.glide.Glide
@@ -225,6 +226,14 @@ class PlayerFragment : Fragment() {
     override fun onStart() {
         super.onStart()
         observeSpotifyTrackInfo()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (StateHelper.isPlaylistChangePending) {
+            reloadPlaylist()
+            StateHelper.isPlaylistChangePending = false
+        }
     }
 
     private fun observeSpotifyTrackInfo() {
