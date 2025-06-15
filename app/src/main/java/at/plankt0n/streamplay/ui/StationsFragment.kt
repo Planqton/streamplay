@@ -31,6 +31,7 @@ import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.MainActivity
 import androidx.viewpager2.widget.ViewPager2
+import androidx.activity.OnBackPressedCallback
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.launch
@@ -44,6 +45,7 @@ class StationsFragment : Fragment() {
     private lateinit var mediaServiceController: MediaServiceController
     private lateinit var topbarBackButton: ImageButton
     private lateinit var topbarTitle: TextView
+    private var backPressedCallback: OnBackPressedCallback? = null
 
     companion object {
         private const val REQUEST_CODE_IMPORT_JSON = 1001
@@ -295,9 +297,21 @@ class StationsFragment : Fragment() {
         parentFragment?.view
             ?.findViewById<ViewPager2>(R.id.main_view_pager)
             ?.isUserInputEnabled = false
+
+        backPressedCallback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                refreshPlaylist()
+                (activity as? MainActivity)?.showPlayerPage()
+            }
+        }
+        requireActivity().onBackPressedDispatcher
+            .addCallback(this, backPressedCallback!!)
     }
 
     override fun onPause() {
+        backPressedCallback?.remove()
+        backPressedCallback = null
+
         parentFragment?.view
             ?.findViewById<ViewPager2>(R.id.main_view_pager)
             ?.isUserInputEnabled = true
