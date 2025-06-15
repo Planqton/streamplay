@@ -39,7 +39,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         title = getString(R.string.settings_autoplay)
         setDefaultValue(false)
         category = SettingsCategory.PLAYBACK
-        icon = context.getDrawable(R.drawable.ic_button_play)
+        icon = context.getDrawable(R.drawable.ic_autoplay)
     }
 
     val delayPreference = SeekBarPreference(context).apply {
@@ -49,7 +49,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         max = 30
         showSeekBarValue = true
         category = SettingsCategory.PLAYBACK
-        icon = context.getDrawable(R.drawable.ic_button_forward)
+        icon = context.getDrawable(R.drawable.ic_timer)
     }
 
     val minimizeSwitch = SwitchPreferenceCompat(context).apply {
@@ -57,7 +57,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         title = getString(R.string.settings_minimize)
         setDefaultValue(false)
         category = SettingsCategory.UI
-        icon = context.getDrawable(R.drawable.ic_drag_handle)
+        icon = context.getDrawable(R.drawable.ic_pip)
     }
 
     val preferences = listOf(autoplaySwitch, delayPreference, minimizeSwitch)
