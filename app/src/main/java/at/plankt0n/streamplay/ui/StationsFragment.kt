@@ -134,12 +134,29 @@ class StationsFragment : Fragment() {
         itemTouchHelper.attachToRecyclerView(recyclerView)
 
         val parentPager = parentFragment?.view?.findViewById<ViewPager2>(R.id.main_view_pager)
+        var startX = 0f
+        var startY = 0f
+        var scrollingVertically = false
+        val touchSlop = ViewConfiguration.get(requireContext()).scaledTouchSlop
         recyclerView.setOnTouchListener { _, event ->
             when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE ->
-                    parentPager?.requestDisallowInterceptTouchEvent(true)
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                MotionEvent.ACTION_DOWN -> {
+                    startX = event.x
+                    startY = event.y
+                    scrollingVertically = false
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = abs(event.x - startX)
+                    val dy = abs(event.y - startY)
+                    if (!scrollingVertically && (dx > touchSlop || dy > touchSlop)) {
+                        scrollingVertically = dy > dx
+                    }
+                    parentPager?.requestDisallowInterceptTouchEvent(scrollingVertically)
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     parentPager?.requestDisallowInterceptTouchEvent(false)
+                    scrollingVertically = false
+                }
             }
             false
         }
