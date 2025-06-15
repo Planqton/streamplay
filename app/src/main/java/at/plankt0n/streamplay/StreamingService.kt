@@ -275,13 +275,14 @@ class StreamingService : MediaSessionService() {
 
         if (minimize) {
             val action = Runnable {
-                sendBroadcast(Intent(Keys.ACTION_HIDE_COUNTDOWN))
+                sendBroadcast(Intent(Keys.ACTION_HIDE_COUNTDOWN).setPackage(packageName))
                 minimizeApp()
             }
 
             if (delay > 0) {
                 val intent = Intent(Keys.ACTION_SHOW_COUNTDOWN).apply {
                     putExtra(Keys.EXTRA_COUNTDOWN_DURATION, delay)
+                    setPackage(packageName)
                 }
                 sendBroadcast(intent)
                 Handler(Looper.getMainLooper()).postDelayed(action, delay * 1000L)
