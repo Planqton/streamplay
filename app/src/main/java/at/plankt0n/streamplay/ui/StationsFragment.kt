@@ -19,6 +19,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.view.MotionEvent
+import android.view.ViewConfiguration
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.adapter.StationListAdapter
@@ -32,6 +33,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.launch
 import java.util.*
+import kotlin.math.abs
 
 class StationsFragment : Fragment() {
 
