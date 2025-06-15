@@ -18,9 +18,10 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/desc_button_play_station"
-            android:src="@drawable/ic_button_play"
+            android:src="@drawable/ic_stationcover_placeholder"
             android:layout_alignParentStart="true"
-            android:layout_centerVertical="true" />
+            android:layout_centerVertical="true"
+            android:scaleType="centerCrop" />
 
         <LinearLayout
             android:id="@+id/stationTexts"

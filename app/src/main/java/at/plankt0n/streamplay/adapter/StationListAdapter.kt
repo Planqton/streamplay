@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import com.bumptech.glide.Glide
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.StationItem
@@ -64,6 +65,13 @@ class StationListAdapter(
 
         holder.playButton.visibility = if (isEditing) View.GONE else View.VISIBLE
         holder.playButton.setOnClickListener { onPlayClick(position) }
+
+        Glide.with(holder.playButton.context)
+            .load(station.iconURL)
+            .placeholder(R.drawable.ic_stationcover_placeholder)
+            .error(R.drawable.ic_stationcover_placeholder)
+            .fallback(R.drawable.ic_stationcover_placeholder)
+            .into(holder.playButton)
 
         val context = holder.itemView.context
         if (position == currentPlayingIndex) {
