@@ -99,7 +99,7 @@
     <!-- Settings Fragment -->
     <string name="settings_title">Settings</string>
     <string name="settings_autoplay">Autoplay</string>
-    <string name="settings_delay">Autoplay Delay</string>
+    <string name="settings_delay">Minimize Delay</string>
     <string name="settings_delay_seconds">%1$d s</string>
     <string name="settings_minimize">Minimize after Autoplay</string>
     <string name="settings_category_playback">Playback</string>

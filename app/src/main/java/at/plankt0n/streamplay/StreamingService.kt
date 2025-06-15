@@ -271,24 +271,23 @@ class StreamingService : MediaSessionService() {
         val delay = prefs.getInt("autoplay_delay", 0)
         val minimize = prefs.getBoolean("minimize_after_autoplay", false)
 
-        val action = Runnable {
-            player.play()
-            if (minimize) {
+        player.play()
+
+        if (minimize) {
+            val action = Runnable {
                 sendBroadcast(Intent(Keys.ACTION_HIDE_COUNTDOWN))
                 minimizeApp()
             }
-        }
 
-        if (delay > 0) {
-            if (minimize) {
+            if (delay > 0) {
                 val intent = Intent(Keys.ACTION_SHOW_COUNTDOWN).apply {
                     putExtra(Keys.EXTRA_COUNTDOWN_DURATION, delay)
                 }
                 sendBroadcast(intent)
+                Handler(Looper.getMainLooper()).postDelayed(action, delay * 1000L)
+            } else {
+                action.run()
             }
-            Handler(Looper.getMainLooper()).postDelayed(action, delay * 1000L)
-        } else {
-            action.run()
         }
     }
 
