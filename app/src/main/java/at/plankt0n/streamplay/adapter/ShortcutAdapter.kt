@@ -38,9 +38,12 @@ class ShortcutAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
         holder.labelTextView.text = item.label
+        val source = item.iconUrl.takeIf { it.isNotBlank() }
         Glide.with(holder.itemView)
-            .load(item.iconUrl)
+            .load(source)
             .placeholder(R.drawable.ic_placeholder_logo)
+            .error(R.drawable.ic_radio)
+            .fallback(R.drawable.ic_radio)
             .into(holder.iconImageView)
 
         holder.itemView.setOnClickListener { onClick(item) }
