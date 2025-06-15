@@ -290,6 +290,20 @@ class StationsFragment : Fragment() {
         val iconUrl: String
     )
 
+    override fun onResume() {
+        super.onResume()
+        parentFragment?.view
+            ?.findViewById<ViewPager2>(R.id.main_view_pager)
+            ?.isUserInputEnabled = false
+    }
+
+    override fun onPause() {
+        parentFragment?.view
+            ?.findViewById<ViewPager2>(R.id.main_view_pager)
+            ?.isUserInputEnabled = true
+        super.onPause()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         mediaServiceController.disconnect()
