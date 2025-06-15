@@ -1,0 +1,109 @@
+<resources>
+    <string name="app_name">StreamPlay</string>
+
+    <!-- media_item_view.xml -->
+    <string name="desc_media_cover">Media Cover</string>
+    <string name="desc_media_item_container">Media item container layout</string>
+    <string name="desc_guideline">Guideline for layout alignment</string>
+    <string name="desc_cover_image">Cover image of the media item</string>
+    <string name="desc_player_buttons_group">Player control buttons: back, play/pause, forward</string>
+    <string name="desc_button_back">Back button</string>
+    <string name="desc_button_play_pause">Play or pause button</string>
+    <string name="desc_button_forward">Forward button</string>
+    <string name="desc_shortcut_recycler_view">Shortcut list for quick actions</string>
+    <string name="desc_right_buttons_container">Container for right side vertical buttons</string>
+    <string name="desc_right_vertical_buttons">Vertical buttons: mute, share, menu</string>
+    <string name="desc_button_mute_unmute">Mute or unmute button</string>
+    <string name="desc_button_share">Share button</string>
+    <string name="desc_button_menu">Menu button</string>
+
+    <string name="desc_metainfo_overlay_container">Metainfo overlay container</string>
+    <string name="desc_metainfo_overlay_image">Meta image</string>
+    <string name="desc_metainfo_overlay_texts_container">Container for overlay texts</string>
+    <string name="desc_metainfo_overlay_text_title">Title overlay text</string>
+    <string name="desc_metainfo_overlay_text_artist">Artist overlay text</string>
+    <string name="desc_button_manual_log">Manual log button</string>
+    <string name="desc_station_overlay_container">Station overlay container</string>
+    <string name="desc_station_overlay_content">Content of the Station overlay</string>
+    <string name="desc_station_overlay_image">Image in the Station overlay</string>
+    <string name="desc_station_overlay_text">Text in the Station overlay</string>
+    <string name="placeholder_upper_overlay">Upper overlay text</string>
+
+
+    <!-- StreamsFragment -->
+    <string name="streams_title">Streams</string>
+    <string name="add_stream">Stream hinzufügen</string>
+    <string name="edit_stream">Stream bearbeiten</string>
+    <string name="delete_stream">Stream löschen</string>
+
+
+    <!-- Sonstige Standardstrings -->
+    <string name="ok">OK</string>
+    <string name="cancel">Abbrechen</string>
+
+    <!-- Sample Text -->
+    <string name="sample_text_station_metadata" translatable="false">David Bowie - The Man Who Sold The World</string>
+    <string name="sample_text_station_name" translatable="false">Byte FM</string>
+    <string name="sample_text_steam_url" translatable="false">http://bytefm.cast.addradio.de/bytefm/main/mid/stream</string>
+    <string name="sample_text_sleep_timer_remaining_time" translatable="false">00:00</string>
+
+    <!-- StreamService -->
+    <string name="streaming_service_notification_title">Streaming Service</string>
+    <string name="streaming_service_notification_text">Initializing.....</string>
+    <string name="streaming_service_channel_name">Streaming Service Channel</string>
+    <string name="streaming_service_channel_description">Channel for the Streaming Service</string>
+    <string name="streaming_service_refresh_playlist_log">🔁 refreshPlaylist() executed via Save button!</string>
+    <string name="streaming_service_media_item_changed_log">🔁 MediaItem changed: Index = %1$d</string>
+    <string name="streaming_service_timeline_changed_log">📻 Timeline Changed</string>
+    <string name="streaming_service_unknown_stream">Unknown Stream</string>
+    <string name="streaming_service_error_message">Error playing %1$s: %2$s\n%3$s: %4$s</string>
+
+
+    <!-- Topbar -->
+    <string name="descr_back_icon">Navigate back</string>
+    <string name="fragment_stations_title">Stations</string>
+
+    <!-- Player Fragment -->
+    <string name="unknown_title">No Title Information</string>
+    <string name="unknown_artist">No Artist Information</string>
+    <string name="unknown_station">Unknown Statio</string>
+    <string name="unknown_album">Unknown Album</string>
+    <string name="album_prefix">Album: %1$s</string>
+    <string name="share_text">Hey! I am listening: %1$s from %2$s\nCheck it out: %3$s</string>
+    <string name="share_chooser_title">Share with…</string>
+
+
+    <!-- Sheet Menu -->
+    !-- Bottom Sheet -->
+    <string name="bottom_sheet_title">Aktionen</string>
+    <!-- Option 1: Station Setup -->
+    <string name="bottom_sheet_station_text">Stations öffnen</string>
+    <string name="bottom_sheet_station_content_desc">Zur Playlist hinzufügen</string>
+    <!-- Option 4: Autostart -->
+    <string name="bottom_sheet_autostart">Autostart</string>
+    <!-- Option Discover -->
+    <string name="bottom_sheet_discover_text">Discover Stations</string>
+    <string name="bottom_sheet_discover_content_desc">Browse online stations</string>
+
+    <string name="drag_handle_desc">Move station</string>
+
+    <!-- Stations Fragment play button -->
+    <string name="desc_button_play_station">Play this station</string>
+
+    <!-- Discover Fragment -->
+    <string name="discover_title">Discover</string>
+    <string name="search_hint">Search stations</string>
+    <string name="confirm_add_title">Add Station</string>
+    <string name="confirm_add_message">Add %1$s to your playlist?</string>
+
+    <!-- Settings Fragment -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_autoplay">Autoplay</string>
+    <string name="settings_delay">Autoplay Delay</string>
+    <string name="settings_delay_seconds">%1$d s</string>
+    <string name="settings_minimize">Minimize after Autoplay</string>
+    <string name="settings_category_playback">Playback</string>
+    <string name="settings_category_ui">UI Settings</string>
+    <string name="settings_category_metainfo">Metainfo Settings</string>
+    <string name="minimizing_in">Minimizing in %1$d s</string>
+</resources>

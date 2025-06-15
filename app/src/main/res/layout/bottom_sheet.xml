@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    <!-- Griff -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:background="@drawable/bottom_sheet_handle"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Überschrift -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/bottom_sheet_title"
+        android:textAppearance="?attr/textAppearanceHeadline6"
+        android:paddingBottom="8dp" />
+
+    <!-- Eintrag 1: Station Setup -->
+    <LinearLayout
+        android:id="@+id/option_stations"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="12dp"
+        android:clickable="true"
+        android:foreground="?attr/selectableItemBackground">
+
+        <ImageView
+            android:id="@+id/icon_stations"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_sheet_stations"
+            android:contentDescription="@string/bottom_sheet_station_content_desc"
+            android:tint="?attr/colorOnSurface" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingStart="16dp"
+            android:text="@string/bottom_sheet_station_text"
+        android:textAppearance="?attr/textAppearanceBody1" />
+    </LinearLayout>
+
+    <!-- Eintrag 1b: Discover -->
+    <LinearLayout
+        android:id="@+id/option_discover"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="12dp"
+        android:clickable="true"
+        android:foreground="?attr/selectableItemBackground">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_sheet_discover"
+            android:contentDescription="@string/bottom_sheet_discover_content_desc"
+            android:tint="?attr/colorOnSurface" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingStart="16dp"
+            android:text="@string/bottom_sheet_discover_text"
+            android:textAppearance="?attr/textAppearanceBody1" />
+    </LinearLayout>
+
+    <!-- Eintrag 3: Abstandhalter -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="16dp" />
+
+    <!-- Eintrag 4: Autostart Switch -->
+    <LinearLayout
+        android:id="@+id/option_autostart"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="12dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/bottom_sheet_autostart"
+            android:textAppearance="?attr/textAppearanceBody1"
+            android:paddingStart="8dp"
+            android:gravity="center_vertical" />
+
+        <Switch
+            android:id="@+id/switch_autostart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false" />
+    </LinearLayout>
+
+        <!-- Settings Header -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_title"
+            android:textAppearance="?attr/textAppearanceHeadline6"
+            android:paddingTop="24dp"
+            android:paddingBottom="8dp" />
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/settings_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

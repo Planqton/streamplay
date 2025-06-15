@@ -1,0 +1,43 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.StreamPlay" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Hauptfarbe (z.B. Toolbar-Hintergrund) -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryDark</item>
+        <item name="colorOnPrimary">@color/textPrimary</item>
+
+        <!-- Akzentfarbe für Buttons, Highlights etc. -->
+        <item name="colorSecondary">@color/colorAccent</item>
+        <item name="colorSecondaryVariant">@color/colorAccent</item>
+        <item name="colorOnSecondary">@color/textPrimary</item>
+
+        <!-- Hintergrund für alle Activities/Fragments -->
+        <item name="android:windowBackground">@color/backgroundDark</item>
+
+        <!-- Statusbar-Farbe -->
+        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+
+        <!-- Panels / BottomSheets / Karten -->
+        <item name="colorSurface">@color/surfaceDark</item>
+
+
+
+        <!-- Schriftfarben -->
+
+        <item name="android:textColor">@color/primary_dark_material_light</item>
+        <item name="android:textColorSecondary">@color/primary_dark_material_light</item>
+        <item name="preferenceCategoryStyle">@style/PreferenceCategory.WhiteText</item>
+        <!-- Divider / Trennlinien -->
+        <item name="dividerColor">@color/divider</item>
+    </style>
+
+    <style name="PreferenceCategory.WhiteText" parent="Preference.Category">
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.App.CornerFamilyRounded" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+</resources>
