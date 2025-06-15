@@ -146,6 +146,7 @@ class StationsFragment : Fragment() {
                     startX = event.x
                     startY = event.y
                     orientationDecided = false
+                    parentPager?.requestDisallowInterceptTouchEvent(true)
                 }
                 MotionEvent.ACTION_MOVE -> {
                     if (!orientationDecided) {
@@ -153,7 +154,8 @@ class StationsFragment : Fragment() {
                         val dy = abs(event.y - startY)
                         if (dx > touchSlop || dy > touchSlop) {
                             orientationDecided = true
-                            parentPager?.requestDisallowInterceptTouchEvent(dy > dx)
+                            val isVertical = dy > dx
+                            parentPager?.requestDisallowInterceptTouchEvent(isVertical)
                         }
                     }
                 }
