@@ -143,8 +143,10 @@ class StationsFragment : Fragment() {
         val parentPager = parentFragment?.view?.findViewById<ViewPager2>(R.id.main_view_pager)
         recyclerView.setOnTouchListener { _, event ->
             when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> parentPager?.requestDisallowInterceptTouchEvent(true)
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> parentPager?.requestDisallowInterceptTouchEvent(false)
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE ->
+                    parentPager?.requestDisallowInterceptTouchEvent(true)
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                    parentPager?.requestDisallowInterceptTouchEvent(false)
             }
             false
         }
