@@ -146,7 +146,6 @@ class StationsFragment : Fragment() {
                     startX = event.x
                     startY = event.y
                     orientationDecided = false
-                    parentPager?.requestDisallowInterceptTouchEvent(true)
                 }
                 MotionEvent.ACTION_MOVE -> {
                     if (!orientationDecided) {
