@@ -6,6 +6,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import at.plankt0n.streamplay.Keys
+import at.plankt0n.streamplay.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,7 +41,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     val remoteVersion = json.getString("version")
                     val apkUrl = json.getString("apkUrl")
                     val pkgInfo = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
-                    val localVersion = pkgInfo.versionName
+                    val localVersion = pkgInfo.versionName ?: ""
                     if (isNewerVersion(remoteVersion, localVersion)) {
                         downloadAndInstall(apkUrl)
                     } else {
