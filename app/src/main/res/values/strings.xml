@@ -105,5 +105,9 @@
     <string name="settings_category_playback">Playback</string>
     <string name="settings_category_ui">UI Settings</string>
     <string name="settings_category_metainfo">Metainfo Settings</string>
+    <string name="settings_category_about">About</string>
+    <string name="settings_app_version">App Version</string>
+    <string name="settings_check_updates">Auf Updates prüfen</string>
+    <string name="toast_latest_version">Aktuellste Version installiert</string>
     <string name="minimizing_in">Minimizing in %1$d s</string>
 </resources>

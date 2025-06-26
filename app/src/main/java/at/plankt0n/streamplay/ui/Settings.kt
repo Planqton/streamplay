@@ -1,10 +1,14 @@
 package at.plankt0n.streamplay.ui
 
 import androidx.preference.*
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import at.plankt0n.streamplay.R
+import at.plankt0n.streamplay.BuildConfig
+import at.plankt0n.streamplay.helper.UpdateHelper
 
 /** Possible categories a preference can belong to. */
-enum class SettingsCategory { PLAYBACK, UI, METAINFO }
+enum class SettingsCategory { PLAYBACK, UI, METAINFO, ABOUT }
 
 private const val EXTRA_CATEGORY = "category"
 
@@ -25,11 +29,13 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 SettingsCategory.PLAYBACK -> getString(R.string.settings_category_playback)
                 SettingsCategory.UI -> getString(R.string.settings_category_ui)
                 SettingsCategory.METAINFO -> getString(R.string.settings_category_metainfo)
+                SettingsCategory.ABOUT -> getString(R.string.settings_category_about)
             }
             icon = when (cat) {
                 SettingsCategory.PLAYBACK -> context.getDrawable(R.drawable.ic_button_play)
                 SettingsCategory.UI -> context.getDrawable(R.drawable.ic_sheet_settings)
                 SettingsCategory.METAINFO -> context.getDrawable(R.drawable.ic_sheet_discover)
+                SettingsCategory.ABOUT -> context.getDrawable(R.drawable.ic_radio)
             }
         }
     }
@@ -60,7 +66,27 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_pip)
     }
 
-    val preferences = listOf(autoplaySwitch, delayPreference, minimizeSwitch)
+    val versionPreference = Preference(context).apply {
+        title = getString(R.string.settings_app_version)
+        summary = BuildConfig.VERSION_NAME
+        isSelectable = false
+        category = SettingsCategory.ABOUT
+        icon = context.getDrawable(R.drawable.ic_launcher_foreground)
+    }
+
+    val updatePreference = Preference(context).apply {
+        title = getString(R.string.settings_check_updates)
+        category = SettingsCategory.ABOUT
+        icon = context.getDrawable(R.drawable.ic_update)
+        setOnPreferenceClickListener {
+            lifecycleScope.launch {
+                UpdateHelper.checkForUpdates(requireContext())
+            }
+            true
+        }
+    }
+
+    val preferences = listOf(autoplaySwitch, delayPreference, minimizeSwitch, versionPreference, updatePreference)
 
     SettingsCategory.values().forEach { cat ->
         val catPref = categoryMap[cat]!!
