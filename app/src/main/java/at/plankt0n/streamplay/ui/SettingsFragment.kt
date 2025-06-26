@@ -56,8 +56,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun isNewerVersion(remote: String, local: String): Boolean {
-        val r = remote.split(".").map { it.toIntOrNull() ?: 0 }
-        val l = local.split(".").map { it.toIntOrNull() ?: 0 }
+        val r = remote.split('.').map { it.toIntOrNull() ?: 0 }
+        val l = local.split('.').map { it.toIntOrNull() ?: 0 }
         val maxLen = maxOf(r.size, l.size)
         for (i in 0 until maxLen) {
             val rv = r.getOrElse(i) { 0 }
