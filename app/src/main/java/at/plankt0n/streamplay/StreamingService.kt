@@ -437,7 +437,7 @@ class StreamingService : MediaSessionService() {
         lastArtworkUri = artworkUri
 
         val updateartist: String
-        val updatetitle: String
+        var updatetitle: String
 
         if (isInForeground) {
             updateartist = artist
@@ -445,6 +445,9 @@ class StreamingService : MediaSessionService() {
             Log.d("StreamingService", "App im Vordergrund: bleibt so")
         } else {
             updatetitle = "$artist - $title"
+            if (artist.isBlank() && title.isBlank()) {
+                updatetitle = getString(R.string.no_metadata_available)
+            }
             updateartist = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "Sendername nicht Gesetzt"
             Log.d("StreamingService", "App ist im Hinterrgund: updateartist=$updateartist, updatetitle=$updatetitle")
         }
@@ -477,7 +480,7 @@ class StreamingService : MediaSessionService() {
 
 
         val updateartist: String
-        val updatetitle: String
+        var updatetitle: String
 val artist = refreshMetaData?.artist?.toString().orEmpty()
 val title = refreshMetaData?.title?.toString().orEmpty()
         val artworkUri = refreshMetaData?.artworkUri?.toString().orEmpty()
@@ -488,6 +491,9 @@ val title = refreshMetaData?.title?.toString().orEmpty()
             Log.d("StreamingService", "App im Vordergrund: bleibt so")
         } else {
             updatetitle = "$artist - $title"
+            if (artist.isBlank() && title.isBlank()) {
+                updatetitle = getString(R.string.no_metadata_available)
+            }
             updateartist = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "Sendername nicht Gesetzt"
             Log.d("StreamingService", "App ist im Hinterrgund: updateartist=$updateartist, updatetitle=$updatetitle")
         }
