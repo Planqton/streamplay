@@ -2,9 +2,10 @@ package at.plankt0n.streamplay.ui
 
 import androidx.preference.*
 import at.plankt0n.streamplay.R
+import at.plankt0n.streamplay.BuildConfig
 
 /** Possible categories a preference can belong to. */
-enum class SettingsCategory { PLAYBACK, UI, METAINFO }
+enum class SettingsCategory { PLAYBACK, UI, METAINFO, ABOUT }
 
 private const val EXTRA_CATEGORY = "category"
 
@@ -25,11 +26,13 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 SettingsCategory.PLAYBACK -> getString(R.string.settings_category_playback)
                 SettingsCategory.UI -> getString(R.string.settings_category_ui)
                 SettingsCategory.METAINFO -> getString(R.string.settings_category_metainfo)
+                SettingsCategory.ABOUT -> getString(R.string.settings_category_about)
             }
             icon = when (cat) {
                 SettingsCategory.PLAYBACK -> context.getDrawable(R.drawable.ic_button_play)
                 SettingsCategory.UI -> context.getDrawable(R.drawable.ic_sheet_settings)
                 SettingsCategory.METAINFO -> context.getDrawable(R.drawable.ic_sheet_discover)
+                SettingsCategory.ABOUT -> context.getDrawable(R.mipmap.ic_launcher)
             }
         }
     }
@@ -60,7 +63,23 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_pip)
     }
 
-    val preferences = listOf(autoplaySwitch, delayPreference, minimizeSwitch)
+    val versionPref = Preference(context).apply {
+        key = "app_version"
+        title = getString(R.string.settings_app_version)
+        summary = BuildConfig.VERSION_NAME
+        category = SettingsCategory.ABOUT
+        icon = context.getDrawable(R.mipmap.ic_launcher)
+        isSelectable = false
+    }
+
+    val updatePref = Preference(context).apply {
+        key = "check_updates"
+        title = getString(R.string.settings_check_updates)
+        category = SettingsCategory.ABOUT
+        icon = context.getDrawable(R.drawable.ic_autoplay)
+    }
+
+    val preferences = listOf(autoplaySwitch, delayPreference, minimizeSwitch, versionPref, updatePref)
 
     SettingsCategory.values().forEach { cat ->
         val catPref = categoryMap[cat]!!
