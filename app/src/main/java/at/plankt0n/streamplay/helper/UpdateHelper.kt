@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import android.content.pm.PackageManager
 import at.plankt0n.streamplay.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
