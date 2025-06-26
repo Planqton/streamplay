@@ -2,7 +2,6 @@ package at.plankt0n.streamplay.ui
 
 import androidx.preference.*
 import at.plankt0n.streamplay.R
-import at.plankt0n.streamplay.BuildConfig
 
 /** Possible categories a preference can belong to. */
 enum class SettingsCategory { PLAYBACK, UI, METAINFO, ABOUT }
@@ -66,7 +65,8 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     val versionPref = Preference(context).apply {
         key = "app_version"
         title = getString(R.string.settings_app_version)
-        summary = BuildConfig.VERSION_NAME
+        val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        summary = pkgInfo.versionName
         category = SettingsCategory.ABOUT
         icon = context.getDrawable(R.mipmap.ic_launcher)
         isSelectable = false

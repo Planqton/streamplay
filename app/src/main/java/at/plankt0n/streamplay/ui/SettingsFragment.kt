@@ -12,7 +12,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
-import at.plankt0n.streamplay.BuildConfig
 import androidx.core.content.FileProvider
 import android.content.Intent
 import java.io.File
@@ -40,7 +39,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     val json = JSONObject(response.body?.string() ?: "")
                     val remoteVersion = json.getString("version")
                     val apkUrl = json.getString("apkUrl")
-                    if (isNewerVersion(remoteVersion, BuildConfig.VERSION_NAME)) {
+                    val pkgInfo = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
+                    val localVersion = pkgInfo.versionName
+                    if (isNewerVersion(remoteVersion, localVersion)) {
                         downloadAndInstall(apkUrl)
                     } else {
                         withContext(Dispatchers.Main) {
