@@ -46,7 +46,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     .url("https://fytfiles.printspace.at/update/updateinfo_streamplay.json")
                     .build()
                 client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) return@withContext
+                    if (!response.isSuccessful) throw Exception("http ${'$'}{response.code}")
                     val json = JSONObject(response.body?.string() ?: "")
                     val remoteVersion = json.getString("version")
                     val apkUrl = json.getString("apkUrl")
@@ -71,7 +71,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     }
                 }
             } catch (_: Exception) {
-                withContext(Dispatchers.Main) { progress.dismiss() }
+                withContext(Dispatchers.Main) {
+                    progress.dismiss()
+                    Toast.makeText(requireContext(), getString(R.string.update_check_fail), Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

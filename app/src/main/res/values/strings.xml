@@ -114,5 +114,6 @@
     <string name="update_available_message">Version %1$s is available. Download?</string>
     <string name="update_downloading">Downloading update…</string>
     <string name="update_download_fail">Download fehlgeschlagen</string>
+    <string name="update_check_fail">Updateprüfung fehlgeschlagen</string>
     <string name="minimizing_in">Minimizing in %1$d s</string>
 </resources>
