@@ -436,7 +436,7 @@ class StreamingService : MediaSessionService() {
         lastArtworkUri = artworkUri
 
         val updateartist: String
-        val updatetitle: String
+        var updatetitle: String
 
         if (isInForeground) {
             updateartist = artist
@@ -479,7 +479,7 @@ class StreamingService : MediaSessionService() {
 
 
         val updateartist: String
-        val updatetitle: String
+        var updatetitle: String
 val artist = refreshMetaData?.artist?.toString().orEmpty()
 val title = refreshMetaData?.title?.toString().orEmpty()
         val artworkUri = refreshMetaData?.artworkUri?.toString().orEmpty()
