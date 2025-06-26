@@ -3,8 +3,8 @@ package at.plankt0n.streamplay.ui
 import androidx.preference.*
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import android.content.pm.PackageManager
 import at.plankt0n.streamplay.R
-import at.plankt0n.streamplay.BuildConfig
 import at.plankt0n.streamplay.helper.UpdateHelper
 
 /** Possible categories a preference can belong to. */
@@ -68,7 +68,16 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
 
     val versionPreference = Preference(context).apply {
         title = getString(R.string.settings_app_version)
-        summary = BuildConfig.VERSION_NAME
+        val version = try {
+            context.packageManager
+                .getPackageInfo(
+                    context.packageName,
+                    PackageManager.PackageInfoFlags.of(0)
+                ).versionName
+        } catch (_: Exception) {
+            ""
+        }
+        summary = version
         isSelectable = false
         category = SettingsCategory.ABOUT
         icon = context.getDrawable(R.drawable.ic_launcher_foreground)

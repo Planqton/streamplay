@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.core.content.FileProvider
-import at.plankt0n.streamplay.BuildConfig
 import at.plankt0n.streamplay.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -42,7 +41,16 @@ object UpdateHelper {
                 val json = JSONObject(body)
                 val latestVersion = json.getString("version")
                 val apkUrl = json.getString("apkUrl")
-                if (isNewerVersion(latestVersion, BuildConfig.VERSION_NAME)) {
+                val localVersion = try {
+                    context.packageManager
+                        .getPackageInfo(
+                            context.packageName,
+                            PackageManager.PackageInfoFlags.of(0)
+                        ).versionName
+                } catch (_: Exception) {
+                    ""
+                }
+                if (isNewerVersion(latestVersion, localVersion)) {
                     val file = downloadApk(client, apkUrl, context)
                     file?.let { installApk(context, it) }
                 } else {
@@ -74,7 +82,7 @@ object UpdateHelper {
 
     private fun installApk(context: Context, file: File) {
         val uri: Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.provider", file)
+            FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         } else {
             Uri.fromFile(file)
         }
