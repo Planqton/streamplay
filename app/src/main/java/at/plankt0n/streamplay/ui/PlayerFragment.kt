@@ -129,8 +129,15 @@ class PlayerFragment : Fragment() {
                 shortcutAdapter.setItems(shortcuts)
 
                 if (controller.mediaItemCount == 0) {
-                    Log.w("PlayerFragment", "\u26a0\ufe0f MediaSession ist leer! Wechsel ins StationsFragment.")
-                    (activity as? MainActivity)?.showStationsPage()
+                    Log.w(
+                        "PlayerFragment",
+                        "\u26a0\ufe0f MediaSession ist leer! Öffne DiscoverFragment."
+                    )
+                    parentFragmentManager.beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(R.id.fragment_container, DiscoverFragment())
+                        .addToBackStack(null)
+                        .commit()
                     return@initializeAndConnect
                 }
 
