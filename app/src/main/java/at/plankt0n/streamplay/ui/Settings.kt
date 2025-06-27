@@ -11,7 +11,6 @@ import android.os.Environment
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.*
-import at.plankt0n.streamplay.BuildConfig
 import at.plankt0n.streamplay.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -79,9 +78,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_pip)
     }
 
+    val versionName = try {
+        val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        pkgInfo.versionName ?: ""
+    } catch (e: Exception) { "" }
+
     val versionPref = Preference(context).apply {
         key = "app_version"
-        title = getString(R.string.settings_current_version, BuildConfig.VERSION_NAME)
+        title = getString(R.string.settings_current_version, versionName)
         icon = context.getDrawable(R.mipmap.ic_launcher)
         isSelectable = false
         category = SettingsCategory.ABOUT
@@ -143,7 +147,11 @@ fun PreferenceFragmentCompat.checkForUpdates() {
         }
 
         result?.let { (version, apkUrl) ->
-            if (isNewerVersion(version, BuildConfig.VERSION_NAME)) {
+            val current = try {
+                val info = requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
+                info.versionName ?: ""
+            } catch (e: Exception) { "" }
+            if (isNewerVersion(version, current)) {
                 AlertDialog.Builder(requireContext())
                     .setMessage(getString(R.string.update_available_question, version))
                     .setPositiveButton(android.R.string.ok) { _, _ ->
