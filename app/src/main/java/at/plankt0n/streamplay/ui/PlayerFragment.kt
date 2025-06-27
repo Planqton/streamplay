@@ -106,6 +106,12 @@ class PlayerFragment : Fragment() {
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
 
+        // Grundlegende Button-Listener setzen, auch wenn die Playlist leer ist
+        playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
+        buttonBack.setOnClickListener { mediaServiceController.skipToPrevious() }
+        buttonForward.setOnClickListener { mediaServiceController.skipToNext() }
+        buttonMenu.setOnClickListener { showBottomSheet() }
+
         val filter = IntentFilter().apply {
             addAction(Keys.ACTION_SHOW_COUNTDOWN)
             addAction(Keys.ACTION_HIDE_COUNTDOWN)
@@ -169,10 +175,6 @@ class PlayerFragment : Fragment() {
                     }
                 })
 
-                playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
-                buttonBack.setOnClickListener { mediaServiceController.skipToPrevious() }
-                buttonForward.setOnClickListener { mediaServiceController.skipToNext() }
-                buttonMenu.setOnClickListener { showBottomSheet() }
             },
             onPlaybackChanged = { updatePlayPauseIcon(it) },
             onStreamIndexChanged = { index ->
