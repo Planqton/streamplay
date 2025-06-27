@@ -43,7 +43,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             try {
                 val client = OkHttpClient()
                 val request = Request.Builder()
-                    .url("https://fytfiles.printspace.at/update/updateinfo_streamplay.json")
+                    .url(Keys.PREFS_UPDATE_URL)
                     .build()
                 client.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) throw Exception("http ${'$'}{response.code}")
