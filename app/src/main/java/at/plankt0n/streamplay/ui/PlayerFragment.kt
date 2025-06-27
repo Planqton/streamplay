@@ -117,6 +117,12 @@ class PlayerFragment : Fragment() {
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
 
+        // Grundlegende Button-Listener setzen, auch wenn die Playlist leer ist
+        playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
+        buttonBack.setOnClickListener { mediaServiceController.skipToPrevious() }
+        buttonForward.setOnClickListener { mediaServiceController.skipToNext() }
+        buttonMenu.setOnClickListener { showBottomSheet() }
+
         val filter = IntentFilter().apply {
             addAction(Keys.ACTION_SHOW_COUNTDOWN)
             addAction(Keys.ACTION_HIDE_COUNTDOWN)
@@ -140,9 +146,22 @@ class PlayerFragment : Fragment() {
                 shortcutAdapter.setItems(shortcuts)
 
                 if (controller.mediaItemCount == 0) {
-                    Log.w("PlayerFragment", "\u26a0\ufe0f MediaSession ist leer! Wechsel ins StationsFragment.")
-                    (activity as? MainActivity)?.showStationsPage()
+                    if (!StateHelper.hasAutoOpenedDiscover) {
+                        Log.w(
+                            "PlayerFragment",
+                            "\u26a0\ufe0f MediaSession ist leer! Öffne DiscoverFragment."
+                        )
+                        StateHelper.hasAutoOpenedDiscover = true
+                        requireActivity().supportFragmentManager
+                            .beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragment_container, DiscoverFragment())
+                            .addToBackStack(null)
+                            .commit()
+                    }
                     return@initializeAndConnect
+                } else {
+                    StateHelper.hasAutoOpenedDiscover = false
                 }
 
                 val coverPageAdapter = CoverPageAdapter(mediaServiceController)
@@ -167,10 +186,6 @@ class PlayerFragment : Fragment() {
                     }
                 })
 
-                playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
-                buttonBack.setOnClickListener { mediaServiceController.skipToPrevious() }
-                buttonForward.setOnClickListener { mediaServiceController.skipToNext() }
-                buttonMenu.setOnClickListener { showBottomSheet() }
             },
             onPlaybackChanged = { updatePlayPauseIcon(it) },
             onStreamIndexChanged = { index ->
