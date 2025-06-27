@@ -133,7 +133,7 @@ class PlayerFragment : Fragment() {
                         "PlayerFragment",
                         "\u26a0\ufe0f MediaSession ist leer! Öffne DiscoverFragment."
                     )
-                    parentFragmentManager.beginTransaction()
+                    requireActivity().supportFragmentManager.beginTransaction()
                         .setReorderingAllowed(true)
                         .replace(R.id.fragment_container, DiscoverFragment())
                         .addToBackStack(null)
