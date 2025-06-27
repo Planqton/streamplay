@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
+import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.R
 
 class MainPagerFragment : Fragment() {
@@ -25,12 +26,17 @@ class MainPagerFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         viewPager = view.findViewById(R.id.main_view_pager)
         viewPager.orientation = ViewPager2.ORIENTATION_VERTICAL
-        viewPager.adapter = object : FragmentStateAdapter(this) {
+        val adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount(): Int = 2
             override fun createFragment(position: Int): Fragment = when (position) {
                 0 -> PlayerFragment()
                 else -> StationsFragment()
             }
+        }
+        viewPager.adapter = adapter
+
+        if (PreferencesHelper.getStations(requireContext()).isEmpty()) {
+            viewPager.setCurrentItem(1, false)
         }
     }
 

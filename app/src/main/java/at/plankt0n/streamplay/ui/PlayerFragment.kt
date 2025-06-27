@@ -32,6 +32,7 @@ import at.plankt0n.streamplay.data.ShortcutItem
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.StateHelper
+import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.Keys
 import com.bumptech.glide.Glide
@@ -39,6 +40,8 @@ import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
 
 class PlayerFragment : Fragment() {
+
+    private var initialized = false
 
     private lateinit var viewPager: ViewPager2
     private lateinit var dotsIndicator: WormDotsIndicator
@@ -84,6 +87,14 @@ class PlayerFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         buttonMenu = view.findViewById(R.id.button_menu)
+        buttonMenu.setOnClickListener { showBottomSheet() }
+
+        if (PreferencesHelper.getStations(requireContext()).isEmpty()) {
+            Log.w("PlayerFragment", "\u26a0\ufe0f Keine Stationen gespeichert, Wechsel ins StationsFragment.")
+            (activity as? MainActivity)?.showStationsPage()
+            return
+        }
+
         viewPager = view.findViewById(R.id.view_pager)
         viewPager.offscreenPageLimit = 2
 
@@ -221,15 +232,18 @@ class PlayerFragment : Fragment() {
             }
             isMuted = !isMuted
         }
+        initialized = true
     }
 
     override fun onStart() {
         super.onStart()
+        if (!initialized) return
         observeSpotifyTrackInfo()
     }
 
     override fun onResume() {
         super.onResume()
+        if (!initialized) return
         if (StateHelper.isPlaylistChangePending) {
             reloadPlaylist()
             StateHelper.isPlaylistChangePending = false
@@ -342,6 +356,12 @@ class PlayerFragment : Fragment() {
     private fun reloadPlaylist() {
         val controller = mediaServiceController.mediaController ?: return
 
+        if (controller.mediaItemCount == 0) {
+            Log.w("PlayerFragment", "\u26a0\ufe0f Playlist leer nach Reload. Wechsel ins StationsFragment.")
+            (activity as? MainActivity)?.showStationsPage()
+            return
+        }
+
         val shortcuts = (0 until controller.mediaItemCount).mapNotNull { i ->
             val mediaItem = controller.getMediaItemAt(i)
             val extras = mediaItem.mediaMetadata.extras ?: return@mapNotNull null
@@ -366,10 +386,12 @@ class PlayerFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        if (initialized) {
+            requireContext().unregisterReceiver(autoplayReceiver)
+            countdownHandler.removeCallbacksAndMessages(null)
+            mediaServiceController.disconnect()
+        }
         super.onDestroyView()
-        requireContext().unregisterReceiver(autoplayReceiver)
-        countdownHandler.removeCallbacksAndMessages(null)
-        mediaServiceController.disconnect()
     }
 
     private fun showBottomSheet() {
