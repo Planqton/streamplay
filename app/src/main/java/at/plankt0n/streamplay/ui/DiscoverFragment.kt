@@ -29,6 +29,7 @@ class DiscoverFragment : Fragment() {
     private lateinit var adapter: DiscoverAdapter
     private lateinit var searchField: EditText
     private lateinit var searchButton: ImageButton
+    private lateinit var backButton: ImageButton
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,6 +43,11 @@ class DiscoverFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         searchField = view.findViewById(R.id.editSearchRadio)
         searchButton = view.findViewById(R.id.buttonSearchRadio)
+        backButton = view.findViewById(R.id.arrow_back)
+
+        backButton.setOnClickListener {
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+        }
 
         adapter = DiscoverAdapter(stations) { station ->
             android.app.AlertDialog.Builder(requireContext())
