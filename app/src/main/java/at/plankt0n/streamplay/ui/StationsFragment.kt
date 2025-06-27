@@ -278,6 +278,7 @@ class StationsFragment : Fragment() {
 
             PreferencesHelper.saveStations(requireContext(), stationList)
             adapter.notifyDataSetChanged()
+            refreshPlaylist()
 
             Toast.makeText(requireContext(), "Import abgeschlossen: $added neu, $updated aktualisiert.", Toast.LENGTH_LONG).show()
 
