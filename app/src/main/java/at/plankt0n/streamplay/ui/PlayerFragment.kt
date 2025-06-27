@@ -86,13 +86,15 @@ class PlayerFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        buttonMenu = view.findViewById(R.id.button_menu)
+        buttonMenu.setOnClickListener { showBottomSheet() }
+
         if (PreferencesHelper.getStations(requireContext()).isEmpty()) {
             Log.w("PlayerFragment", "\u26a0\ufe0f Keine Stationen gespeichert, Wechsel ins StationsFragment.")
             (activity as? MainActivity)?.showStationsPage()
             return
         }
 
-        buttonMenu = view.findViewById(R.id.button_menu)
         viewPager = view.findViewById(R.id.view_pager)
         viewPager.offscreenPageLimit = 2
 
