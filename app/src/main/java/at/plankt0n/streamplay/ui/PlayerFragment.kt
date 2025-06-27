@@ -41,6 +41,8 @@ import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
 
 class PlayerFragment : Fragment() {
 
+    private var initialized = false
+
     private lateinit var viewPager: ViewPager2
     private lateinit var dotsIndicator: WormDotsIndicator
     private lateinit var mediaServiceController: MediaServiceController
@@ -228,15 +230,18 @@ class PlayerFragment : Fragment() {
             }
             isMuted = !isMuted
         }
+        initialized = true
     }
 
     override fun onStart() {
         super.onStart()
+        if (!initialized) return
         observeSpotifyTrackInfo()
     }
 
     override fun onResume() {
         super.onResume()
+        if (!initialized) return
         if (StateHelper.isPlaylistChangePending) {
             reloadPlaylist()
             StateHelper.isPlaylistChangePending = false
@@ -379,10 +384,12 @@ class PlayerFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        if (initialized) {
+            requireContext().unregisterReceiver(autoplayReceiver)
+            countdownHandler.removeCallbacksAndMessages(null)
+            mediaServiceController.disconnect()
+        }
         super.onDestroyView()
-        requireContext().unregisterReceiver(autoplayReceiver)
-        countdownHandler.removeCallbacksAndMessages(null)
-        mediaServiceController.disconnect()
     }
 
     private fun showBottomSheet() {
