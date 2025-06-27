@@ -129,16 +129,22 @@ class PlayerFragment : Fragment() {
                 shortcutAdapter.setItems(shortcuts)
 
                 if (controller.mediaItemCount == 0) {
-                    Log.w(
-                        "PlayerFragment",
-                        "\u26a0\ufe0f MediaSession ist leer! Öffne DiscoverFragment."
-                    )
-                    requireActivity().supportFragmentManager.beginTransaction()
-                        .setReorderingAllowed(true)
-                        .replace(R.id.fragment_container, DiscoverFragment())
-                        .addToBackStack(null)
-                        .commit()
+                    if (!StateHelper.hasAutoOpenedDiscover) {
+                        Log.w(
+                            "PlayerFragment",
+                            "\u26a0\ufe0f MediaSession ist leer! Öffne DiscoverFragment."
+                        )
+                        StateHelper.hasAutoOpenedDiscover = true
+                        requireActivity().supportFragmentManager
+                            .beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragment_container, DiscoverFragment())
+                            .addToBackStack(null)
+                            .commit()
+                    }
                     return@initializeAndConnect
+                } else {
+                    StateHelper.hasAutoOpenedDiscover = false
                 }
 
                 val coverPageAdapter = CoverPageAdapter(mediaServiceController)
