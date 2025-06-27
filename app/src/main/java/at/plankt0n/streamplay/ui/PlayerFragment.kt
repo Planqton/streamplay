@@ -320,6 +320,7 @@ class PlayerFragment : Fragment() {
 
     private fun updateOverlayUI(index: Int) {
         val controller = mediaServiceController.mediaController ?: return
+        if (index !in 0 until controller.mediaItemCount) return
         val mediaItem = controller.getMediaItemAt(index)
         val extras = mediaItem.mediaMetadata.extras ?: return
 
@@ -341,6 +342,7 @@ class PlayerFragment : Fragment() {
 
     private fun reloadPlaylist() {
         val controller = mediaServiceController.mediaController ?: return
+        if (controller.mediaItemCount == 0) return
 
         val shortcuts = (0 until controller.mediaItemCount).mapNotNull { i ->
             val mediaItem = controller.getMediaItemAt(i)
