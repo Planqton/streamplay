@@ -84,6 +84,7 @@ class PlayerFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         buttonMenu = view.findViewById(R.id.button_menu)
+        buttonMenu.setOnClickListener { showBottomSheet() }
         viewPager = view.findViewById(R.id.view_pager)
         viewPager.offscreenPageLimit = 2
 
@@ -159,7 +160,6 @@ class PlayerFragment : Fragment() {
                 playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
                 buttonBack.setOnClickListener { mediaServiceController.skipToPrevious() }
                 buttonForward.setOnClickListener { mediaServiceController.skipToNext() }
-                buttonMenu.setOnClickListener { showBottomSheet() }
             },
             onPlaybackChanged = { updatePlayPauseIcon(it) },
             onStreamIndexChanged = { index ->
