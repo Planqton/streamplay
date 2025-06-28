@@ -396,7 +396,6 @@ class StreamingService : MediaSessionService() {
                             artist = extendedInfo.artistName,
                             artworkUri = extendedInfo.bestCoverUrl ?: ""
                         )
-                        )
 
                         MetaLogHelper.addLog(
                             this@StreamingService,
