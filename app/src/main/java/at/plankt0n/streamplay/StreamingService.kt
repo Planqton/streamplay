@@ -38,6 +38,8 @@ import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.IcyStreamReader
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.SpotifyMetaReader
+import at.plankt0n.streamplay.helper.MetaLogHelper
+import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.viewmodel.UITrackInfo
 import kotlinx.coroutines.Dispatchers
@@ -393,7 +395,17 @@ class StreamingService : MediaSessionService() {
                             title = extendedInfo.trackName,
                             artist = extendedInfo.artistName,
                             artworkUri = extendedInfo.bestCoverUrl ?: ""
+                        )
 
+                        MetaLogHelper.addLog(
+                            this@StreamingService,
+                            MetaLogEntry(
+                                timestamp = System.currentTimeMillis(),
+                                station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
+                                title = extendedInfo.trackName,
+                                artist = extendedInfo.artistName,
+                                url = extendedInfo.spotifyUrl.takeIf { it.isNotBlank() }
+                            )
                         )
                     } else {
                         Log.w(
@@ -406,6 +418,16 @@ class StreamingService : MediaSessionService() {
                                 trackName = title,
                                 artistName = artist,
                                 bestCoverUrl = fallbackartworkUri
+                            )
+                        )
+                        MetaLogHelper.addLog(
+                            this@StreamingService,
+                            MetaLogEntry(
+                                timestamp = System.currentTimeMillis(),
+                                station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
+                                title = title,
+                                artist = artist,
+                                url = null
                             )
                         )
                     }
@@ -425,6 +447,16 @@ class StreamingService : MediaSessionService() {
                     trackName = title,
                     artistName = artist,
                     bestCoverUrl = fallbackartworkUri
+                )
+            )
+            MetaLogHelper.addLog(
+                this@StreamingService,
+                MetaLogEntry(
+                    timestamp = System.currentTimeMillis(),
+                    station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
+                    title = title,
+                    artist = artist,
+                    url = null
                 )
             )
         }
