@@ -84,6 +84,8 @@
     <!-- Option Discover -->
     <string name="bottom_sheet_discover_text">Discover Stations</string>
     <string name="bottom_sheet_discover_content_desc">Browse online stations</string>
+    <string name="bottom_sheet_logs_text">Show Logs</string>
+    <string name="bottom_sheet_logs_content_desc">View metadata log</string>
 
     <string name="drag_handle_desc">Move station</string>
 

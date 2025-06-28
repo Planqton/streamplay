@@ -14,6 +14,7 @@ import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.ui.DiscoverFragment
 import at.plankt0n.streamplay.MainActivity
 import at.plankt0n.streamplay.ui.SettingsFragment
+import at.plankt0n.streamplay.ui.MetaLogFragment
 import at.plankt0n.streamplay.Keys
 
 class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
@@ -55,6 +56,11 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
             openDiscoverFragment()
         }
 
+        view.findViewById<LinearLayout>(R.id.option_logs).setOnClickListener {
+            dismiss()
+            openMetaLogFragment()
+        }
+
         // Inflate settings fragment into this sheet
         if (savedInstanceState == null) {
             childFragmentManager.beginTransaction()
@@ -85,6 +91,14 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
         requireActivity().supportFragmentManager.beginTransaction()
             .setReorderingAllowed(true)
             .replace(R.id.fragment_container, DiscoverFragment())
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun openMetaLogFragment() {
+        requireActivity().supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .replace(R.id.fragment_container, MetaLogFragment())
             .addToBackStack(null)
             .commit()
     }

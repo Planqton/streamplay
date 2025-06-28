@@ -17,6 +17,9 @@ object Keys {
     const val KEY_SPOTIFY_CLIENT_ID = "cc55a94b922c496a84c4a725242a313b"
     const val KEY_SPOTIFY_CLIENT_SECRET = "1893b26ecec74a4984152f0d86200b63"
 
+    const val KEY_META_LOGS_PREFS = "meta_log_prefs"
+    const val KEY_META_LOGS = "metadata_logs"
+
 
     // mime types and charsets and file extensions
     const val CHARSET_UNDEFINDED = "undefined"
