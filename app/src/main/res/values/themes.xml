@@ -24,8 +24,8 @@
 
         <!-- Schriftfarben -->
 
-        <item name="android:textColor">@color/primary_dark_material_light</item>
-        <item name="android:textColorSecondary">@color/primary_dark_material_light</item>
+        <item name="android:textColor">@color/textPrimary</item>
+        <item name="android:textColorSecondary">@color/textSecondary</item>
         <item name="preferenceCategoryStyle">@style/PreferenceCategory.WhiteText</item>
         <!-- Divider / Trennlinien -->
         <item name="dividerColor">@color/divider</item>
