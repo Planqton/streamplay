@@ -6,7 +6,6 @@ import android.content.Intent
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.core.content.FileProvider
-import at.plankt0n.streamplay.BuildConfig
 import at.plankt0n.streamplay.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,7 +51,7 @@ class GitHubUpdateChecker(private val context: Context) {
                     }
                 }
             }
-            val localVersion = BuildConfig.VERSION_NAME
+            val localVersion = at.plankt0n.streamplay.BuildConfig.VERSION_NAME
             withContext(Dispatchers.Main) { progress.dismiss() }
             if (isNewerVersion(remoteVersion, localVersion) && !apkUrl.isNullOrEmpty()) {
                 withContext(Dispatchers.Main) {
