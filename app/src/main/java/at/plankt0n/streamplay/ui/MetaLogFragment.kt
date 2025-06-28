@@ -7,16 +7,22 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageButton
+import android.text.Editable
+import android.text.TextWatcher
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.adapter.MetaLogAdapter
+import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.helper.MetaLogHelper
 
 class MetaLogFragment : Fragment() {
     private lateinit var adapter: MetaLogAdapter
+    private lateinit var searchField: EditText
+    private var allLogs = mutableListOf<MetaLogEntry>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,14 +47,40 @@ class MetaLogFragment : Fragment() {
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter = adapter
 
+        searchField = view.findViewById(R.id.editSearchLogs)
+        searchField.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                filterLogs(s?.toString() ?: "")
+            }
+        })
+
         view.findViewById<Button>(R.id.buttonClearLogs).setOnClickListener {
             MetaLogHelper.clear(requireContext())
-            adapter.setItems(emptyList())
+            allLogs.clear()
+            filterLogs("")
         }
     }
 
     override fun onResume() {
         super.onResume()
-        adapter.setItems(MetaLogHelper.getLogs(requireContext()))
+        allLogs = MetaLogHelper.getLogs(requireContext())
+        filterLogs(searchField.text.toString())
+    }
+
+    private fun filterLogs(query: String) {
+        if (query.isBlank()) {
+            adapter.setItems(allLogs)
+            return
+        }
+        val lower = query.lowercase()
+        val filtered = allLogs.filter {
+            it.station.contains(lower, true) ||
+            it.title.contains(lower, true) ||
+            it.artist.contains(lower, true) ||
+            it.formattedTime().contains(lower, true)
+        }
+        adapter.setItems(filtered)
     }
 }

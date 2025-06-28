@@ -87,6 +87,10 @@
     <string name="bottom_sheet_logs_text">Show Logs</string>
     <string name="bottom_sheet_logs_content_desc">View metadata log</string>
 
+    <!-- Meta log -->
+    <string name="search_logs_hint">Search logs</string>
+    <string name="clear_logs">Clear Logs</string>
+
     <string name="drag_handle_desc">Move station</string>
 
     <!-- Stations Fragment play button -->
