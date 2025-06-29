@@ -162,6 +162,7 @@ class MediaServiceController(private val context: Context) {
         if (controller.isPlaying) {
             controller.pause()
         } else {
+            controller.seekToDefaultPosition(controller.currentMediaItemIndex)
             controller.play()
         }
     }
