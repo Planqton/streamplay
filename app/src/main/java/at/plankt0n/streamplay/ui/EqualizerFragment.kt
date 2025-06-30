@@ -9,6 +9,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ImageButton
 import android.widget.Spinner
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import at.plankt0n.streamplay.Keys
@@ -36,7 +37,12 @@ class EqualizerFragment : Fragment() {
         view.findViewById<android.widget.TextView>(R.id.topbar_title).text = getString(R.string.equalizer_title)
         presetSpinner = view.findViewById(R.id.spinnerPresets)
 
-        equalizer = Equalizer(0, 0).apply { enabled = false }
+        equalizer = try {
+            Equalizer(0, 0).apply { enabled = false }
+        } catch (e: RuntimeException) {
+            Toast.makeText(requireContext(), R.string.equalizer_not_available, Toast.LENGTH_SHORT).show()
+            null
+        }
         setupPresets()
     }
 
