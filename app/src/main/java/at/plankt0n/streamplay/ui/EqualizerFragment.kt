@@ -12,6 +12,7 @@ import android.widget.Spinner
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
+import android.content.Context
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.R
 import android.media.audiofx.Equalizer
@@ -37,8 +38,10 @@ class EqualizerFragment : Fragment() {
         view.findViewById<android.widget.TextView>(R.id.topbar_title).text = getString(R.string.equalizer_title)
         presetSpinner = view.findViewById(R.id.spinnerPresets)
 
+        val prefs = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        val sessionId = prefs.getInt(Keys.KEY_EQUALIZER_SESSION, android.media.AudioManager.ERROR)
         equalizer = try {
-            Equalizer(0, 0).apply { enabled = false }
+            Equalizer(0, sessionId).apply { enabled = false }
         } catch (e: RuntimeException) {
             Toast.makeText(requireContext(), R.string.equalizer_not_available, Toast.LENGTH_SHORT).show()
             null

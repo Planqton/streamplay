@@ -317,6 +317,7 @@ class StreamingService : MediaSessionService() {
             if (preset in 0 until numberOfPresets) {
                 usePreset(preset.toShort())
             }
+            prefs.edit().putInt(Keys.KEY_EQUALIZER_SESSION, sessionId).apply()
         }
     }
 
@@ -346,6 +347,10 @@ class StreamingService : MediaSessionService() {
         ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
         mediaSession.release()
         equalizer?.release()
+        getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .remove(Keys.KEY_EQUALIZER_SESSION)
+            .apply()
         player.release()
         super.onDestroy()
     }
