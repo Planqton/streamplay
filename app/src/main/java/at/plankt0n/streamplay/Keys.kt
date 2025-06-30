@@ -11,6 +11,10 @@ object Keys {
     const val ACTION_HIDE_COUNTDOWN = "at.plankt0n.streamplay.HIDE_COUNTDOWN"
     const val EXTRA_COUNTDOWN_DURATION = "countdown_duration"
 
+    const val ACTION_SET_EQUALIZER_PRESET = "at.plankt0n.streamplay.SET_EQ_PRESET"
+    const val EXTRA_EQUALIZER_PRESET = "eq_preset"
+    const val KEY_EQUALIZER_PRESET = "equalizer_preset"
+
 
 
     //Spotify

@@ -19,6 +19,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
             true
         }
+
+        findPreference<Preference>("open_equalizer")?.setOnPreferenceClickListener {
+            (parentFragment as? MediaItemOptionsBottomSheet)?.openEqualizerFragment()
+            true
+        }
     }
 
 }

@@ -15,6 +15,7 @@ import at.plankt0n.streamplay.ui.DiscoverFragment
 import at.plankt0n.streamplay.MainActivity
 import at.plankt0n.streamplay.ui.SettingsFragment
 import at.plankt0n.streamplay.ui.MetaLogFragment
+import at.plankt0n.streamplay.ui.EqualizerFragment
 import at.plankt0n.streamplay.Keys
 
 class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
@@ -99,6 +100,14 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
         requireActivity().supportFragmentManager.beginTransaction()
             .setReorderingAllowed(true)
             .replace(R.id.fragment_container, MetaLogFragment())
+            .addToBackStack(null)
+            .commit()
+    }
+
+    fun openEqualizerFragment() {
+        childFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .replace(R.id.settings_container, EqualizerFragment())
             .addToBackStack(null)
             .commit()
     }

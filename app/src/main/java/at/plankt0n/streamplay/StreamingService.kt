@@ -34,6 +34,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.metadata.icy.IcyInfo
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import android.media.audiofx.Equalizer
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.IcyStreamReader
 import at.plankt0n.streamplay.helper.PreferencesHelper
@@ -55,6 +56,7 @@ class StreamingService : MediaSessionService() {
 
     private var icyStreamReader: IcyStreamReader? = null //alt
     private lateinit var player: ExoPlayer
+    private var equalizer: android.media.audiofx.Equalizer? = null
     private lateinit var mediaSession: MediaSession
 
     private var streams: List<StationItem> = emptyList()
@@ -88,8 +90,12 @@ class StreamingService : MediaSessionService() {
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST") {
-            refreshPlaylist()
+        when (intent?.action) {
+            "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST" -> refreshPlaylist()
+            Keys.ACTION_SET_EQUALIZER_PRESET -> {
+                val preset = intent.getIntExtra(Keys.EXTRA_EQUALIZER_PRESET, 0)
+                applyEqualizerPreset(preset)
+            }
         }
         return super.onStartCommand(intent, flags, startId)
     }
@@ -118,6 +124,12 @@ class StreamingService : MediaSessionService() {
                     //Listener für ICY META aus EXOPLAYER (nicht MediaMetadata)
                     override fun onMetadata(metadata: Metadata) {
                             fetchMetadata(metadata)
+                    }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        if (playbackState == Player.STATE_READY && equalizer == null) {
+                            setupEqualizer()
+                        }
                     }
 
                     //Listener für wechsel der Streams
@@ -294,6 +306,30 @@ class StreamingService : MediaSessionService() {
         }
     }
 
+    private fun setupEqualizer() {
+        val sessionId = player.audioSessionId
+        if (sessionId == android.media.AudioManager.ERROR) return
+
+        equalizer = Equalizer(0, sessionId).apply {
+            enabled = true
+            val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+            val preset = prefs.getInt(Keys.KEY_EQUALIZER_PRESET, 0)
+            if (preset in 0 until numberOfPresets) {
+                usePreset(preset.toShort())
+            }
+        }
+    }
+
+    private fun applyEqualizerPreset(preset: Int) {
+        val eq = equalizer ?: return
+        val clamped = preset.coerceIn(0, eq.numberOfPresets - 1)
+        eq.usePreset(clamped.toShort())
+        getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putInt(Keys.KEY_EQUALIZER_PRESET, clamped)
+            .apply()
+    }
+
     private fun minimizeApp() {
         val intent = Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_HOME)
@@ -309,6 +345,7 @@ class StreamingService : MediaSessionService() {
     override fun onDestroy() {
         ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
         mediaSession.release()
+        equalizer?.release()
         player.release()
         super.onDestroy()
     }
