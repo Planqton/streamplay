@@ -80,7 +80,6 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
         bottomSheet?.let {
             val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(it)
             behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HALF_EXPANDED
-            it.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
         }
     }
 
@@ -106,11 +105,13 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
 
     fun openEqualizerFragment() {
         dismiss()
-        requireActivity().supportFragmentManager.beginTransaction()
-            .setReorderingAllowed(true)
-            .replace(R.id.fragment_container, EqualizerFragment())
-            .addToBackStack(null)
-            .commit()
+        view?.post {
+            requireActivity().supportFragmentManager.beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(R.id.fragment_container, EqualizerFragment())
+                .addToBackStack(null)
+                .commit()
+        }
     }
 
 }
