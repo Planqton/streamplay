@@ -6,6 +6,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.helper.GitHubUpdateChecker
+import at.plankt0n.streamplay.R
 import kotlinx.coroutines.launch
 
 class SettingsFragment : PreferenceFragmentCompat() {
