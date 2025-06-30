@@ -13,12 +13,10 @@ import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.R
-import at.plankt0n.streamplay.helper.MediaServiceController
 import android.media.audiofx.Equalizer
 
 class EqualizerFragment : Fragment() {
 
-    private lateinit var mediaServiceController: MediaServiceController
     private var equalizer: Equalizer? = null
     private lateinit var presetSpinner: Spinner
 
@@ -38,20 +36,8 @@ class EqualizerFragment : Fragment() {
         view.findViewById<android.widget.TextView>(R.id.topbar_title).text = getString(R.string.equalizer_title)
         presetSpinner = view.findViewById(R.id.spinnerPresets)
 
-        mediaServiceController = MediaServiceController(requireContext())
-        mediaServiceController.initializeAndConnect(
-            onConnected = { controller ->
-                val sessionId = controller.audioSessionId
-                if (sessionId != 0) {
-                    equalizer = Equalizer(0, sessionId)
-                    setupPresets()
-                }
-            },
-            onPlaybackChanged = {},
-            onStreamIndexChanged = {},
-            onMetadataChanged = {},
-            onTimelineChanged = {}
-        )
+        equalizer = Equalizer(0, 0).apply { enabled = false }
+        setupPresets()
     }
 
     private fun setupPresets() {
@@ -83,7 +69,6 @@ class EqualizerFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        mediaServiceController.disconnect()
         equalizer?.release()
         super.onDestroyView()
     }
