@@ -105,9 +105,10 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
     }
 
     fun openEqualizerFragment() {
-        childFragmentManager.beginTransaction()
+        dismiss()
+        requireActivity().supportFragmentManager.beginTransaction()
             .setReorderingAllowed(true)
-            .replace(R.id.settings_container, EqualizerFragment())
+            .replace(R.id.fragment_container, EqualizerFragment())
             .addToBackStack(null)
             .commit()
     }

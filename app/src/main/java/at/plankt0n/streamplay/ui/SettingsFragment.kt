@@ -21,7 +21,16 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
 
         findPreference<Preference>("open_equalizer")?.setOnPreferenceClickListener {
-            (parentFragment as? MediaItemOptionsBottomSheet)?.openEqualizerFragment()
+            val parentSheet = parentFragment as? MediaItemOptionsBottomSheet
+            if (parentSheet != null) {
+                parentSheet.openEqualizerFragment()
+            } else {
+                requireActivity().supportFragmentManager.beginTransaction()
+                    .setReorderingAllowed(true)
+                    .replace(R.id.fragment_container, EqualizerFragment())
+                    .addToBackStack(null)
+                    .commit()
+            }
             true
         }
     }
