@@ -308,27 +308,35 @@ class StreamingService : MediaSessionService() {
 
     private fun setupEqualizer() {
         val sessionId = player.audioSessionId
-        if (sessionId == android.media.AudioManager.ERROR) return
+        if (sessionId == android.media.AudioManager.ERROR || sessionId == 0) return
 
-        equalizer = Equalizer(0, sessionId).apply {
-            enabled = true
-            val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
-            val preset = prefs.getInt(Keys.KEY_EQUALIZER_PRESET, 0)
-            if (preset in 0 until numberOfPresets) {
-                usePreset(preset.toShort())
+        equalizer = try {
+            Equalizer(0, sessionId).apply {
+                enabled = true
+                val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+                val preset = prefs.getInt(Keys.KEY_EQUALIZER_PRESET, 0)
+                if (preset in 0 until numberOfPresets) {
+                    usePreset(preset.toShort())
+                }
+                prefs.edit().putInt(Keys.KEY_EQUALIZER_SESSION, sessionId).apply()
             }
-            prefs.edit().putInt(Keys.KEY_EQUALIZER_SESSION, sessionId).apply()
+        } catch (_: RuntimeException) {
+            null
         }
     }
 
     private fun applyEqualizerPreset(preset: Int) {
         val eq = equalizer ?: return
         val clamped = preset.coerceIn(0, eq.numberOfPresets - 1)
-        eq.usePreset(clamped.toShort())
-        getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putInt(Keys.KEY_EQUALIZER_PRESET, clamped)
-            .apply()
+        try {
+            eq.usePreset(clamped.toShort())
+            getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putInt(Keys.KEY_EQUALIZER_PRESET, clamped)
+                .apply()
+        } catch (_: RuntimeException) {
+            // ignore
+        }
     }
 
     private fun minimizeApp() {

@@ -40,6 +40,12 @@ class EqualizerFragment : Fragment() {
 
         val prefs = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         val sessionId = prefs.getInt(Keys.KEY_EQUALIZER_SESSION, android.media.AudioManager.ERROR)
+
+        if (sessionId == android.media.AudioManager.ERROR || sessionId == 0) {
+            Toast.makeText(requireContext(), R.string.equalizer_not_available, Toast.LENGTH_SHORT).show()
+            return
+        }
+
         equalizer = try {
             Equalizer(0, sessionId).apply { enabled = false }
         } catch (e: RuntimeException) {
