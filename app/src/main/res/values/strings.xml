@@ -117,6 +117,7 @@
     <string name="settings_equalizer">Equalizer</string>
     <string name="equalizer_title">Equalizer</string>
     <string name="equalizer_select_preset">Select Preset</string>
+    <string name="equalizer_not_available">Equalizer not available</string>
     <string name="update_latest">Aktuellste Version installiert</string>
     <string name="update_checking">Checking for updates…</string>
     <string name="update_available_title">Update Available</string>

@@ -8,6 +8,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ImageButton
 import android.widget.Spinner
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.helper.EqualizerHelper
@@ -33,6 +34,12 @@ class EqualizerFragment : Fragment() {
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, presets)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = adapter
+
+        if (presets.isEmpty()) {
+            spinner.isEnabled = false
+            Toast.makeText(requireContext(), R.string.equalizer_not_available, Toast.LENGTH_LONG).show()
+            return
+        }
 
         val current = PreferencesHelper.getEqualizerPreset(requireContext())
         if (current in presets.indices) {
