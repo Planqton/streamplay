@@ -6,6 +6,8 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.helper.GitHubUpdateChecker
+import at.plankt0n.streamplay.ui.EqualizerFragment
+import at.plankt0n.streamplay.ui.MediaItemOptionsBottomSheet
 import kotlinx.coroutines.launch
 
 class SettingsFragment : PreferenceFragmentCompat() {
@@ -17,6 +19,16 @@ class SettingsFragment : PreferenceFragmentCompat() {
             lifecycleScope.launch {
                 GitHubUpdateChecker(requireContext()).checkForUpdate()
             }
+            true
+        }
+
+        findPreference<Preference>("open_equalizer")?.setOnPreferenceClickListener {
+            (parentFragment as? MediaItemOptionsBottomSheet)?.dismiss()
+            requireActivity().supportFragmentManager.beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(R.id.fragment_container, EqualizerFragment())
+                .addToBackStack(null)
+                .commit()
             true
         }
     }

@@ -12,6 +12,7 @@ object PreferencesHelper {
     private const val PREFS_NAME = "MyPrefs"
     private const val KEY_STATIONS = "stations"
     private const val PREF_LAST_PLAYED_STREAM_INDEX = "last_played_stream_index"
+    private const val PREF_EQUALIZER_PRESET = "equalizer_preset"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -46,5 +47,13 @@ object PreferencesHelper {
             .edit()
             .putInt(PREF_LAST_PLAYED_STREAM_INDEX, index)
             .apply()
+    }
+
+    fun getEqualizerPreset(context: Context): Int {
+        return getPrefs(context).getInt(PREF_EQUALIZER_PRESET, 0)
+    }
+
+    fun setEqualizerPreset(context: Context, preset: Int) {
+        getPrefs(context).edit().putInt(PREF_EQUALIZER_PRESET, preset).apply()
     }
 }

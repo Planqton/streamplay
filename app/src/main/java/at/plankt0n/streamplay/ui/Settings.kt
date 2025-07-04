@@ -54,6 +54,13 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_timer)
     }
 
+    val equalizerPref = Preference(context).apply {
+        key = "open_equalizer"
+        title = getString(R.string.settings_equalizer)
+        category = SettingsCategory.PLAYBACK
+        icon = context.getDrawable(R.drawable.ic_equalizer)
+    }
+
     val minimizeSwitch = SwitchPreferenceCompat(context).apply {
         key = "minimize_after_autoplay"
         title = getString(R.string.settings_minimize)
@@ -79,7 +86,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }
 
-    val preferences = listOf(autoplaySwitch, delayPreference, minimizeSwitch, versionPref, updatePref)
+    val preferences = listOf(autoplaySwitch, delayPreference, equalizerPref, minimizeSwitch, versionPref, updatePref)
 
     SettingsCategory.values().forEach { cat ->
         val catPref = categoryMap[cat]!!

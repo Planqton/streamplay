@@ -39,6 +39,7 @@ import at.plankt0n.streamplay.helper.IcyStreamReader
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.SpotifyMetaReader
 import at.plankt0n.streamplay.helper.MetaLogHelper
+import at.plankt0n.streamplay.helper.EqualizerHelper
 import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.viewmodel.UITrackInfo
@@ -221,6 +222,10 @@ class StreamingService : MediaSessionService() {
 
         player.setMediaItems(mediaItems, currentIndex, 0L)
         player.prepare()
+        EqualizerHelper.init(player.audioSessionId)
+        EqualizerHelper.applyPreset(
+            PreferencesHelper.getEqualizerPreset(this)
+        )
         maybeAutoplay()
     }
 
@@ -259,6 +264,10 @@ class StreamingService : MediaSessionService() {
 
         player.setMediaItems(mediaItems, currentIndex, 0L)
         player.prepare()
+        EqualizerHelper.init(player.audioSessionId)
+        EqualizerHelper.applyPreset(
+            PreferencesHelper.getEqualizerPreset(this)
+        )
         maybeAutoplay(wasPlaying)
 
         if (wasPlaying) player.play()
@@ -308,6 +317,7 @@ class StreamingService : MediaSessionService() {
 
     override fun onDestroy() {
         ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
+        EqualizerHelper.release()
         mediaSession.release()
         player.release()
         super.onDestroy()
