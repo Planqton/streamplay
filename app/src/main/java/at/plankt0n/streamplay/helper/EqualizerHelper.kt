@@ -5,7 +5,7 @@ import android.media.audiofx.Equalizer
 object EqualizerHelper {
     private var equalizer: Equalizer? = null
 
-    fun init(audioSessionId: Int) {
+    fun init(audioSessionId: Int = 0) {
         release()
         try {
             equalizer = Equalizer(0, audioSessionId).apply {
@@ -21,8 +21,19 @@ object EqualizerHelper {
         equalizer = null
     }
 
+    private fun ensureEqualizer(): Equalizer? {
+        if (equalizer == null) {
+            try {
+                equalizer = Equalizer(0, 0).apply { enabled = true }
+            } catch (_: Exception) {
+                equalizer = null
+            }
+        }
+        return equalizer
+    }
+
     fun getPresets(): List<String> {
-        val eq = equalizer ?: return emptyList()
+        val eq = ensureEqualizer() ?: return emptyList()
         val list = mutableListOf<String>()
         for (i in 0 until eq.numberOfPresets) {
             list.add(eq.getPresetName(i.toShort()))
@@ -31,7 +42,7 @@ object EqualizerHelper {
     }
 
     fun applyPreset(index: Int) {
-        val eq = equalizer ?: return
+        val eq = ensureEqualizer() ?: return
         if (index in 0 until eq.numberOfPresets) {
             eq.usePreset(index.toShort())
         }

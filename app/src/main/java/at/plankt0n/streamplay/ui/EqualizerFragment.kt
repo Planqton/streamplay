@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.helper.EqualizerHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
+import android.widget.TextView
 
 class EqualizerFragment : Fragment() {
     override fun onCreateView(
@@ -28,9 +29,16 @@ class EqualizerFragment : Fragment() {
         view.findViewById<ImageButton>(R.id.arrow_back)?.setOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
+        view.findViewById<TextView>(R.id.topbar_title)?.text =
+            getString(R.string.equalizer_title)
 
         val spinner = view.findViewById<Spinner>(R.id.spinnerPresets)
-        val presets = EqualizerHelper.getPresets()
+        // ensure equalizer exists so presets can be read even before playback
+        var presets = EqualizerHelper.getPresets()
+        if (presets.isEmpty()) {
+            EqualizerHelper.init(0)
+            presets = EqualizerHelper.getPresets()
+        }
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, presets)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = adapter
