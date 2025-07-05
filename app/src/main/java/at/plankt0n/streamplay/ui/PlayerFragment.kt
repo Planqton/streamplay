@@ -76,6 +76,7 @@ class PlayerFragment : Fragment() {
     }
 
     var isMuted = false
+    private var showingMetaCover = true
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -307,7 +308,8 @@ class PlayerFragment : Fragment() {
                 ?.getMediaItemAt(viewPager.currentItem)
                 ?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
 
-            val imageUrlToLoad = trackInfo.bestCoverUrl?.takeIf { it.isNotBlank() } ?: defaultIconUrl
+            val metaCoverUrl = trackInfo.bestCoverUrl?.takeIf { it.isNotBlank() }
+            val imageUrlToLoad = metaCoverUrl ?: defaultIconUrl
 
             LiveCoverHelper.loadCoverWithBackgroundFade(
                 context = requireContext(),
@@ -318,6 +320,29 @@ class PlayerFragment : Fragment() {
                 lastColor = holder.lastColor,
                 onNewColor = { holder.lastColor = it }
             )
+
+            showingMetaCover = true
+            holder.coverImage.setOnClickListener { view ->
+                val targetUrl = if (showingMetaCover) defaultIconUrl else metaCoverUrl ?: defaultIconUrl
+                view.animate()
+                    .rotationY(90f)
+                    .setDuration(150)
+                    .withEndAction {
+                        LiveCoverHelper.loadCoverWithBackgroundFade(
+                            context = requireContext(),
+                            imageUrl = targetUrl,
+                            imageView = holder.coverImage,
+                            backgroundTarget = holder.itemView,
+                            defaultColor = requireContext().getColor(R.color.default_background),
+                            lastColor = holder.lastColor,
+                            onNewColor = { holder.lastColor = it }
+                        )
+                        holder.coverImage.rotationY = -90f
+                        holder.coverImage.animate().rotationY(0f).setDuration(150).start()
+                    }
+                    .start()
+                showingMetaCover = !showingMetaCover
+            }
 
             titleTextView?.text = trackInfo.trackName.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_title)
             artistTextView?.text = trackInfo.artistName.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_artist)
