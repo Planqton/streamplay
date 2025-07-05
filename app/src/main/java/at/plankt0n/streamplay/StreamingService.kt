@@ -517,6 +517,14 @@ val artist = refreshMetaData?.artist?.toString().orEmpty()
 val title = refreshMetaData?.title?.toString().orEmpty()
         val artworkUri = refreshMetaData?.artworkUri?.toString().orEmpty()
 
+        UITrackViewModel.updateTrackInfo(
+            UITrackInfo(
+                trackName = title,
+                artistName = artist,
+                bestCoverUrl = artworkUri.takeIf { it.isNotBlank() }
+            )
+        )
+
         if (isInForeground) {
             updateartist = artist
             updatetitle = title
