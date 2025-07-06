@@ -479,10 +479,14 @@ class PlayerFragment : Fragment() {
     }
 
     private fun showConnecting() {
-        connectingBanner.visibility = View.VISIBLE
+        if (::connectingBanner.isInitialized) {
+            connectingBanner.visibility = View.VISIBLE
+        }
     }
 
     private fun hideConnecting() {
-        connectingBanner.visibility = View.GONE
+        if (::connectingBanner.isInitialized) {
+            connectingBanner.visibility = View.GONE
+        }
     }
 }
