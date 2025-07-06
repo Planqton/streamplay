@@ -10,6 +10,7 @@ object Keys {
     const val PREF_UPDATE_AVAILABLE = "update_available"
     const val ACTION_SHOW_COUNTDOWN = "at.plankt0n.streamplay.SHOW_COUNTDOWN"
     const val ACTION_HIDE_COUNTDOWN = "at.plankt0n.streamplay.HIDE_COUNTDOWN"
+    const val ACTION_REFRESH_METADATA = "at.plankt0n.streamplay.ACTION_REFRESH_METADATA"
     const val EXTRA_COUNTDOWN_DURATION = "countdown_duration"
     const val UPDATE_FORCE_TAP_COUNT = 5
 

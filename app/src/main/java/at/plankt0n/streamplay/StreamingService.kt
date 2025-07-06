@@ -88,8 +88,9 @@ class StreamingService : MediaSessionService() {
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST") {
-            refreshPlaylist()
+        when (intent?.action) {
+            "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST" -> refreshPlaylist()
+            Keys.ACTION_REFRESH_METADATA -> refreshMediaItemMetadata()
         }
         return super.onStartCommand(intent, flags, startId)
     }
@@ -506,15 +507,13 @@ class StreamingService : MediaSessionService() {
 
 
     fun refreshMediaItemMetadata() {
-
-    val refreshMetaData = lastshowedMetadata
+        val refreshMetaData = lastshowedMetadata
         val isInForeground = isAppInForeground()
-
 
         val updateartist: String
         var updatetitle: String
-val artist = refreshMetaData?.artist?.toString().orEmpty()
-val title = refreshMetaData?.title?.toString().orEmpty()
+        val artist = refreshMetaData?.artist?.toString().orEmpty()
+        val title = refreshMetaData?.title?.toString().orEmpty()
         val artworkUri = refreshMetaData?.artworkUri?.toString().orEmpty()
 
         if (isInForeground) {
@@ -546,6 +545,14 @@ val title = refreshMetaData?.title?.toString().orEmpty()
             player.replaceMediaItem(player.currentMediaItemIndex, updatedMediaItem)
             Log.d("StreamingService", "🔄 Nur Metadaten aktualisiert: $title - $artist")
             lastshowedMetadata = updatedMetadata // 🟢 Hier speichern!
+            UITrackRepository.updateTrackInfo(
+                UITrackInfo(
+                    trackName = title,
+                    artistName = artist,
+                    bestCoverUrl = artworkUri
+                )
+            )
+
 
         }
     } //zur anpassung wenn PlayerFragment Minimiert ist damit der sende rin der Medaisesion angzeigt wird

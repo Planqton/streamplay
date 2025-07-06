@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.Handler
+import at.plankt0n.streamplay.StreamingService
 import android.os.Looper
 import android.media.AudioManager
 import android.net.Uri
@@ -237,6 +238,11 @@ class PlayerFragment : Fragment() {
                 updateOverlayUI(currentIndex)
                 updatePlayPauseIcon(controller.isPlaying)
 
+                requireContext().startService(
+                    Intent(requireContext(), StreamingService::class.java).apply {
+                        action = Keys.ACTION_REFRESH_METADATA
+                    }
+                )
                 viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
