@@ -1,8 +1,6 @@
 package at.plankt0n.streamplay.ui
 
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import android.util.AttributeSet
 import android.view.MotionEvent
 import androidx.preference.Preference
@@ -16,27 +14,27 @@ class LongPressPreference @JvmOverloads constructor(
 
     var onLongPressListener: (() -> Unit)? = null
 
-    private val handler = Handler(Looper.getMainLooper())
-    private var isPressing = false
+    private var downTime = 0L
 
     override fun onBindViewHolder(holder: PreferenceViewHolder) {
         super.onBindViewHolder(holder)
         holder.itemView.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    isPressing = true
-                    handler.postDelayed({
-                        if (isPressing) {
-                            onLongPressListener?.invoke()
-                        }
-                    }, Keys.UPDATE_FORCE_HOLD_MS)
+                    downTime = System.currentTimeMillis()
+                    false
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    isPressing = false
-                    handler.removeCallbacksAndMessages(null)
+                MotionEvent.ACTION_UP -> {
+                    val held = System.currentTimeMillis() - downTime
+                    if (held >= Keys.UPDATE_FORCE_HOLD_MS) {
+                        onLongPressListener?.invoke()
+                        true
+                    } else {
+                        false
+                    }
                 }
+                else -> false
             }
-            false
         }
     }
 }
