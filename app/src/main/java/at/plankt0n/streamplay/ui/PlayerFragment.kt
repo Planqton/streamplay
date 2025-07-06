@@ -38,6 +38,7 @@ import at.plankt0n.streamplay.Keys
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
+import androidx.media3.common.Player
 
 class PlayerFragment : Fragment() {
 
@@ -76,6 +77,8 @@ class PlayerFragment : Fragment() {
     }
 
     var isMuted = false
+    private var isConnecting = false
+    private var baseStationName: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -188,6 +191,10 @@ class PlayerFragment : Fragment() {
 
             },
             onPlaybackChanged = { updatePlayPauseIcon(it) },
+            onPlaybackStateChanged = { state ->
+                isConnecting = state == Player.STATE_BUFFERING
+                updateStationNameText()
+            },
             onStreamIndexChanged = { index ->
                 viewPager.setCurrentItem(index, true)
                 updateOverlayUI(index)
@@ -354,8 +361,8 @@ class PlayerFragment : Fragment() {
 
         val stationName = extras.getString("EXTRA_STATION_NAME") ?: ""
         val iconUrl = extras.getString("EXTRA_ICON_URL") ?: ""
-
-        stationNameTextView.text = stationName
+        baseStationName = stationName
+        updateStationNameText()
         Glide.with(stationIconImageView)
             .load(iconUrl)
             .placeholder(R.drawable.placeholder_spotify_dark)
@@ -366,6 +373,15 @@ class PlayerFragment : Fragment() {
     private fun updatePlayPauseIcon(isPlaying: Boolean) {
         val iconRes = if (isPlaying) R.drawable.ic_button_pause else R.drawable.ic_button_play
         playPauseButton.setImageResource(iconRes)
+    }
+
+    private fun updateStationNameText() {
+        val text = if (isConnecting && baseStationName.isNotBlank()) {
+            "$baseStationName - Connecting..."
+        } else {
+            baseStationName
+        }
+        stationNameTextView.text = text
     }
 
     private fun reloadPlaylist() {

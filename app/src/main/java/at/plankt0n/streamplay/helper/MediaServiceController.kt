@@ -26,6 +26,7 @@ class MediaServiceController(private val context: Context) {
     fun initializeAndConnect(
         onConnected: (MediaController) -> Unit,
         onPlaybackChanged: (Boolean) -> Unit,
+        onPlaybackStateChanged: (Int) -> Unit,
         onStreamIndexChanged: (Int) -> Unit,
         onMetadataChanged: (String) -> Unit,
         onTimelineChanged: (Int) -> Unit
@@ -48,6 +49,10 @@ class MediaServiceController(private val context: Context) {
                 listener = object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         onPlaybackChanged(isPlaying)
+                    }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        onPlaybackStateChanged(playbackState)
                     }
 
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
