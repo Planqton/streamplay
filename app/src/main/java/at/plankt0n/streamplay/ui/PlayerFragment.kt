@@ -64,6 +64,12 @@ class PlayerFragment : Fragment() {
     private val countdownHandler = Handler(Looper.getMainLooper())
     private var countdownRunnable: Runnable? = null
     private lateinit var sharedPreferences: android.content.SharedPreferences
+    private val prefListener =
+        android.content.SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
+            if (key == Keys.PREF_SHOW_EXOPLAYER_INFO && !prefs.getBoolean(Keys.PREF_SHOW_EXOPLAYER_INFO, true)) {
+                connectionStatusBanner.visibility = View.GONE
+            }
+        }
 
     private val autoplayReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -122,6 +128,7 @@ class PlayerFragment : Fragment() {
         connectionStatusBanner = view.findViewById(R.id.connection_status_banner)
 
         sharedPreferences = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        sharedPreferences.registerOnSharedPreferenceChangeListener(prefListener)
 
         // Grundlegende Button-Listener setzen, auch wenn die Playlist leer ist
         playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
@@ -195,7 +202,7 @@ class PlayerFragment : Fragment() {
             },
             onPlaybackChanged = { updatePlayPauseIcon(it) },
             onPlaybackStateChanged = { state ->
-                val showBanner = sharedPreferences.getBoolean("show_exoplayer_info", true)
+                val showBanner = sharedPreferences.getBoolean(Keys.PREF_SHOW_EXOPLAYER_INFO, true)
                 if (!showBanner) {
                     connectionStatusBanner.visibility = View.GONE
                 } else if (state == Player.STATE_BUFFERING) {
@@ -209,7 +216,7 @@ class PlayerFragment : Fragment() {
                 }
             },
             onPlaybackError = { error ->
-                val showBanner = sharedPreferences.getBoolean("show_exoplayer_info", true)
+                val showBanner = sharedPreferences.getBoolean(Keys.PREF_SHOW_EXOPLAYER_INFO, true)
                 if (!showBanner) return@initializeAndConnect
 
                 val msg = error.message ?: error.errorCodeName
@@ -439,6 +446,7 @@ class PlayerFragment : Fragment() {
         if (initialized) {
             requireContext().unregisterReceiver(autoplayReceiver)
             countdownHandler.removeCallbacksAndMessages(null)
+            sharedPreferences.unregisterOnSharedPreferenceChangeListener(prefListener)
             mediaServiceController.disconnect()
         }
         super.onDestroyView()

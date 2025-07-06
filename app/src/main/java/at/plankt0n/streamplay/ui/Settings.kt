@@ -63,7 +63,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     }
 
     val exoplayerInfoSwitch = SwitchPreferenceCompat(context).apply {
-        key = "show_exoplayer_info"
+        key = Keys.PREF_SHOW_EXOPLAYER_INFO
         title = getString(R.string.settings_show_exoplayer_info)
         setDefaultValue(true)
         category = SettingsCategory.UI
