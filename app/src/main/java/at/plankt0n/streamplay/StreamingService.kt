@@ -40,7 +40,7 @@ import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.SpotifyMetaReader
 import at.plankt0n.streamplay.helper.MetaLogHelper
 import at.plankt0n.streamplay.data.MetaLogEntry
-import at.plankt0n.streamplay.viewmodel.UITrackViewModel
+import at.plankt0n.streamplay.viewmodel.UITrackRepository
 import at.plankt0n.streamplay.viewmodel.UITrackInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -125,7 +125,7 @@ class StreamingService : MediaSessionService() {
                         currentIndex = currentMediaItemIndex
 
                         Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
-                        UITrackViewModel.clearTrackInfo()
+                        UITrackRepository.clearTrackInfo()
 
 
                         PreferencesHelper.setLastPlayedStreamIndex(
@@ -377,7 +377,7 @@ class StreamingService : MediaSessionService() {
                         )
 
 
-                        UITrackViewModel.updateTrackInfo(
+                        UITrackRepository.updateTrackInfo(
                             UITrackInfo(
                                 trackName = extendedInfo.trackName,
                                 artistName = extendedInfo.artistName,
@@ -413,7 +413,7 @@ class StreamingService : MediaSessionService() {
                             "❌ Keine Spotify-Daten gefunden für: $artist - $title"
                         )
                         updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
-                        UITrackViewModel.updateTrackInfo(
+                        UITrackRepository.updateTrackInfo(
                             UITrackInfo(
                                 trackName = title,
                                 artistName = artist,
@@ -442,7 +442,7 @@ class StreamingService : MediaSessionService() {
             GlobalScope.launch(Dispatchers.Main) {
                 updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
             }
-            UITrackViewModel.updateTrackInfo(
+            UITrackRepository.updateTrackInfo(
                 UITrackInfo(
                     trackName = title,
                     artistName = artist,

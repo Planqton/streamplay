@@ -16,8 +16,12 @@ data class UITrackInfo(
     val spotifyUrl: String = ""
 )
 
-object  UITrackViewModel : ViewModel() {
-
+/**
+ * Repository object that stores the currently fetched Spotify track information.
+ * This object can be accessed from anywhere in the app, including the
+ * [StreamingService]. The [UITrackViewModel] simply exposes the data held here.
+ */
+object UITrackRepository {
     private val _trackInfo = MutableLiveData<UITrackInfo?>()
     val trackInfo: LiveData<UITrackInfo?> get() = _trackInfo
 
@@ -29,4 +33,15 @@ object  UITrackViewModel : ViewModel() {
         _trackInfo.postValue(null)
         Log.d("UITrackinfo", "Trackinfo cleared")
     }
+}
+
+/**
+ * ViewModel used by UI components to observe changes in [UITrackRepository].
+ */
+class UITrackViewModel : ViewModel() {
+    val trackInfo: LiveData<UITrackInfo?> = UITrackRepository.trackInfo
+
+    fun updateTrackInfo(info: UITrackInfo) = UITrackRepository.updateTrackInfo(info)
+
+    fun clearTrackInfo() = UITrackRepository.clearTrackInfo()
 }
