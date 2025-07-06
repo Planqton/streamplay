@@ -19,6 +19,20 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
             true
         }
+
+        findPreference<Preference>("app_version")?.let { pref ->
+            var tapCount = 0
+            pref.setOnPreferenceClickListener {
+                tapCount++
+                if (tapCount >= Keys.UPDATE_FORCE_TAP_COUNT) {
+                    tapCount = 0
+                    lifecycleScope.launch {
+                        GitHubUpdateChecker(requireContext()).forceUpdate()
+                    }
+                }
+                true
+            }
+        }
     }
 
 }

@@ -77,7 +77,6 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         summary = pkgInfo.versionName
         category = SettingsCategory.ABOUT
         icon = context.getDrawable(R.mipmap.ic_launcher)
-        isSelectable = false
     }
 
     val updatePref = Preference(context).apply {

@@ -21,7 +21,7 @@ class GitHubUpdateChecker(private val context: Context) {
     private val client = OkHttpClient()
     private val apiUrl = "https://api.github.com/repos/Planqton/streamplay/releases/latest"
 
-    suspend fun checkForUpdate() {
+    suspend fun checkForUpdate(force: Boolean = false) {
         val progress = withContext(Dispatchers.Main) {
             val bar = ProgressBar(context)
             AlertDialog.Builder(context)
@@ -58,18 +58,22 @@ class GitHubUpdateChecker(private val context: Context) {
                 "0"
             }
             withContext(Dispatchers.Main) { progress.dismiss() }
-            if (isNewerVersion(remoteVersion, localVersion) && !apkUrl.isNullOrEmpty()) {
-                withContext(Dispatchers.Main) {
-                    AlertDialog.Builder(context)
-                        .setTitle(context.getString(R.string.update_available_title))
-                        .setMessage(context.getString(R.string.update_available_message, remoteVersion))
-                        .setPositiveButton(android.R.string.ok) { _, _ ->
-                            CoroutineScope(Dispatchers.Main).launch { downloadAndInstall(apkUrl!!) }
-                        }
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .show()
+            if ((force || isNewerVersion(remoteVersion, localVersion)) && !apkUrl.isNullOrEmpty()) {
+                if (force) {
+                    downloadAndInstall(apkUrl!!)
+                } else {
+                    withContext(Dispatchers.Main) {
+                        AlertDialog.Builder(context)
+                            .setTitle(context.getString(R.string.update_available_title))
+                            .setMessage(context.getString(R.string.update_available_message, remoteVersion))
+                            .setPositiveButton(android.R.string.ok) { _, _ ->
+                                CoroutineScope(Dispatchers.Main).launch { downloadAndInstall(apkUrl!!) }
+                            }
+                            .setNegativeButton(android.R.string.cancel, null)
+                            .show()
+                    }
                 }
-            } else {
+            } else if (!force) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, context.getString(R.string.update_latest), Toast.LENGTH_SHORT).show()
                 }
@@ -80,6 +84,10 @@ class GitHubUpdateChecker(private val context: Context) {
                 Toast.makeText(context, context.getString(R.string.update_check_fail), Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    suspend fun forceUpdate() {
+        checkForUpdate(true)
     }
 
     private fun isNewerVersion(remote: String, local: String): Boolean {
