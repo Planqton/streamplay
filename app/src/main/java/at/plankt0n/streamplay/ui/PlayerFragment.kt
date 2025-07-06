@@ -35,6 +35,7 @@ import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.Keys
+import androidx.media3.common.Player
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
@@ -60,6 +61,7 @@ class PlayerFragment : Fragment() {
     private lateinit var shortcutRecyclerView: RecyclerView
     private lateinit var shortcutAdapter: ShortcutAdapter
     private lateinit var countdownTextView: TextView
+    private lateinit var connectingBanner: TextView
     private val countdownHandler = Handler(Looper.getMainLooper())
     private var countdownRunnable: Runnable? = null
 
@@ -117,6 +119,7 @@ class PlayerFragment : Fragment() {
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
+        connectingBanner = view.findViewById(R.id.connecting_banner)
 
         // Grundlegende Button-Listener setzen, auch wenn die Playlist leer ist
         playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
@@ -197,6 +200,13 @@ class PlayerFragment : Fragment() {
             onTimelineChanged = {
                 Log.d("PlayerFragment", "\ud83d\udd01 Timeline ge\u00e4ndert! Grund: $it")
                 reloadPlaylist()
+            },
+            onPlaybackStateChanged = { state ->
+                if (state == Player.STATE_BUFFERING) {
+                    showConnecting()
+                } else if (state == Player.STATE_READY) {
+                    hideConnecting()
+                }
             }
         )
 
@@ -466,5 +476,13 @@ class PlayerFragment : Fragment() {
     private fun hideCountdown() {
         countdownRunnable?.let { countdownHandler.removeCallbacks(it) }
         countdownTextView.visibility = View.GONE
+    }
+
+    private fun showConnecting() {
+        connectingBanner.visibility = View.VISIBLE
+    }
+
+    private fun hideConnecting() {
+        connectingBanner.visibility = View.GONE
     }
 }

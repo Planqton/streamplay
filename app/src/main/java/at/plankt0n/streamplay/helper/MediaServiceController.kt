@@ -28,7 +28,8 @@ class MediaServiceController(private val context: Context) {
         onPlaybackChanged: (Boolean) -> Unit,
         onStreamIndexChanged: (Int) -> Unit,
         onMetadataChanged: (String) -> Unit,
-        onTimelineChanged: (Int) -> Unit
+        onTimelineChanged: (Int) -> Unit,
+        onPlaybackStateChanged: (Int) -> Unit = {}
     ) {
         // Service als Foreground starten
         val serviceIntent = Intent(context, StreamingService::class.java)
@@ -48,6 +49,10 @@ class MediaServiceController(private val context: Context) {
                 listener = object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         onPlaybackChanged(isPlaying)
+                    }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        onPlaybackStateChanged(playbackState)
                     }
 
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
