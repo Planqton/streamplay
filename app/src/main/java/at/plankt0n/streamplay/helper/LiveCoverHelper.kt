@@ -14,14 +14,27 @@ import androidx.palette.graphics.Palette
 
 object LiveCoverHelper {
 
-    fun loadCoverWithBackgroundFade(
+    enum class BackgroundEffect {
+        FADE,
+        AQUA,
+        RADIAL,
+        SUNSET,
+        FOREST,
+        DIAGONAL,
+        SPOTLIGHT
+    }
+
+    fun loadCoverWithBackground(
         context: Context,
         imageUrl: String,
         imageView: ImageView,
         backgroundTarget: View,
         defaultColor: Int,
         lastColor: Int?,
-        onNewColor: (Int) -> Unit
+        lastEffect: BackgroundEffect?,
+        effect: BackgroundEffect = BackgroundEffect.FADE,
+        onNewColor: (Int) -> Unit,
+        onNewEffect: (BackgroundEffect) -> Unit
     ) {
         Glide.with(context)
             .asBitmap()
@@ -42,8 +55,8 @@ object LiveCoverHelper {
                                 hsv[2] = (hsv[2] + 0.1f).coerceAtMost(1.0f)
                                 val smoothColor = Color.HSVToColor(hsv)
 
-                                // Nur animieren, wenn sich Farbe wirklich ändert
-                                if (lastColor != smoothColor) {
+                                // Nur animieren, wenn sich Farbe oder Effekt ändert
+                                if (lastColor != smoothColor || lastEffect != effect) {
                                     val animator = ValueAnimator.ofArgb(
                                         lastColor ?: defaultColor,
                                         smoothColor
@@ -51,21 +64,58 @@ object LiveCoverHelper {
                                         duration = 400
                                         addUpdateListener { anim ->
                                             val color = anim.animatedValue as Int
-                                            val gradient = GradientDrawable(
-                                                GradientDrawable.Orientation.TOP_BOTTOM,
-                                                intArrayOf(color, Color.TRANSPARENT)
-                                            )
-                                            gradient.cornerRadius = 0f
+                                            val gradient = createGradient(color, effect)
                                             backgroundTarget.background = gradient
                                         }
                                     }
                                     animator.start()
                                     onNewColor(smoothColor)
+                                    onNewEffect(effect)
                                 }
                             }
                         }
                     }
                 }
             })
+    }
+
+    fun createGradient(color: Int, effect: BackgroundEffect): GradientDrawable {
+        val hsv = FloatArray(3)
+        Color.colorToHSV(color, hsv)
+        val lighter = Color.HSVToColor(floatArrayOf(hsv[0], (hsv[1] * 0.7f).coerceAtMost(1f), (hsv[2] * 1.1f).coerceAtMost(1f)))
+        val darker = Color.HSVToColor(floatArrayOf(hsv[0], hsv[1], (hsv[2] * 0.7f).coerceAtMost(1f)))
+
+        return when (effect) {
+            BackgroundEffect.FADE -> GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(color, Color.TRANSPARENT)
+            )
+            BackgroundEffect.AQUA -> GradientDrawable(
+                GradientDrawable.Orientation.BL_TR,
+                intArrayOf(color, Color.TRANSPARENT)
+            )
+            BackgroundEffect.RADIAL -> GradientDrawable().apply {
+                gradientType = GradientDrawable.RADIAL_GRADIENT
+                colors = intArrayOf(color, Color.TRANSPARENT)
+                gradientRadius = 800f
+            }
+            BackgroundEffect.SUNSET -> GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                intArrayOf(lighter, color)
+            )
+            BackgroundEffect.FOREST -> GradientDrawable(
+                GradientDrawable.Orientation.TR_BL,
+                intArrayOf(darker, color)
+            )
+            BackgroundEffect.DIAGONAL -> GradientDrawable(
+                GradientDrawable.Orientation.BR_TL,
+                intArrayOf(color, Color.TRANSPARENT)
+            )
+            BackgroundEffect.SPOTLIGHT -> GradientDrawable().apply {
+                gradientType = GradientDrawable.RADIAL_GRADIENT
+                colors = intArrayOf(lighter, color)
+                gradientRadius = 600f
+            }
+        }.apply { cornerRadius = 0f }
     }
 }

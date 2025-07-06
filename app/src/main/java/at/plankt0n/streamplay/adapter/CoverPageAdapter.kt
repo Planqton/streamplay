@@ -13,12 +13,14 @@ import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.MediaServiceController
+import at.plankt0n.streamplay.helper.LiveCoverHelper
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.BitmapImageViewTarget
 import com.google.android.material.imageview.ShapeableImageView
 
 class CoverPageAdapter(
-    private val mediaServiceController: MediaServiceController
+    private val mediaServiceController: MediaServiceController,
+    var backgroundEffect: LiveCoverHelper.BackgroundEffect
 ) : RecyclerView.Adapter<CoverPageAdapter.CoverViewHolder>() {
 
     val mediaItems: List<StationItem> = mediaServiceController.getCurrentPlaylist()
@@ -26,6 +28,7 @@ class CoverPageAdapter(
     inner class CoverViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val coverImage: ShapeableImageView = itemView.findViewById(R.id.cover_image)
         var lastColor: Int? = null
+        var lastEffect: LiveCoverHelper.BackgroundEffect? = null
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CoverViewHolder {
@@ -59,24 +62,20 @@ class CoverPageAdapter(
                                 hsv[2] = (hsv[2] + 0.1f).coerceAtMost(1.0f) // Helligkeit leicht erhöhen
                                 val smoothColor = Color.HSVToColor(hsv)
 
-                                // Nur animieren, wenn neu!
-                                if (holder.lastColor != smoothColor) {
+                                // Nur animieren, wenn Farbe oder Effekt sich ändert
+                                if (holder.lastColor != smoothColor || holder.lastEffect != backgroundEffect) {
                                     val fromColor = holder.lastColor
                                         ?: holder.itemView.context.getColor(R.color.default_background)
                                     val animator = ValueAnimator.ofArgb(fromColor, smoothColor)
                                     animator.duration = 400
                                     animator.addUpdateListener { a ->
                                         val color = a.animatedValue as Int
-                                        // Verlauf erzeugen: oben deckend, unten transparent
-                                        val gradient = GradientDrawable(
-                                            GradientDrawable.Orientation.TOP_BOTTOM,
-                                            intArrayOf(color, Color.TRANSPARENT)
-                                        )
-                                        gradient.cornerRadius = 0f
+                                        val gradient = LiveCoverHelper.createGradient(color, backgroundEffect)
                                         holder.itemView.background = gradient
                                     }
                                     animator.start()
                                     holder.lastColor = smoothColor
+                                    holder.lastEffect = backgroundEffect
                                 }
                             }
                         }

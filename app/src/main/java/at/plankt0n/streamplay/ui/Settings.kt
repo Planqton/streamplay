@@ -7,6 +7,8 @@ import android.text.style.ForegroundColorSpan
 import androidx.preference.*
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.Keys
+import at.plankt0n.streamplay.helper.LiveCoverHelper
+import at.plankt0n.streamplay.data.CoverMode
 
 /** Possible categories a preference can belong to. */
 enum class SettingsCategory { PLAYBACK, UI, METAINFO, ABOUT }
@@ -75,6 +77,48 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }
 
+    val backgroundEffectPref = ListPreference(context).apply {
+        key = "background_effect"
+        title = getString(R.string.settings_background_effect)
+        entries = arrayOf(
+            getString(R.string.bg_effect_fade),
+            getString(R.string.bg_effect_aqua),
+            getString(R.string.bg_effect_radial),
+            getString(R.string.bg_effect_sunset),
+            getString(R.string.bg_effect_forest),
+            getString(R.string.bg_effect_diagonal),
+            getString(R.string.bg_effect_spotlight)
+        )
+        entryValues = arrayOf(
+            LiveCoverHelper.BackgroundEffect.FADE.name,
+            LiveCoverHelper.BackgroundEffect.AQUA.name,
+            LiveCoverHelper.BackgroundEffect.RADIAL.name,
+            LiveCoverHelper.BackgroundEffect.SUNSET.name,
+            LiveCoverHelper.BackgroundEffect.FOREST.name,
+            LiveCoverHelper.BackgroundEffect.DIAGONAL.name,
+            LiveCoverHelper.BackgroundEffect.SPOTLIGHT.name
+        )
+        setDefaultValue(LiveCoverHelper.BackgroundEffect.FADE.name)
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    val coverModePref = ListPreference(context).apply {
+        key = "cover_mode"
+        title = getString(R.string.settings_cover_mode)
+        entries = arrayOf(
+            getString(R.string.cover_mode_station),
+            getString(R.string.cover_mode_meta)
+        )
+        entryValues = arrayOf(
+            CoverMode.STATION.name,
+            CoverMode.META.name
+        )
+        setDefaultValue(CoverMode.META.name)
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
     val versionPref = Preference(context).apply {
         key = "app_version"
         title = getString(R.string.settings_app_version)
@@ -110,6 +154,8 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         delayPreference,
         minimizeSwitch,
         bannerSwitch,
+        backgroundEffectPref,
+        coverModePref,
         versionPref,
         updatePref
     )

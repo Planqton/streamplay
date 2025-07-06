@@ -30,19 +30,17 @@ import at.plankt0n.streamplay.MainActivity
 import at.plankt0n.streamplay.adapter.CoverPageAdapter
 import at.plankt0n.streamplay.adapter.ShortcutAdapter
 import at.plankt0n.streamplay.data.ShortcutItem
+import at.plankt0n.streamplay.data.CoverMode
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
-import at.plankt0n.streamplay.helper.MetaLogHelper
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.Keys
-import at.plankt0n.streamplay.data.MetaLogEntry
 import androidx.media3.common.Player
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
-import android.widget.Toast
 
 class PlayerFragment : Fragment() {
 
@@ -61,7 +59,6 @@ class PlayerFragment : Fragment() {
     private lateinit var buttonMenu: ImageButton
     private lateinit var updateBadge: TextView
     private lateinit var buttonSpotify: ImageButton
-    private lateinit var buttonManualLog: ImageButton
     private lateinit var buttonMute: ImageButton
     private lateinit var buttonShare: ImageButton
     private lateinit var shortcutRecyclerView: RecyclerView
@@ -74,10 +71,30 @@ class PlayerFragment : Fragment() {
     private var bannerRunnable: Runnable? = null
     private lateinit var prefs: SharedPreferences
     private var showInfoBanner: Boolean = true
+    private var backgroundEffect = LiveCoverHelper.BackgroundEffect.FADE
+    private var coverMode = CoverMode.META
     private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
         if (key == "show_exoplayer_banner") {
             showInfoBanner = shared.getBoolean(key, true)
             if (!showInfoBanner) hideConnecting()
+        }
+        if (key == "background_effect") {
+            backgroundEffect = try {
+                LiveCoverHelper.BackgroundEffect.valueOf(
+                    shared.getString(key, LiveCoverHelper.BackgroundEffect.FADE.name)!!
+                )
+            } catch (e: IllegalArgumentException) {
+                LiveCoverHelper.BackgroundEffect.FADE
+            }
+            if (initialized) reloadPlaylist()
+        }
+        if (key == "cover_mode") {
+            coverMode = try {
+                CoverMode.valueOf(shared.getString(key, CoverMode.META.name)!!)
+            } catch (e: IllegalArgumentException) {
+                CoverMode.META
+            }
+            if (initialized) reloadPlaylist()
         }
         if (key == Keys.PREF_UPDATE_AVAILABLE) {
             val showBadge = shared.getBoolean(key, false)
@@ -137,13 +154,24 @@ class PlayerFragment : Fragment() {
         buttonBack = view.findViewById(R.id.button_back)
         buttonForward = view.findViewById(R.id.button_forward)
         buttonSpotify = view.findViewById(R.id.button_spotify)
-        buttonManualLog = view.findViewById(R.id.button_manual_log)
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
         connectingBanner = view.findViewById(R.id.connecting_banner)
         prefs = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         showInfoBanner = prefs.getBoolean("show_exoplayer_banner", true)
+        backgroundEffect = try {
+            LiveCoverHelper.BackgroundEffect.valueOf(
+                prefs.getString("background_effect", LiveCoverHelper.BackgroundEffect.FADE.name)!!
+            )
+        } catch (e: IllegalArgumentException) {
+            LiveCoverHelper.BackgroundEffect.FADE
+        }
+        coverMode = try {
+            CoverMode.valueOf(prefs.getString("cover_mode", CoverMode.META.name)!!)
+        } catch (e: IllegalArgumentException) {
+            CoverMode.META
+        }
         updateBadge.visibility = if (prefs.getBoolean(Keys.PREF_UPDATE_AVAILABLE, false)) View.VISIBLE else View.GONE
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
 
@@ -194,7 +222,7 @@ class PlayerFragment : Fragment() {
                     StateHelper.hasAutoOpenedDiscover = false
                 }
 
-                val coverPageAdapter = CoverPageAdapter(mediaServiceController)
+                val coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
                 viewPager.adapter = coverPageAdapter
                 dotsIndicator.setViewPager2(viewPager)
 
@@ -275,8 +303,6 @@ class PlayerFragment : Fragment() {
             startActivity(Intent.createChooser(intent, chooserTitle))
         }
 
-        buttonManualLog.setOnClickListener { addManualLog() }
-
         buttonMute.setOnClickListener {
             val audioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as AudioManager
             if (isMuted) {
@@ -342,48 +368,59 @@ class PlayerFragment : Fragment() {
 
             val recyclerView = viewPager.getChildAt(0) as? RecyclerView
             val holder = recyclerView?.findViewHolderForAdapterPosition(viewPager.currentItem)
-                    as? CoverPageAdapter.CoverViewHolder
+                    as? CoverPageAdapter.CoverViewHolder ?: return@observe
 
             val defaultIconUrl = mediaServiceController.mediaController
                 ?.getMediaItemAt(viewPager.currentItem)
                 ?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
 
             val metaCoverUrl = trackInfo.bestCoverUrl?.takeIf { it.isNotBlank() }
-            val imageUrlToLoad = metaCoverUrl ?: defaultIconUrl
+            val imageUrlToLoad = when (coverMode) {
+                CoverMode.META -> metaCoverUrl ?: defaultIconUrl
+                CoverMode.STATION -> defaultIconUrl
+            }
 
-            holder?.let { coverHolder ->
-                LiveCoverHelper.loadCoverWithBackgroundFade(
-                    context = requireContext(),
-                    imageUrl = imageUrlToLoad,
-                    imageView = coverHolder.coverImage,
-                    backgroundTarget = coverHolder.itemView,
-                    defaultColor = requireContext().getColor(R.color.default_background),
-                    lastColor = coverHolder.lastColor,
-                    onNewColor = { coverHolder.lastColor = it }
-                )
+            LiveCoverHelper.loadCoverWithBackground(
+                context = requireContext(),
+                imageUrl = imageUrlToLoad,
+                imageView = holder.coverImage,
+                backgroundTarget = holder.itemView,
+                defaultColor = requireContext().getColor(R.color.default_background),
+                lastColor = holder.lastColor,
+                lastEffect = holder.lastEffect,
+                effect = backgroundEffect,
+                onNewColor = { holder.lastColor = it },
+                onNewEffect = { holder.lastEffect = it }
+            )
 
+            if (coverMode == CoverMode.META && metaCoverUrl != null) {
                 showingMetaCover = true
-                coverHolder.coverImage.setOnClickListener { view ->
-                    val targetUrl = if (showingMetaCover) defaultIconUrl else metaCoverUrl ?: defaultIconUrl
+                holder.coverImage.setOnClickListener { view ->
+                    val targetUrl = if (showingMetaCover) defaultIconUrl else metaCoverUrl
                     view.animate()
                         .rotationY(90f)
                         .setDuration(150)
                         .withEndAction {
-                            LiveCoverHelper.loadCoverWithBackgroundFade(
+                            LiveCoverHelper.loadCoverWithBackground(
                                 context = requireContext(),
                                 imageUrl = targetUrl,
-                                imageView = coverHolder.coverImage,
-                                backgroundTarget = coverHolder.itemView,
+                                imageView = holder.coverImage,
+                                backgroundTarget = holder.itemView,
                                 defaultColor = requireContext().getColor(R.color.default_background),
-                                lastColor = coverHolder.lastColor,
-                                onNewColor = { coverHolder.lastColor = it }
+                                lastColor = holder.lastColor,
+                                lastEffect = holder.lastEffect,
+                                effect = backgroundEffect,
+                                onNewColor = { holder.lastColor = it },
+                                onNewEffect = { holder.lastEffect = it }
                             )
-                            coverHolder.coverImage.rotationY = -90f
-                            coverHolder.coverImage.animate().rotationY(0f).setDuration(150).start()
+                            holder.coverImage.rotationY = -90f
+                            holder.coverImage.animate().rotationY(0f).setDuration(150).start()
                         }
                         .start()
                     showingMetaCover = !showingMetaCover
                 }
+            } else {
+                holder.coverImage.setOnClickListener(null)
             }
 
             titleTextView?.text = trackInfo.trackName.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_title)
@@ -399,15 +436,18 @@ class PlayerFragment : Fragment() {
                 albumTextView?.text = getString(R.string.unknown_album)
             }
 
-            if (!trackInfo.bestCoverUrl.isNullOrBlank()) {
+            if (coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
                 Glide.with(requireContext())
                     .load(trackInfo.bestCoverUrl)
                     .placeholder(R.drawable.ic_placeholder_logo)
                     .error(R.drawable.ic_stationcover_placeholder)
                     .into(stationIconView!!)
             } else {
-                Glide.with(requireContext()).clear(stationIconView!!)
-                stationIconView!!.setImageDrawable(null)
+                Glide.with(requireContext())
+                    .load(defaultIconUrl)
+                    .placeholder(R.drawable.ic_placeholder_logo)
+                    .error(R.drawable.ic_stationcover_placeholder)
+                    .into(stationIconView!!)
             }
 
             enableMarquee(titleTextView!!, artistTextView!!, albumTextView!!)
@@ -454,7 +494,7 @@ class PlayerFragment : Fragment() {
         }
         shortcutAdapter.setItems(shortcuts)
 
-        val coverPageAdapter = CoverPageAdapter(mediaServiceController)
+        val coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
         viewPager.adapter = coverPageAdapter
         dotsIndicator.setViewPager2(viewPager)
 
@@ -542,26 +582,6 @@ class PlayerFragment : Fragment() {
             connectingBanner.setBackgroundResource(R.drawable.rounded_red_transparent_bg)
             connectingBanner.visibility = View.VISIBLE
         }
-    }
-
-    private fun addManualLog() {
-        val trackInfo = spotifyTrackViewModel.trackInfo.value ?: return
-        val controller = mediaServiceController.mediaController ?: return
-        val stationName = controller.getMediaItemAt(viewPager.currentItem)
-            .mediaMetadata.extras?.getString("EXTRA_STATION_NAME") ?: ""
-
-        MetaLogHelper.addLog(
-            requireContext(),
-            MetaLogEntry(
-                timestamp = System.currentTimeMillis(),
-                station = stationName,
-                title = trackInfo.trackName,
-                artist = trackInfo.artistName,
-                url = trackInfo.spotifyUrl.takeIf { it.isNotBlank() },
-                manual = true
-            )
-        )
-        Toast.makeText(requireContext(), getString(R.string.manual_log_saved), Toast.LENGTH_SHORT).show()
     }
 
     private fun hideConnecting() {
