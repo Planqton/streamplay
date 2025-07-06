@@ -11,6 +11,8 @@ object Keys {
     const val ACTION_HIDE_COUNTDOWN = "at.plankt0n.streamplay.HIDE_COUNTDOWN"
     const val EXTRA_COUNTDOWN_DURATION = "countdown_duration"
 
+    const val PREF_SHOW_EXOPLAYER_INFO = "show_exoplayer_info"
+
 
 
     //Spotify

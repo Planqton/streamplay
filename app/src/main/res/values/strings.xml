@@ -112,6 +112,7 @@
     <string name="settings_category_ui">UI Settings</string>
     <string name="settings_category_metainfo">Metainfo Settings</string>
     <string name="settings_category_about">About</string>
+    <string name="settings_show_exoplayer_info">Zeige Exoplayer Information</string>
     <string name="settings_app_version">App Version</string>
     <string name="settings_check_updates">Check for Updates</string>
     <string name="update_latest">Aktuellste Version installiert</string>
@@ -122,5 +123,7 @@
     <string name="update_download_fail">Download fehlgeschlagen</string>
     <string name="update_check_fail">Updateprüfung fehlgeschlagen</string>
     <string name="minimizing_in">Minimizing in %1$d s</string>
+    <string name="connecting">Connecting…</string>
+    <string name="connection_error">Error: %1$s</string>
     <string name="no_metadata_available">Keine Informationen verfügbar</string>
 </resources>

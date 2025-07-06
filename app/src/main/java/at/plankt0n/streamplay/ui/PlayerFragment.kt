@@ -38,6 +38,7 @@ import at.plankt0n.streamplay.Keys
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
+import androidx.media3.common.Player
 
 class PlayerFragment : Fragment() {
 
@@ -62,6 +63,13 @@ class PlayerFragment : Fragment() {
     private lateinit var countdownTextView: TextView
     private val countdownHandler = Handler(Looper.getMainLooper())
     private var countdownRunnable: Runnable? = null
+    private lateinit var sharedPreferences: android.content.SharedPreferences
+    private val prefListener =
+        android.content.SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
+            if (key == Keys.PREF_SHOW_EXOPLAYER_INFO && !prefs.getBoolean(Keys.PREF_SHOW_EXOPLAYER_INFO, true)) {
+                connectionStatusBanner.visibility = View.GONE
+            }
+        }
 
     private val autoplayReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -76,6 +84,8 @@ class PlayerFragment : Fragment() {
     }
 
     var isMuted = false
+    private lateinit var connectionStatusBanner: TextView
+    private var baseStationName: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -116,6 +126,10 @@ class PlayerFragment : Fragment() {
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
+        connectionStatusBanner = view.findViewById(R.id.connection_status_banner)
+
+        sharedPreferences = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        sharedPreferences.registerOnSharedPreferenceChangeListener(prefListener)
 
         // Grundlegende Button-Listener setzen, auch wenn die Playlist leer ist
         playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
@@ -188,6 +202,42 @@ class PlayerFragment : Fragment() {
 
             },
             onPlaybackChanged = { updatePlayPauseIcon(it) },
+            onPlaybackStateChanged = { state ->
+                val showBanner = sharedPreferences.getBoolean(Keys.PREF_SHOW_EXOPLAYER_INFO, true)
+                if (!showBanner) {
+                    connectionStatusBanner.visibility = View.GONE
+                }
+
+                if (state == Player.STATE_BUFFERING) {
+                    if (showBanner) {
+                        connectionStatusBanner.text = getString(R.string.connecting)
+                        connectionStatusBanner.setBackgroundColor(
+                            requireContext().getColor(R.color.banner_connecting)
+                        )
+                        connectionStatusBanner.visibility = View.VISIBLE
+                    }
+                    updateStationName(true)
+                } else if (state == Player.STATE_READY) {
+                    if (showBanner) {
+                        connectionStatusBanner.visibility = View.GONE
+                    }
+                    updateStationName(false)
+                }
+            },
+            onPlaybackError = { error ->
+                val showBanner = sharedPreferences.getBoolean(Keys.PREF_SHOW_EXOPLAYER_INFO, true)
+                if (!showBanner) return@initializeAndConnect
+
+                val msg = error.message ?: error.errorCodeName
+                connectionStatusBanner.text = getString(
+                    R.string.connection_error,
+                    msg
+                )
+                connectionStatusBanner.setBackgroundColor(
+                    requireContext().getColor(R.color.banner_error)
+                )
+                connectionStatusBanner.visibility = View.VISIBLE
+            },
             onStreamIndexChanged = { index ->
                 viewPager.setCurrentItem(index, true)
                 updateOverlayUI(index)
@@ -354,7 +404,7 @@ class PlayerFragment : Fragment() {
 
         val stationName = extras.getString("EXTRA_STATION_NAME") ?: ""
         val iconUrl = extras.getString("EXTRA_ICON_URL") ?: ""
-
+        baseStationName = stationName
         stationNameTextView.text = stationName
         Glide.with(stationIconImageView)
             .load(iconUrl)
@@ -367,6 +417,17 @@ class PlayerFragment : Fragment() {
         val iconRes = if (isPlaying) R.drawable.ic_button_pause else R.drawable.ic_button_play
         playPauseButton.setImageResource(iconRes)
     }
+
+    private fun updateStationName(isBuffering: Boolean) {
+        val text = if (isBuffering) {
+            baseStationName + " - " + getString(R.string.connecting)
+        } else {
+            baseStationName
+        }
+        stationNameTextView.text = text
+    }
+
+
 
     private fun reloadPlaylist() {
         val controller = mediaServiceController.mediaController ?: return
@@ -404,6 +465,7 @@ class PlayerFragment : Fragment() {
         if (initialized) {
             requireContext().unregisterReceiver(autoplayReceiver)
             countdownHandler.removeCallbacksAndMessages(null)
+            sharedPreferences.unregisterOnSharedPreferenceChangeListener(prefListener)
             mediaServiceController.disconnect()
         }
         super.onDestroyView()

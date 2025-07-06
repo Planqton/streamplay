@@ -11,6 +11,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import androidx.media3.common.PlaybackException
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import at.plankt0n.streamplay.StreamingService
@@ -26,6 +27,8 @@ class MediaServiceController(private val context: Context) {
     fun initializeAndConnect(
         onConnected: (MediaController) -> Unit,
         onPlaybackChanged: (Boolean) -> Unit,
+        onPlaybackStateChanged: (Int) -> Unit,
+        onPlaybackError: (PlaybackException) -> Unit,
         onStreamIndexChanged: (Int) -> Unit,
         onMetadataChanged: (String) -> Unit,
         onTimelineChanged: (Int) -> Unit
@@ -48,6 +51,14 @@ class MediaServiceController(private val context: Context) {
                 listener = object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         onPlaybackChanged(isPlaying)
+                    }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        onPlaybackStateChanged(playbackState)
+                    }
+
+                    override fun onPlayerError(error: PlaybackException) {
+                        onPlaybackError(error)
                     }
 
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
