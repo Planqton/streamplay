@@ -131,4 +131,9 @@
     <string name="bg_effect_fade">Fade</string>
     <string name="bg_effect_aqua">Aqua</string>
     <string name="bg_effect_radial">Radial</string>
+    <string name="bg_effect_sunset">Sunset</string>
+    <string name="bg_effect_forest">Forest</string>
+    <string name="settings_cover_mode">Cover Source</string>
+    <string name="cover_mode_station">Station Cover</string>
+    <string name="cover_mode_meta">Metadata Cover</string>
 </resources>

@@ -30,6 +30,7 @@ import at.plankt0n.streamplay.MainActivity
 import at.plankt0n.streamplay.adapter.CoverPageAdapter
 import at.plankt0n.streamplay.adapter.ShortcutAdapter
 import at.plankt0n.streamplay.data.ShortcutItem
+import at.plankt0n.streamplay.data.CoverMode
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.StateHelper
@@ -71,6 +72,7 @@ class PlayerFragment : Fragment() {
     private lateinit var prefs: SharedPreferences
     private var showInfoBanner: Boolean = true
     private var backgroundEffect = LiveCoverHelper.BackgroundEffect.FADE
+    private var coverMode = CoverMode.META
     private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
         if (key == "show_exoplayer_banner") {
             showInfoBanner = shared.getBoolean(key, true)
@@ -83,6 +85,14 @@ class PlayerFragment : Fragment() {
                 )
             } catch (e: IllegalArgumentException) {
                 LiveCoverHelper.BackgroundEffect.FADE
+            }
+            if (initialized) reloadPlaylist()
+        }
+        if (key == "cover_mode") {
+            coverMode = try {
+                CoverMode.valueOf(shared.getString(key, CoverMode.META.name)!!)
+            } catch (e: IllegalArgumentException) {
+                CoverMode.META
             }
             if (initialized) reloadPlaylist()
         }
@@ -156,6 +166,11 @@ class PlayerFragment : Fragment() {
             )
         } catch (e: IllegalArgumentException) {
             LiveCoverHelper.BackgroundEffect.FADE
+        }
+        coverMode = try {
+            CoverMode.valueOf(prefs.getString("cover_mode", CoverMode.META.name)!!)
+        } catch (e: IllegalArgumentException) {
+            CoverMode.META
         }
         updateBadge.visibility = if (prefs.getBoolean(Keys.PREF_UPDATE_AVAILABLE, false)) View.VISIBLE else View.GONE
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
@@ -360,7 +375,10 @@ class PlayerFragment : Fragment() {
                 ?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
 
             val metaCoverUrl = trackInfo.bestCoverUrl?.takeIf { it.isNotBlank() }
-            val imageUrlToLoad = metaCoverUrl ?: defaultIconUrl
+            val imageUrlToLoad = when (coverMode) {
+                CoverMode.META -> metaCoverUrl ?: defaultIconUrl
+                CoverMode.STATION -> defaultIconUrl
+            }
 
             LiveCoverHelper.loadCoverWithBackground(
                 context = requireContext(),
@@ -375,30 +393,34 @@ class PlayerFragment : Fragment() {
                 onNewEffect = { holder.lastEffect = it }
             )
 
-            showingMetaCover = true
-            holder.coverImage.setOnClickListener { view ->
-                val targetUrl = if (showingMetaCover) defaultIconUrl else metaCoverUrl ?: defaultIconUrl
-                view.animate()
-                    .rotationY(90f)
-                    .setDuration(150)
-                    .withEndAction {
-                        LiveCoverHelper.loadCoverWithBackground(
-                            context = requireContext(),
-                            imageUrl = targetUrl,
-                            imageView = holder.coverImage,
-                            backgroundTarget = holder.itemView,
-                            defaultColor = requireContext().getColor(R.color.default_background),
-                            lastColor = holder.lastColor,
-                            lastEffect = holder.lastEffect,
-                            effect = backgroundEffect,
-                            onNewColor = { holder.lastColor = it },
-                            onNewEffect = { holder.lastEffect = it }
-                        )
-                        holder.coverImage.rotationY = -90f
-                        holder.coverImage.animate().rotationY(0f).setDuration(150).start()
-                    }
-                    .start()
-                showingMetaCover = !showingMetaCover
+            if (coverMode == CoverMode.META && metaCoverUrl != null) {
+                showingMetaCover = true
+                holder.coverImage.setOnClickListener { view ->
+                    val targetUrl = if (showingMetaCover) defaultIconUrl else metaCoverUrl
+                    view.animate()
+                        .rotationY(90f)
+                        .setDuration(150)
+                        .withEndAction {
+                            LiveCoverHelper.loadCoverWithBackground(
+                                context = requireContext(),
+                                imageUrl = targetUrl,
+                                imageView = holder.coverImage,
+                                backgroundTarget = holder.itemView,
+                                defaultColor = requireContext().getColor(R.color.default_background),
+                                lastColor = holder.lastColor,
+                                lastEffect = holder.lastEffect,
+                                effect = backgroundEffect,
+                                onNewColor = { holder.lastColor = it },
+                                onNewEffect = { holder.lastEffect = it }
+                            )
+                            holder.coverImage.rotationY = -90f
+                            holder.coverImage.animate().rotationY(0f).setDuration(150).start()
+                        }
+                        .start()
+                    showingMetaCover = !showingMetaCover
+                }
+            } else {
+                holder.coverImage.setOnClickListener(null)
             }
 
             titleTextView?.text = trackInfo.trackName.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_title)
@@ -414,15 +436,18 @@ class PlayerFragment : Fragment() {
                 albumTextView?.text = getString(R.string.unknown_album)
             }
 
-            if (!trackInfo.bestCoverUrl.isNullOrBlank()) {
+            if (coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
                 Glide.with(requireContext())
                     .load(trackInfo.bestCoverUrl)
                     .placeholder(R.drawable.ic_placeholder_logo)
                     .error(R.drawable.ic_stationcover_placeholder)
                     .into(stationIconView!!)
             } else {
-                Glide.with(requireContext()).clear(stationIconView!!)
-                stationIconView!!.setImageDrawable(null)
+                Glide.with(requireContext())
+                    .load(defaultIconUrl)
+                    .placeholder(R.drawable.ic_placeholder_logo)
+                    .error(R.drawable.ic_stationcover_placeholder)
+                    .into(stationIconView!!)
             }
 
             enableMarquee(titleTextView!!, artistTextView!!, albumTextView!!)

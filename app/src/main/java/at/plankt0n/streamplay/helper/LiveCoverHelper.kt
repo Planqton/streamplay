@@ -14,7 +14,7 @@ import androidx.palette.graphics.Palette
 
 object LiveCoverHelper {
 
-    enum class BackgroundEffect { FADE, AQUA, RADIAL }
+    enum class BackgroundEffect { FADE, AQUA, RADIAL, SUNSET, FOREST }
 
     fun loadCoverWithBackground(
         context: Context,
@@ -86,6 +86,14 @@ object LiveCoverHelper {
                 colors = intArrayOf(color, Color.TRANSPARENT)
                 gradientRadius = 800f
             }
+            BackgroundEffect.SUNSET -> GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                intArrayOf(Color.parseColor("#ff7e5f"), Color.parseColor("#feb47b"))
+            )
+            BackgroundEffect.FOREST -> GradientDrawable(
+                GradientDrawable.Orientation.TR_BL,
+                intArrayOf(Color.parseColor("#a8e063"), Color.parseColor("#56ab2f"))
+            )
         }.apply { cornerRadius = 0f }
     }
 }
