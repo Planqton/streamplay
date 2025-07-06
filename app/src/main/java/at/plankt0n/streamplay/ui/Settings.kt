@@ -85,14 +85,18 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
             getString(R.string.bg_effect_aqua),
             getString(R.string.bg_effect_radial),
             getString(R.string.bg_effect_sunset),
-            getString(R.string.bg_effect_forest)
+            getString(R.string.bg_effect_forest),
+            getString(R.string.bg_effect_diagonal),
+            getString(R.string.bg_effect_spotlight)
         )
         entryValues = arrayOf(
             LiveCoverHelper.BackgroundEffect.FADE.name,
             LiveCoverHelper.BackgroundEffect.AQUA.name,
             LiveCoverHelper.BackgroundEffect.RADIAL.name,
             LiveCoverHelper.BackgroundEffect.SUNSET.name,
-            LiveCoverHelper.BackgroundEffect.FOREST.name
+            LiveCoverHelper.BackgroundEffect.FOREST.name,
+            LiveCoverHelper.BackgroundEffect.DIAGONAL.name,
+            LiveCoverHelper.BackgroundEffect.SPOTLIGHT.name
         )
         setDefaultValue(LiveCoverHelper.BackgroundEffect.FADE.name)
         category = SettingsCategory.UI

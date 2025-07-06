@@ -14,7 +14,15 @@ import androidx.palette.graphics.Palette
 
 object LiveCoverHelper {
 
-    enum class BackgroundEffect { FADE, AQUA, RADIAL, SUNSET, FOREST }
+    enum class BackgroundEffect {
+        FADE,
+        AQUA,
+        RADIAL,
+        SUNSET,
+        FOREST,
+        DIAGONAL,
+        SPOTLIGHT
+    }
 
     fun loadCoverWithBackground(
         context: Context,
@@ -72,6 +80,11 @@ object LiveCoverHelper {
     }
 
     fun createGradient(color: Int, effect: BackgroundEffect): GradientDrawable {
+        val hsv = FloatArray(3)
+        Color.colorToHSV(color, hsv)
+        val lighter = Color.HSVToColor(floatArrayOf(hsv[0], (hsv[1] * 0.7f).coerceAtMost(1f), (hsv[2] * 1.1f).coerceAtMost(1f)))
+        val darker = Color.HSVToColor(floatArrayOf(hsv[0], hsv[1], (hsv[2] * 0.7f).coerceAtMost(1f)))
+
         return when (effect) {
             BackgroundEffect.FADE -> GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
@@ -88,12 +101,21 @@ object LiveCoverHelper {
             }
             BackgroundEffect.SUNSET -> GradientDrawable(
                 GradientDrawable.Orientation.TL_BR,
-                intArrayOf(Color.parseColor("#ff7e5f"), Color.parseColor("#feb47b"))
+                intArrayOf(lighter, color)
             )
             BackgroundEffect.FOREST -> GradientDrawable(
                 GradientDrawable.Orientation.TR_BL,
-                intArrayOf(Color.parseColor("#a8e063"), Color.parseColor("#56ab2f"))
+                intArrayOf(darker, color)
             )
+            BackgroundEffect.DIAGONAL -> GradientDrawable(
+                GradientDrawable.Orientation.BR_TL,
+                intArrayOf(color, Color.TRANSPARENT)
+            )
+            BackgroundEffect.SPOTLIGHT -> GradientDrawable().apply {
+                gradientType = GradientDrawable.RADIAL_GRADIENT
+                colors = intArrayOf(lighter, color)
+                gradientRadius = 600f
+            }
         }.apply { cornerRadius = 0f }
     }
 }
