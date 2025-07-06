@@ -19,6 +19,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.ViewFlipper
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -60,6 +61,10 @@ class PlayerFragment : Fragment() {
     private lateinit var shortcutRecyclerView: RecyclerView
     private lateinit var shortcutAdapter: ShortcutAdapter
     private lateinit var countdownTextView: TextView
+    private lateinit var statusBanner: TextView
+    private val statusHandler = Handler(Looper.getMainLooper())
+    private var statusRunnable: Runnable? = null
+    private var showStatusBannerPref = true
     private val countdownHandler = Handler(Looper.getMainLooper())
     private var countdownRunnable: Runnable? = null
 
@@ -117,6 +122,9 @@ class PlayerFragment : Fragment() {
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
+        statusBanner = view.findViewById(R.id.exoplayer_status_banner)
+        val prefs = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        showStatusBannerPref = prefs.getBoolean("show_exoplayer_status", true)
 
         // Grundlegende Button-Listener setzen, auch wenn die Playlist leer ist
         playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
@@ -134,8 +142,14 @@ class PlayerFragment : Fragment() {
         requireContext().registerReceiver(autoplayReceiver, filter, flags)
 
         mediaServiceController = MediaServiceController(requireContext())
+        if (showStatusBannerPref) {
+            showStatus(getString(R.string.exoplayer_status_connecting), R.drawable.rounded_blue_transparent_bg)
+        }
         mediaServiceController.initializeAndConnect(
             onConnected = { controller ->
+                if (showStatusBannerPref) {
+                    showStatus(getString(R.string.exoplayer_status_connected), R.drawable.rounded_green_transparent_bg, true)
+                }
                 val shortcuts = (0 until controller.mediaItemCount).mapNotNull { i ->
                     val mediaItem = controller.getMediaItemAt(i)
                     val extras = mediaItem.mediaMetadata.extras ?: return@mapNotNull null
@@ -188,7 +202,10 @@ class PlayerFragment : Fragment() {
                 })
 
             },
-            onPlaybackChanged = { updatePlayPauseIcon(it) },
+            onPlaybackChanged = { playing ->
+                updatePlayPauseIcon(playing)
+                if (playing && showStatusBannerPref) hideStatus()
+            },
             onStreamIndexChanged = { index ->
                 viewPager.setCurrentItem(index, true)
                 updateOverlayUI(index)
@@ -197,6 +214,12 @@ class PlayerFragment : Fragment() {
             onTimelineChanged = {
                 Log.d("PlayerFragment", "\ud83d\udd01 Timeline ge\u00e4ndert! Grund: $it")
                 reloadPlaylist()
+            }
+            ,
+            onPlayerError = { error ->
+                if (showStatusBannerPref) {
+                    showStatus(error, R.drawable.rounded_red_transparent_bg)
+                }
             }
         )
 
@@ -429,6 +452,7 @@ class PlayerFragment : Fragment() {
         if (initialized) {
             requireContext().unregisterReceiver(autoplayReceiver)
             countdownHandler.removeCallbacksAndMessages(null)
+            statusHandler.removeCallbacksAndMessages(null)
             mediaServiceController.disconnect()
         }
         super.onDestroyView()
@@ -466,5 +490,21 @@ class PlayerFragment : Fragment() {
     private fun hideCountdown() {
         countdownRunnable?.let { countdownHandler.removeCallbacks(it) }
         countdownTextView.visibility = View.GONE
+    }
+
+    private fun showStatus(text: String, backgroundRes: Int, autoHide: Boolean = false) {
+        statusRunnable?.let { statusHandler.removeCallbacks(it) }
+        statusBanner.text = text
+        statusBanner.background = ContextCompat.getDrawable(requireContext(), backgroundRes)
+        statusBanner.visibility = View.VISIBLE
+        if (autoHide) {
+            statusRunnable = Runnable { statusBanner.visibility = View.GONE }
+            statusHandler.postDelayed(statusRunnable!!, Keys.EXO_CONNECTED_DISPLAY_MS.toLong())
+        }
+    }
+
+    private fun hideStatus() {
+        statusRunnable?.let { statusHandler.removeCallbacks(it) }
+        statusBanner.visibility = View.GONE
     }
 }

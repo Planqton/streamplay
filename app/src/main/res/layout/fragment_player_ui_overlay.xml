@@ -26,6 +26,20 @@
         app:layout_constraintGuide_percent="0.65" />
 
     <TextView
+        android:id="@+id/exoplayer_status_banner"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_blue_transparent_bg"
+        android:padding="8dp"
+        android:textColor="@android:color/white"
+        android:text="@string/exoplayer_status_connecting"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
         android:id="@+id/autoplay_countdown"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -34,7 +48,7 @@
         android:padding="8dp"
         android:textColor="@android:color/black"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/exoplayer_status_banner"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

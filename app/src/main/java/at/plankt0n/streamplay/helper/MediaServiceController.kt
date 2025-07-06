@@ -11,6 +11,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import androidx.media3.common.PlaybackException
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import at.plankt0n.streamplay.StreamingService
@@ -28,7 +29,8 @@ class MediaServiceController(private val context: Context) {
         onPlaybackChanged: (Boolean) -> Unit,
         onStreamIndexChanged: (Int) -> Unit,
         onMetadataChanged: (String) -> Unit,
-        onTimelineChanged: (Int) -> Unit
+        onTimelineChanged: (Int) -> Unit,
+        onPlayerError: (String) -> Unit
     ) {
         // Service als Foreground starten
         val serviceIntent = Intent(context, StreamingService::class.java)
@@ -48,6 +50,10 @@ class MediaServiceController(private val context: Context) {
                 listener = object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         onPlaybackChanged(isPlaying)
+                    }
+
+                    override fun onPlayerError(error: PlaybackException) {
+                        onPlayerError(error.cause?.message ?: error.message ?: "Unknown error")
                     }
 
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
