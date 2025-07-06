@@ -15,6 +15,22 @@ object MetaLogHelper {
 
     fun addLog(context: Context, entry: MetaLogEntry) {
         val list = getLogs(context)
+
+        if (list.isNotEmpty()) {
+            val newest = list[0]
+            val sameMeta = newest.station == entry.station &&
+                newest.title == entry.title &&
+                newest.artist == entry.artist &&
+                newest.url == entry.url
+
+            if (sameMeta && entry.manual && !newest.manual) {
+                list[0] = entry
+                val json = Gson().toJson(list)
+                prefs(context).edit().putString(KEY_LOGS, json).apply()
+                return
+            }
+        }
+
         list.add(0, entry) // newest first
         val json = Gson().toJson(list)
         prefs(context).edit().putString(KEY_LOGS, json).apply()
