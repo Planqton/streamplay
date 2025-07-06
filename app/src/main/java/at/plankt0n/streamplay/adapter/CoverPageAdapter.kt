@@ -20,7 +20,7 @@ import com.google.android.material.imageview.ShapeableImageView
 
 class CoverPageAdapter(
     private val mediaServiceController: MediaServiceController,
-    private val backgroundEffect: LiveCoverHelper.BackgroundEffect
+    var backgroundEffect: LiveCoverHelper.BackgroundEffect
 ) : RecyclerView.Adapter<CoverPageAdapter.CoverViewHolder>() {
 
     val mediaItems: List<StationItem> = mediaServiceController.getCurrentPlaylist()

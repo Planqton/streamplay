@@ -78,10 +78,13 @@ class PlayerFragment : Fragment() {
         }
         if (key == "background_effect") {
             backgroundEffect = try {
-                LiveCoverHelper.BackgroundEffect.valueOf(shared.getString(key, LiveCoverHelper.BackgroundEffect.FADE.name)!!)
+                LiveCoverHelper.BackgroundEffect.valueOf(
+                    shared.getString(key, LiveCoverHelper.BackgroundEffect.FADE.name)!!
+                )
             } catch (e: IllegalArgumentException) {
                 LiveCoverHelper.BackgroundEffect.FADE
             }
+            if (initialized) reloadPlaylist()
         }
         if (key == Keys.PREF_UPDATE_AVAILABLE) {
             val showBadge = shared.getBoolean(key, false)
