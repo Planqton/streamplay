@@ -14,13 +14,16 @@ import androidx.palette.graphics.Palette
 
 object LiveCoverHelper {
 
-    fun loadCoverWithBackgroundFade(
+    enum class BackgroundEffect { FADE, AQUA, RADIAL }
+
+    fun loadCoverWithBackground(
         context: Context,
         imageUrl: String,
         imageView: ImageView,
         backgroundTarget: View,
         defaultColor: Int,
         lastColor: Int?,
+        effect: BackgroundEffect = BackgroundEffect.FADE,
         onNewColor: (Int) -> Unit
     ) {
         Glide.with(context)
@@ -51,11 +54,7 @@ object LiveCoverHelper {
                                         duration = 400
                                         addUpdateListener { anim ->
                                             val color = anim.animatedValue as Int
-                                            val gradient = GradientDrawable(
-                                                GradientDrawable.Orientation.TOP_BOTTOM,
-                                                intArrayOf(color, Color.TRANSPARENT)
-                                            )
-                                            gradient.cornerRadius = 0f
+                                            val gradient = createGradient(color, effect)
                                             backgroundTarget.background = gradient
                                         }
                                     }
@@ -67,5 +66,23 @@ object LiveCoverHelper {
                     }
                 }
             })
+    }
+
+    fun createGradient(color: Int, effect: BackgroundEffect): GradientDrawable {
+        return when (effect) {
+            BackgroundEffect.FADE -> GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(color, Color.TRANSPARENT)
+            )
+            BackgroundEffect.AQUA -> GradientDrawable(
+                GradientDrawable.Orientation.BL_TR,
+                intArrayOf(Color.parseColor("#00d4ff"), Color.TRANSPARENT)
+            )
+            BackgroundEffect.RADIAL -> GradientDrawable().apply {
+                gradientType = GradientDrawable.RADIAL_GRADIENT
+                colors = intArrayOf(color, Color.TRANSPARENT)
+                gradientRadius = 800f
+            }
+        }.apply { cornerRadius = 0f }
     }
 }

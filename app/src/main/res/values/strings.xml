@@ -127,4 +127,8 @@
     <string name="connecting">Verbindung wird hergestellt…</string>
     <string name="connected">Connected!</string>
     <string name="playback_error">Error: %1$s</string>
+    <string name="settings_background_effect">Background Effect</string>
+    <string name="bg_effect_fade">Fade</string>
+    <string name="bg_effect_aqua">Aqua</string>
+    <string name="bg_effect_radial">Radial</string>
 </resources>

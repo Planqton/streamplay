@@ -7,6 +7,7 @@ import android.text.style.ForegroundColorSpan
 import androidx.preference.*
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.Keys
+import at.plankt0n.streamplay.helper.LiveCoverHelper
 
 /** Possible categories a preference can belong to. */
 enum class SettingsCategory { PLAYBACK, UI, METAINFO, ABOUT }
@@ -75,6 +76,24 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }
 
+    val backgroundEffectPref = ListPreference(context).apply {
+        key = "background_effect"
+        title = getString(R.string.settings_background_effect)
+        entries = arrayOf(
+            getString(R.string.bg_effect_fade),
+            getString(R.string.bg_effect_aqua),
+            getString(R.string.bg_effect_radial)
+        )
+        entryValues = arrayOf(
+            LiveCoverHelper.BackgroundEffect.FADE.name,
+            LiveCoverHelper.BackgroundEffect.AQUA.name,
+            LiveCoverHelper.BackgroundEffect.RADIAL.name
+        )
+        setDefaultValue(LiveCoverHelper.BackgroundEffect.FADE.name)
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
     val versionPref = Preference(context).apply {
         key = "app_version"
         title = getString(R.string.settings_app_version)
@@ -110,6 +129,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         delayPreference,
         minimizeSwitch,
         bannerSwitch,
+        backgroundEffectPref,
         versionPref,
         updatePref
     )

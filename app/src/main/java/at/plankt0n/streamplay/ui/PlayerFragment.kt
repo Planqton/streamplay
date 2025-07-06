@@ -70,10 +70,18 @@ class PlayerFragment : Fragment() {
     private var bannerRunnable: Runnable? = null
     private lateinit var prefs: SharedPreferences
     private var showInfoBanner: Boolean = true
+    private var backgroundEffect = LiveCoverHelper.BackgroundEffect.FADE
     private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
         if (key == "show_exoplayer_banner") {
             showInfoBanner = shared.getBoolean(key, true)
             if (!showInfoBanner) hideConnecting()
+        }
+        if (key == "background_effect") {
+            backgroundEffect = try {
+                LiveCoverHelper.BackgroundEffect.valueOf(shared.getString(key, LiveCoverHelper.BackgroundEffect.FADE.name)!!)
+            } catch (e: IllegalArgumentException) {
+                LiveCoverHelper.BackgroundEffect.FADE
+            }
         }
         if (key == Keys.PREF_UPDATE_AVAILABLE) {
             val showBadge = shared.getBoolean(key, false)
@@ -139,6 +147,13 @@ class PlayerFragment : Fragment() {
         connectingBanner = view.findViewById(R.id.connecting_banner)
         prefs = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         showInfoBanner = prefs.getBoolean("show_exoplayer_banner", true)
+        backgroundEffect = try {
+            LiveCoverHelper.BackgroundEffect.valueOf(
+                prefs.getString("background_effect", LiveCoverHelper.BackgroundEffect.FADE.name)!!
+            )
+        } catch (e: IllegalArgumentException) {
+            LiveCoverHelper.BackgroundEffect.FADE
+        }
         updateBadge.visibility = if (prefs.getBoolean(Keys.PREF_UPDATE_AVAILABLE, false)) View.VISIBLE else View.GONE
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
 
@@ -189,7 +204,7 @@ class PlayerFragment : Fragment() {
                     StateHelper.hasAutoOpenedDiscover = false
                 }
 
-                val coverPageAdapter = CoverPageAdapter(mediaServiceController)
+                val coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
                 viewPager.adapter = coverPageAdapter
                 dotsIndicator.setViewPager2(viewPager)
 
@@ -344,13 +359,14 @@ class PlayerFragment : Fragment() {
             val metaCoverUrl = trackInfo.bestCoverUrl?.takeIf { it.isNotBlank() }
             val imageUrlToLoad = metaCoverUrl ?: defaultIconUrl
 
-            LiveCoverHelper.loadCoverWithBackgroundFade(
+            LiveCoverHelper.loadCoverWithBackground(
                 context = requireContext(),
                 imageUrl = imageUrlToLoad,
                 imageView = holder.coverImage,
                 backgroundTarget = holder.itemView,
                 defaultColor = requireContext().getColor(R.color.default_background),
                 lastColor = holder.lastColor,
+                effect = backgroundEffect,
                 onNewColor = { holder.lastColor = it }
             )
 
@@ -361,13 +377,14 @@ class PlayerFragment : Fragment() {
                     .rotationY(90f)
                     .setDuration(150)
                     .withEndAction {
-                        LiveCoverHelper.loadCoverWithBackgroundFade(
+                        LiveCoverHelper.loadCoverWithBackground(
                             context = requireContext(),
                             imageUrl = targetUrl,
                             imageView = holder.coverImage,
                             backgroundTarget = holder.itemView,
                             defaultColor = requireContext().getColor(R.color.default_background),
                             lastColor = holder.lastColor,
+                            effect = backgroundEffect,
                             onNewColor = { holder.lastColor = it }
                         )
                         holder.coverImage.rotationY = -90f
@@ -445,7 +462,7 @@ class PlayerFragment : Fragment() {
         }
         shortcutAdapter.setItems(shortcuts)
 
-        val coverPageAdapter = CoverPageAdapter(mediaServiceController)
+        val coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
         viewPager.adapter = coverPageAdapter
         dotsIndicator.setViewPager2(viewPager)
 

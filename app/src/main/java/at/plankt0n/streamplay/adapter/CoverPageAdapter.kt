@@ -13,12 +13,14 @@ import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.MediaServiceController
+import at.plankt0n.streamplay.helper.LiveCoverHelper
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.BitmapImageViewTarget
 import com.google.android.material.imageview.ShapeableImageView
 
 class CoverPageAdapter(
-    private val mediaServiceController: MediaServiceController
+    private val mediaServiceController: MediaServiceController,
+    private val backgroundEffect: LiveCoverHelper.BackgroundEffect
 ) : RecyclerView.Adapter<CoverPageAdapter.CoverViewHolder>() {
 
     val mediaItems: List<StationItem> = mediaServiceController.getCurrentPlaylist()
@@ -67,12 +69,7 @@ class CoverPageAdapter(
                                     animator.duration = 400
                                     animator.addUpdateListener { a ->
                                         val color = a.animatedValue as Int
-                                        // Verlauf erzeugen: oben deckend, unten transparent
-                                        val gradient = GradientDrawable(
-                                            GradientDrawable.Orientation.TOP_BOTTOM,
-                                            intArrayOf(color, Color.TRANSPARENT)
-                                        )
-                                        gradient.cornerRadius = 0f
+                                        val gradient = LiveCoverHelper.createGradient(color, backgroundEffect)
                                         holder.itemView.background = gradient
                                     }
                                     animator.start()
