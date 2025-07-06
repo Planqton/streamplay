@@ -23,8 +23,10 @@ object LiveCoverHelper {
         backgroundTarget: View,
         defaultColor: Int,
         lastColor: Int?,
+        lastEffect: BackgroundEffect?,
         effect: BackgroundEffect = BackgroundEffect.FADE,
-        onNewColor: (Int) -> Unit
+        onNewColor: (Int) -> Unit,
+        onNewEffect: (BackgroundEffect) -> Unit
     ) {
         Glide.with(context)
             .asBitmap()
@@ -45,8 +47,8 @@ object LiveCoverHelper {
                                 hsv[2] = (hsv[2] + 0.1f).coerceAtMost(1.0f)
                                 val smoothColor = Color.HSVToColor(hsv)
 
-                                // Nur animieren, wenn sich Farbe wirklich ändert
-                                if (lastColor != smoothColor) {
+                                // Nur animieren, wenn sich Farbe oder Effekt ändert
+                                if (lastColor != smoothColor || lastEffect != effect) {
                                     val animator = ValueAnimator.ofArgb(
                                         lastColor ?: defaultColor,
                                         smoothColor
@@ -60,6 +62,7 @@ object LiveCoverHelper {
                                     }
                                     animator.start()
                                     onNewColor(smoothColor)
+                                    onNewEffect(effect)
                                 }
                             }
                         }

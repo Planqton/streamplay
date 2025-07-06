@@ -28,6 +28,7 @@ class CoverPageAdapter(
     inner class CoverViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val coverImage: ShapeableImageView = itemView.findViewById(R.id.cover_image)
         var lastColor: Int? = null
+        var lastEffect: LiveCoverHelper.BackgroundEffect? = null
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CoverViewHolder {
@@ -61,8 +62,8 @@ class CoverPageAdapter(
                                 hsv[2] = (hsv[2] + 0.1f).coerceAtMost(1.0f) // Helligkeit leicht erhöhen
                                 val smoothColor = Color.HSVToColor(hsv)
 
-                                // Nur animieren, wenn neu!
-                                if (holder.lastColor != smoothColor) {
+                                // Nur animieren, wenn Farbe oder Effekt sich ändert
+                                if (holder.lastColor != smoothColor || holder.lastEffect != backgroundEffect) {
                                     val fromColor = holder.lastColor
                                         ?: holder.itemView.context.getColor(R.color.default_background)
                                     val animator = ValueAnimator.ofArgb(fromColor, smoothColor)
@@ -74,6 +75,7 @@ class CoverPageAdapter(
                                     }
                                     animator.start()
                                     holder.lastColor = smoothColor
+                                    holder.lastEffect = backgroundEffect
                                 }
                             }
                         }

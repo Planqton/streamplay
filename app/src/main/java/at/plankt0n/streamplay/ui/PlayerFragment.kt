@@ -366,8 +366,10 @@ class PlayerFragment : Fragment() {
                 backgroundTarget = holder.itemView,
                 defaultColor = requireContext().getColor(R.color.default_background),
                 lastColor = holder.lastColor,
+                lastEffect = holder.lastEffect,
                 effect = backgroundEffect,
-                onNewColor = { holder.lastColor = it }
+                onNewColor = { holder.lastColor = it },
+                onNewEffect = { holder.lastEffect = it }
             )
 
             showingMetaCover = true
@@ -384,8 +386,10 @@ class PlayerFragment : Fragment() {
                             backgroundTarget = holder.itemView,
                             defaultColor = requireContext().getColor(R.color.default_background),
                             lastColor = holder.lastColor,
+                            lastEffect = holder.lastEffect,
                             effect = backgroundEffect,
-                            onNewColor = { holder.lastColor = it }
+                            onNewColor = { holder.lastColor = it },
+                            onNewEffect = { holder.lastEffect = it }
                         )
                         holder.coverImage.rotationY = -90f
                         holder.coverImage.animate().rotationY(0f).setDuration(150).start()
