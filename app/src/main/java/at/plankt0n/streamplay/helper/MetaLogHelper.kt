@@ -20,6 +20,28 @@ object MetaLogHelper {
         prefs(context).edit().putString(KEY_LOGS, json).apply()
     }
 
+    fun addManualLog(context: Context, entry: MetaLogEntry) {
+        val manualEntry = entry.copy(manual = true)
+        val list = getLogs(context)
+        if (list.isNotEmpty()) {
+            val first = list[0]
+            if (first.station == manualEntry.station &&
+                first.title == manualEntry.title &&
+                first.artist == manualEntry.artist &&
+                first.url == manualEntry.url &&
+                !first.manual
+            ) {
+                list[0] = manualEntry
+            } else {
+                list.add(0, manualEntry)
+            }
+        } else {
+            list.add(manualEntry)
+        }
+        val json = Gson().toJson(list)
+        prefs(context).edit().putString(KEY_LOGS, json).apply()
+    }
+
     fun getLogs(context: Context): MutableList<MetaLogEntry> {
         val json = prefs(context).getString(KEY_LOGS, null)
         return if (json != null) {

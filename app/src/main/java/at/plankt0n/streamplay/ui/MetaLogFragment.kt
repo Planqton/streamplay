@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ToggleButton
 import android.text.Editable
 import android.text.TextWatcher
 import androidx.fragment.app.Fragment
@@ -22,6 +23,8 @@ import at.plankt0n.streamplay.helper.MetaLogHelper
 class MetaLogFragment : Fragment() {
     private lateinit var adapter: MetaLogAdapter
     private lateinit var searchField: EditText
+    private lateinit var manualToggle: ToggleButton
+    private var showManualOnly = false
     private var allLogs = mutableListOf<MetaLogEntry>()
 
     override fun onCreateView(
@@ -56,6 +59,12 @@ class MetaLogFragment : Fragment() {
             }
         })
 
+        manualToggle = view.findViewById(R.id.buttonToggleManual)
+        manualToggle.setOnClickListener {
+            showManualOnly = manualToggle.isChecked
+            filterLogs(searchField.text.toString())
+        }
+
         view.findViewById<Button>(R.id.buttonClearLogs).setOnClickListener {
             MetaLogHelper.clear(requireContext())
             allLogs.clear()
@@ -70,12 +79,16 @@ class MetaLogFragment : Fragment() {
     }
 
     private fun filterLogs(query: String) {
+        var baseList = allLogs
+        if (showManualOnly) {
+            baseList = baseList.filter { it.manual }.toMutableList()
+        }
         if (query.isBlank()) {
-            adapter.setItems(allLogs)
+            adapter.setItems(baseList)
             return
         }
         val lower = query.lowercase()
-        val filtered = allLogs.filter {
+        val filtered = baseList.filter {
             it.station.contains(lower, true) ||
             it.title.contains(lower, true) ||
             it.artist.contains(lower, true) ||

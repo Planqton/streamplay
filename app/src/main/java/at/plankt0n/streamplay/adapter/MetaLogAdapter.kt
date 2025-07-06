@@ -45,5 +45,11 @@ class MetaLogAdapter(
         } else {
             holder.button.visibility = View.GONE
         }
+        val context = holder.itemView.context
+        if (item.manual) {
+            holder.itemView.setBackgroundColor(context.getColor(R.color.highlight))
+        } else {
+            holder.itemView.setBackgroundColor(context.getColor(android.R.color.transparent))
+        }
     }
 }

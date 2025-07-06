@@ -9,7 +9,8 @@ data class MetaLogEntry(
     val station: String,
     val title: String,
     val artist: String,
-    val url: String? = null
+    val url: String? = null,
+    val manual: Boolean = false
 ) {
     fun formattedTime(): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())

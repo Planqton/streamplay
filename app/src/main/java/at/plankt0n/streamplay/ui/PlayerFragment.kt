@@ -34,8 +34,10 @@ import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
+import at.plankt0n.streamplay.helper.MetaLogHelper
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.Keys
+import at.plankt0n.streamplay.data.MetaLogEntry
 import androidx.media3.common.Player
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
@@ -58,6 +60,7 @@ class PlayerFragment : Fragment() {
     private lateinit var buttonMenu: ImageButton
     private lateinit var updateBadge: TextView
     private lateinit var buttonSpotify: ImageButton
+    private lateinit var buttonManualLog: ImageButton
     private lateinit var buttonMute: ImageButton
     private lateinit var buttonShare: ImageButton
     private lateinit var shortcutRecyclerView: RecyclerView
@@ -133,6 +136,7 @@ class PlayerFragment : Fragment() {
         buttonBack = view.findViewById(R.id.button_back)
         buttonForward = view.findViewById(R.id.button_forward)
         buttonSpotify = view.findViewById(R.id.button_spotify)
+        buttonManualLog = view.findViewById(R.id.button_manual_log)
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
@@ -268,6 +272,10 @@ class PlayerFragment : Fragment() {
             }
 
             startActivity(Intent.createChooser(intent, chooserTitle))
+        }
+
+        buttonManualLog.setOnClickListener {
+            addManualLogEntry()
         }
 
         buttonMute.setOnClickListener {
@@ -472,6 +480,24 @@ class PlayerFragment : Fragment() {
     private fun showBottomSheet() {
         val bottomSheet = MediaItemOptionsBottomSheet()
         bottomSheet.show(parentFragmentManager, bottomSheet.tag)
+    }
+
+    private fun addManualLogEntry() {
+        val trackInfo = spotifyTrackViewModel.trackInfo.value ?: return
+        val controller = mediaServiceController.mediaController ?: return
+        val index = controller.currentMediaItemIndex
+        val mediaItem = controller.getMediaItemAt(index)
+        val station = mediaItem.mediaMetadata.extras?.getString("EXTRA_STATION_NAME") ?: ""
+        MetaLogHelper.addManualLog(
+            requireContext(),
+            MetaLogEntry(
+                timestamp = System.currentTimeMillis(),
+                station = station,
+                title = trackInfo.trackName,
+                artist = trackInfo.artistName,
+                url = trackInfo.spotifyUrl.takeIf { it.isNotBlank() }
+            )
+        )
     }
 
     fun enableMarquee(vararg views: TextView) {
