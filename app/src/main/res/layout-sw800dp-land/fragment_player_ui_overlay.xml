@@ -40,13 +40,13 @@
 
     <TextView
         android:id="@+id/connection_status_banner"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:background="@drawable/rounded_white_semitransparent_bg"
+        android:background="@color/banner_connecting"
         android:padding="8dp"
         android:text="@string/connecting"
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/white"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/autoplay_countdown"
         app:layout_constraintStart_toStartOf="parent"

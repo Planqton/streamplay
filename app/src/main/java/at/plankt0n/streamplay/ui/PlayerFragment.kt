@@ -192,8 +192,26 @@ class PlayerFragment : Fragment() {
             },
             onPlaybackChanged = { updatePlayPauseIcon(it) },
             onPlaybackStateChanged = { state ->
-                connectionStatusBanner.visibility =
-                    if (state == Player.STATE_BUFFERING) View.VISIBLE else View.GONE
+                if (state == Player.STATE_BUFFERING) {
+                    connectionStatusBanner.text = getString(R.string.connecting)
+                    connectionStatusBanner.setBackgroundColor(
+                        requireContext().getColor(R.color.banner_connecting)
+                    )
+                    connectionStatusBanner.visibility = View.VISIBLE
+                } else if (state == Player.STATE_READY) {
+                    connectionStatusBanner.visibility = View.GONE
+                }
+            },
+            onPlaybackError = { error ->
+                val msg = error.message ?: error.errorCodeName
+                connectionStatusBanner.text = getString(
+                    R.string.connection_error,
+                    msg
+                )
+                connectionStatusBanner.setBackgroundColor(
+                    requireContext().getColor(R.color.banner_error)
+                )
+                connectionStatusBanner.visibility = View.VISIBLE
             },
             onStreamIndexChanged = { index ->
                 viewPager.setCurrentItem(index, true)

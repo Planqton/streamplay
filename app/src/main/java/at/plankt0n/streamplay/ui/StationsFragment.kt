@@ -159,6 +159,7 @@ class StationsFragment : Fragment() {
             },
             onPlaybackChanged = {},
             onPlaybackStateChanged = {},
+            onPlaybackError = {},
             onStreamIndexChanged = { idx -> adapter.setCurrentPlayingIndex(idx) },
             onMetadataChanged = {},
             onTimelineChanged = {}
