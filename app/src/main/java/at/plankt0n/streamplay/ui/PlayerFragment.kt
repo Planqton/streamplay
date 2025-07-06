@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -66,6 +67,14 @@ class PlayerFragment : Fragment() {
     private var countdownRunnable: Runnable? = null
     private val bannerHandler = Handler(Looper.getMainLooper())
     private var bannerRunnable: Runnable? = null
+    private lateinit var prefs: SharedPreferences
+    private var showInfoBanner: Boolean = true
+    private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
+        if (key == "show_exoplayer_banner") {
+            showInfoBanner = shared.getBoolean(key, true)
+            if (!showInfoBanner) hideConnecting()
+        }
+    }
 
     private val autoplayReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -122,6 +131,9 @@ class PlayerFragment : Fragment() {
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
         connectingBanner = view.findViewById(R.id.connecting_banner)
+        prefs = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        showInfoBanner = prefs.getBoolean("show_exoplayer_banner", true)
+        prefs.registerOnSharedPreferenceChangeListener(prefsListener)
 
         // Grundlegende Button-Listener setzen, auch wenn die Playlist leer ist
         playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
@@ -444,6 +456,7 @@ class PlayerFragment : Fragment() {
             requireContext().unregisterReceiver(autoplayReceiver)
             countdownHandler.removeCallbacksAndMessages(null)
             bannerHandler.removeCallbacksAndMessages(null)
+            prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
             mediaServiceController.disconnect()
         }
         super.onDestroyView()
@@ -484,6 +497,7 @@ class PlayerFragment : Fragment() {
     }
 
     private fun showConnecting() {
+        if (!showInfoBanner) return
         bannerRunnable?.let { bannerHandler.removeCallbacks(it) }
         if (::connectingBanner.isInitialized) {
             connectingBanner.text = getString(R.string.connecting)
@@ -493,6 +507,7 @@ class PlayerFragment : Fragment() {
     }
 
     private fun showConnected() {
+        if (!showInfoBanner) return
         bannerRunnable?.let { bannerHandler.removeCallbacks(it) }
         if (::connectingBanner.isInitialized) {
             connectingBanner.text = getString(R.string.connected)
@@ -504,6 +519,7 @@ class PlayerFragment : Fragment() {
     }
 
     private fun showError(message: String?) {
+        if (!showInfoBanner) return
         bannerRunnable?.let { bannerHandler.removeCallbacks(it) }
         if (::connectingBanner.isInitialized) {
             connectingBanner.text = getString(R.string.playback_error, message ?: "unknown")

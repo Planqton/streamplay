@@ -123,6 +123,7 @@
     <string name="update_check_fail">Updateprüfung fehlgeschlagen</string>
     <string name="minimizing_in">Minimizing in %1$d s</string>
     <string name="no_metadata_available">Keine Informationen verfügbar</string>
+    <string name="settings_exoplayer_infobanner">Show Exoplayer Infobanner</string>
     <string name="connecting">Verbindung wird hergestellt…</string>
     <string name="connected">Connected!</string>
     <string name="playback_error">Error: %1$s</string>
