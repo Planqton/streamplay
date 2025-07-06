@@ -35,6 +35,7 @@ import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.Keys
+import androidx.media3.common.Player
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
@@ -60,6 +61,7 @@ class PlayerFragment : Fragment() {
     private lateinit var shortcutRecyclerView: RecyclerView
     private lateinit var shortcutAdapter: ShortcutAdapter
     private lateinit var countdownTextView: TextView
+    private lateinit var exoStatusBanner: TextView
     private val countdownHandler = Handler(Looper.getMainLooper())
     private var countdownRunnable: Runnable? = null
 
@@ -76,6 +78,7 @@ class PlayerFragment : Fragment() {
     }
 
     var isMuted = false
+    private var showStatusEnabled = true
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -116,6 +119,11 @@ class PlayerFragment : Fragment() {
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
+        exoStatusBanner = view.findViewById(R.id.exoplayer_status_banner)
+
+        val prefs = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        showStatusEnabled = prefs.getBoolean("show_exoplayer_status", true)
+        if (!showStatusEnabled) exoStatusBanner.visibility = View.GONE
 
         // Grundlegende Button-Listener setzen, auch wenn die Playlist leer ist
         playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
@@ -194,8 +202,17 @@ class PlayerFragment : Fragment() {
             },
             onMetadataChanged = {},
             onTimelineChanged = {
-                Log.d("PlayerFragment", "\ud83d\udd01 Timeline ge\u00e4ndert! Grund: $it")
+                Log.d("PlayerFragment", "\uD83D\uDD01 Timeline ge\u00e4ndert! Grund: $it")
                 reloadPlaylist()
+            },
+            onPlayerStateChanged = { state ->
+                when (state) {
+                    Player.STATE_BUFFERING -> showStatus(getString(R.string.exo_status_connecting), false)
+                    Player.STATE_READY -> hideStatus()
+                }
+            },
+            onPlayerError = { error ->
+                showStatus(error.message ?: "Unknown error", true)
             }
         )
 
@@ -441,5 +458,18 @@ class PlayerFragment : Fragment() {
     private fun hideCountdown() {
         countdownRunnable?.let { countdownHandler.removeCallbacks(it) }
         countdownTextView.visibility = View.GONE
+    }
+
+    private fun showStatus(text: String, isError: Boolean) {
+        if (!showStatusEnabled) return
+        exoStatusBanner.text = text
+        exoStatusBanner.setBackgroundResource(
+            if (isError) R.drawable.banner_error_bg else R.drawable.banner_connecting_bg
+        )
+        exoStatusBanner.visibility = View.VISIBLE
+    }
+
+    private fun hideStatus() {
+        exoStatusBanner.visibility = View.GONE
     }
 }
