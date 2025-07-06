@@ -200,7 +200,7 @@ class PlayerFragment : Fragment() {
             },
             onMetadataChanged = {},
             onTimelineChanged = {
-                Log.d("PlayerFragment", "\ud83d\udd01 Timeline ge\u00e4ndert! Grund: $it")
+                Log.d("PlayerFragment", "\uD83D\uDD01 Timeline ge\u00E4ndert! Grund: $it")
                 reloadPlaylist()
             },
             onPlaybackStateChanged = { state ->
@@ -208,6 +208,9 @@ class PlayerFragment : Fragment() {
                     Player.STATE_BUFFERING -> showConnecting()
                     Player.STATE_READY -> showConnected()
                 }
+            },
+            onPlayerError = { error ->
+                showError(error.message)
             }
         )
 
@@ -497,6 +500,15 @@ class PlayerFragment : Fragment() {
             connectingBanner.visibility = View.VISIBLE
             bannerRunnable = Runnable { hideConnecting() }
             bannerHandler.postDelayed(bannerRunnable!!, Keys.CONNECTED_BANNER_DURATION_MS)
+        }
+    }
+
+    private fun showError(message: String?) {
+        bannerRunnable?.let { bannerHandler.removeCallbacks(it) }
+        if (::connectingBanner.isInitialized) {
+            connectingBanner.text = getString(R.string.playback_error, message ?: "unknown")
+            connectingBanner.setBackgroundResource(R.drawable.rounded_red_transparent_bg)
+            connectingBanner.visibility = View.VISIBLE
         }
     }
 
