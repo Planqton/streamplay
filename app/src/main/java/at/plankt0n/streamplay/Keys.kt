@@ -11,6 +11,9 @@ object Keys {
     const val ACTION_HIDE_COUNTDOWN = "at.plankt0n.streamplay.HIDE_COUNTDOWN"
     const val EXTRA_COUNTDOWN_DURATION = "countdown_duration"
 
+    /** How long the "Connected!" banner stays visible (ms) */
+    const val CONNECTED_STATUS_DURATION_MS = 1000L
+
 
 
     //Spotify

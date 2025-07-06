@@ -488,7 +488,10 @@ private var hideStatusRunnable: Runnable? = null
 
         if (type == StatusType.SUCCESS) {
             hideStatusRunnable = Runnable { hideStatus() }
-            countdownHandler.postDelayed(hideStatusRunnable!!, 1000)
+            countdownHandler.postDelayed(
+                hideStatusRunnable!!,
+                Keys.CONNECTED_STATUS_DURATION_MS
+            )
         } else {
             hideStatusRunnable = null
         }
