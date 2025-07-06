@@ -63,6 +63,7 @@ class PlayerFragment : Fragment() {
     private lateinit var countdownTextView: TextView
     private val countdownHandler = Handler(Looper.getMainLooper())
     private var countdownRunnable: Runnable? = null
+    private lateinit var sharedPreferences: android.content.SharedPreferences
 
     private val autoplayReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -119,6 +120,8 @@ class PlayerFragment : Fragment() {
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
         connectionStatusBanner = view.findViewById(R.id.connection_status_banner)
+
+        sharedPreferences = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
 
         // Grundlegende Button-Listener setzen, auch wenn die Playlist leer ist
         playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
@@ -192,7 +195,10 @@ class PlayerFragment : Fragment() {
             },
             onPlaybackChanged = { updatePlayPauseIcon(it) },
             onPlaybackStateChanged = { state ->
-                if (state == Player.STATE_BUFFERING) {
+                val showBanner = sharedPreferences.getBoolean("show_exoplayer_info", true)
+                if (!showBanner) {
+                    connectionStatusBanner.visibility = View.GONE
+                } else if (state == Player.STATE_BUFFERING) {
                     connectionStatusBanner.text = getString(R.string.connecting)
                     connectionStatusBanner.setBackgroundColor(
                         requireContext().getColor(R.color.banner_connecting)
@@ -203,6 +209,9 @@ class PlayerFragment : Fragment() {
                 }
             },
             onPlaybackError = { error ->
+                val showBanner = sharedPreferences.getBoolean("show_exoplayer_info", true)
+                if (!showBanner) return@initializeAndConnect
+
                 val msg = error.message ?: error.errorCodeName
                 connectionStatusBanner.text = getString(
                     R.string.connection_error,

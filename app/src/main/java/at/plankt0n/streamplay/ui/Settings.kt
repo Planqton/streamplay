@@ -62,6 +62,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_pip)
     }
 
+    val exoplayerInfoSwitch = SwitchPreferenceCompat(context).apply {
+        key = "show_exoplayer_info"
+        title = getString(R.string.settings_show_exoplayer_info)
+        setDefaultValue(true)
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_radio)
+    }
+
     val versionPref = Preference(context).apply {
         key = "app_version"
         title = getString(R.string.settings_app_version)
@@ -79,7 +87,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }
 
-    val preferences = listOf(autoplaySwitch, delayPreference, minimizeSwitch, versionPref, updatePref)
+    val preferences = listOf(
+        autoplaySwitch,
+        delayPreference,
+        minimizeSwitch,
+        exoplayerInfoSwitch,
+        versionPref,
+        updatePref
+    )
 
     SettingsCategory.values().forEach { cat ->
         val catPref = categoryMap[cat]!!
