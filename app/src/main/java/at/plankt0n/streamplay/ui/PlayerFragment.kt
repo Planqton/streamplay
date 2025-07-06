@@ -77,8 +77,7 @@ class PlayerFragment : Fragment() {
     }
 
     var isMuted = false
-    private var isConnecting = false
-    private var baseStationName: String = ""
+    private lateinit var connectionStatusBanner: TextView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -119,6 +118,7 @@ class PlayerFragment : Fragment() {
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
+        connectionStatusBanner = view.findViewById(R.id.connection_status_banner)
 
         // Grundlegende Button-Listener setzen, auch wenn die Playlist leer ist
         playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
@@ -192,8 +192,8 @@ class PlayerFragment : Fragment() {
             },
             onPlaybackChanged = { updatePlayPauseIcon(it) },
             onPlaybackStateChanged = { state ->
-                isConnecting = state == Player.STATE_BUFFERING
-                updateStationNameText()
+                connectionStatusBanner.visibility =
+                    if (state == Player.STATE_BUFFERING) View.VISIBLE else View.GONE
             },
             onStreamIndexChanged = { index ->
                 viewPager.setCurrentItem(index, true)
@@ -361,8 +361,7 @@ class PlayerFragment : Fragment() {
 
         val stationName = extras.getString("EXTRA_STATION_NAME") ?: ""
         val iconUrl = extras.getString("EXTRA_ICON_URL") ?: ""
-        baseStationName = stationName
-        updateStationNameText()
+        stationNameTextView.text = stationName
         Glide.with(stationIconImageView)
             .load(iconUrl)
             .placeholder(R.drawable.placeholder_spotify_dark)
@@ -375,14 +374,7 @@ class PlayerFragment : Fragment() {
         playPauseButton.setImageResource(iconRes)
     }
 
-    private fun updateStationNameText() {
-        val text = if (isConnecting && baseStationName.isNotBlank()) {
-            "$baseStationName - Connecting..."
-        } else {
-            baseStationName
-        }
-        stationNameTextView.text = text
-    }
+
 
     private fun reloadPlaylist() {
         val controller = mediaServiceController.mediaController ?: return
