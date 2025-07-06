@@ -1,5 +1,6 @@
 package at.plankt0n.streamplay
 
+import at.plankt0n.streamplay.BuildConfig
 import java.util.Date
 
 object Keys {
@@ -13,9 +14,9 @@ object Keys {
 
 
 
-    //Spotify
-    const val KEY_SPOTIFY_CLIENT_ID = "cc55a94b922c496a84c4a725242a313b"
-    const val KEY_SPOTIFY_CLIENT_SECRET = "1893b26ecec74a4984152f0d86200b63"
+    //Spotify credentials are provided via BuildConfig
+    const val KEY_SPOTIFY_CLIENT_ID = BuildConfig.SPOTIFY_CLIENT_ID
+    const val KEY_SPOTIFY_CLIENT_SECRET = BuildConfig.SPOTIFY_CLIENT_SECRET
 
     const val KEY_META_LOGS_PREFS = "meta_log_prefs"
     const val KEY_META_LOGS = "metadata_logs"

@@ -42,8 +42,10 @@ import at.plankt0n.streamplay.helper.MetaLogHelper
 import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.viewmodel.UITrackInfo
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
@@ -68,6 +70,8 @@ class StreamingService : MediaSessionService() {
     companion object {
         const val CHANNEL_ID = "stream_service_channel"
     }
+
+    private val serviceScope = MainScope()
 
     private var hasSeenForeground = false
     private val lifecycleObserver = object : DefaultLifecycleObserver {
@@ -308,6 +312,7 @@ class StreamingService : MediaSessionService() {
 
     override fun onDestroy() {
         ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
+        serviceScope.cancel()
         mediaSession.release()
         player.release()
         super.onDestroy()
@@ -366,7 +371,7 @@ class StreamingService : MediaSessionService() {
         }
 
         if (artist.isNotEmpty() && title.isNotEmpty()) {
-            GlobalScope.launch(Dispatchers.IO) {
+            serviceScope.launch(Dispatchers.IO) {
                 val extendedInfo =
                     SpotifyMetaReader.getExtendedMetaInfo(this@StreamingService, artist, title)
                 withContext(Dispatchers.Main) {
@@ -439,7 +444,7 @@ class StreamingService : MediaSessionService() {
                 "⚠️ Artist oder Title fehlen – kein Spotify-Request. Fallback auf alte meta"
             )
             // Sicherstellen, dass auch dieser Aufruf im Main-Thread läuft!
-            GlobalScope.launch(Dispatchers.Main) {
+            serviceScope.launch(Dispatchers.Main) {
                 updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
             }
             UITrackViewModel.updateTrackInfo(

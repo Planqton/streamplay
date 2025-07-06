@@ -8,6 +8,10 @@ android {
     namespace = "at.plankt0n.streamplay"
     compileSdk = 35
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "at.plankt0n.streamplay"
         minSdk = 29
@@ -16,6 +20,17 @@ android {
         versionName = "1.0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "SPOTIFY_CLIENT_ID",
+            "\"${project.findProperty("spotifyClientId") ?: ""}\""
+        )
+        buildConfigField(
+            "String",
+            "SPOTIFY_CLIENT_SECRET",
+            "\"${project.findProperty("spotifyClientSecret") ?: ""}\""
+        )
     }
 
     buildTypes {

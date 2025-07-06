@@ -2,6 +2,7 @@ package at.plankt0n.streamplay.ui
 
 import androidx.preference.*
 import at.plankt0n.streamplay.R
+import at.plankt0n.streamplay.Keys
 
 /** Possible categories a preference can belong to. */
 enum class SettingsCategory { PLAYBACK, UI, METAINFO, ABOUT }
