@@ -2,8 +2,8 @@ package at.plankt0n.streamplay.ui
 
 import android.os.Bundle
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import at.plankt0n.streamplay.ui.LongPressPreference
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.helper.GitHubUpdateChecker
 import kotlinx.coroutines.launch
@@ -13,11 +13,18 @@ class SettingsFragment : PreferenceFragmentCompat() {
         preferenceManager.sharedPreferencesName = Keys.PREFS_NAME
         initSettingsScreen()
 
-        findPreference<Preference>("check_updates")?.setOnPreferenceClickListener {
-            lifecycleScope.launch {
-                GitHubUpdateChecker(requireContext()).checkForUpdate()
+        findPreference<LongPressPreference>("check_updates")?.apply {
+            setOnPreferenceClickListener {
+                lifecycleScope.launch {
+                    GitHubUpdateChecker(requireContext()).checkForUpdate()
+                }
+                true
             }
-            true
+            onLongPressListener = {
+                lifecycleScope.launch {
+                    GitHubUpdateChecker(requireContext()).forceUpdate()
+                }
+            }
         }
     }
 

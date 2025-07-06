@@ -1,6 +1,7 @@
 package at.plankt0n.streamplay.ui
 
 import androidx.preference.*
+import at.plankt0n.streamplay.ui.LongPressPreference
 import at.plankt0n.streamplay.R
 
 /** Possible categories a preference can belong to. */
@@ -72,7 +73,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         isSelectable = false
     }
 
-    val updatePref = Preference(context).apply {
+    val updatePref = LongPressPreference(context).apply {
         key = "check_updates"
         title = getString(R.string.settings_check_updates)
         category = SettingsCategory.ABOUT
