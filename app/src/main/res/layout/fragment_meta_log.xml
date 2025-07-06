@@ -13,6 +13,12 @@
         android:hint="@string/search_logs_hint"
         android:padding="8dp" />
 
+    <CheckBox
+        android:id="@+id/checkManualFilter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/filter_manual_logs" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerMetaLog"
         android:layout_width="match_parent"

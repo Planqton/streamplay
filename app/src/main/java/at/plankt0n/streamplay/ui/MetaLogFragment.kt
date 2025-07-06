@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.CheckBox
 import android.widget.ImageButton
 import android.text.Editable
 import android.text.TextWatcher
@@ -22,6 +23,8 @@ import at.plankt0n.streamplay.helper.MetaLogHelper
 class MetaLogFragment : Fragment() {
     private lateinit var adapter: MetaLogAdapter
     private lateinit var searchField: EditText
+    private lateinit var manualFilter: CheckBox
+    private var showManualOnly = false
     private var allLogs = mutableListOf<MetaLogEntry>()
 
     override fun onCreateView(
@@ -48,6 +51,11 @@ class MetaLogFragment : Fragment() {
         recycler.adapter = adapter
 
         searchField = view.findViewById(R.id.editSearchLogs)
+        manualFilter = view.findViewById(R.id.checkManualFilter)
+        manualFilter.setOnCheckedChangeListener { _, isChecked ->
+            showManualOnly = isChecked
+            filterLogs(searchField.text.toString())
+        }
         searchField.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -70,16 +78,16 @@ class MetaLogFragment : Fragment() {
     }
 
     private fun filterLogs(query: String) {
-        if (query.isBlank()) {
-            adapter.setItems(allLogs)
-            return
-        }
         val lower = query.lowercase()
         val filtered = allLogs.filter {
-            it.station.contains(lower, true) ||
-            it.title.contains(lower, true) ||
-            it.artist.contains(lower, true) ||
-            it.formattedTime().contains(lower, true)
+            val matchesQuery = if (query.isBlank()) true else (
+                it.station.contains(lower, true) ||
+                it.title.contains(lower, true) ||
+                it.artist.contains(lower, true) ||
+                it.formattedTime().contains(lower, true)
+            )
+            val manualOk = !showManualOnly || it.manual
+            matchesQuery && manualOk
         }
         adapter.setItems(filtered)
     }

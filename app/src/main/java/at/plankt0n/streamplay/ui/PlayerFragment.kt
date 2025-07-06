@@ -34,12 +34,15 @@ import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
+import at.plankt0n.streamplay.helper.MetaLogHelper
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.Keys
+import at.plankt0n.streamplay.data.MetaLogEntry
 import androidx.media3.common.Player
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
+import android.widget.Toast
 
 class PlayerFragment : Fragment() {
 
@@ -58,6 +61,7 @@ class PlayerFragment : Fragment() {
     private lateinit var buttonMenu: ImageButton
     private lateinit var updateBadge: TextView
     private lateinit var buttonSpotify: ImageButton
+    private lateinit var buttonManualLog: ImageButton
     private lateinit var buttonMute: ImageButton
     private lateinit var buttonShare: ImageButton
     private lateinit var shortcutRecyclerView: RecyclerView
@@ -133,6 +137,7 @@ class PlayerFragment : Fragment() {
         buttonBack = view.findViewById(R.id.button_back)
         buttonForward = view.findViewById(R.id.button_forward)
         buttonSpotify = view.findViewById(R.id.button_spotify)
+        buttonManualLog = view.findViewById(R.id.button_manual_log)
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
@@ -269,6 +274,8 @@ class PlayerFragment : Fragment() {
 
             startActivity(Intent.createChooser(intent, chooserTitle))
         }
+
+        buttonManualLog.setOnClickListener { addManualLog() }
 
         buttonMute.setOnClickListener {
             val audioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -533,6 +540,26 @@ class PlayerFragment : Fragment() {
             connectingBanner.setBackgroundResource(R.drawable.rounded_red_transparent_bg)
             connectingBanner.visibility = View.VISIBLE
         }
+    }
+
+    private fun addManualLog() {
+        val trackInfo = spotifyTrackViewModel.trackInfo.value ?: return
+        val controller = mediaServiceController.mediaController ?: return
+        val stationName = controller.getMediaItemAt(viewPager.currentItem)
+            .mediaMetadata.extras?.getString("EXTRA_STATION_NAME") ?: ""
+
+        MetaLogHelper.addLog(
+            requireContext(),
+            MetaLogEntry(
+                timestamp = System.currentTimeMillis(),
+                station = stationName,
+                title = trackInfo.trackName,
+                artist = trackInfo.artistName,
+                url = trackInfo.spotifyUrl.takeIf { it.isNotBlank() },
+                manual = true
+            )
+        )
+        Toast.makeText(requireContext(), getString(R.string.manual_log_saved), Toast.LENGTH_SHORT).show()
     }
 
     private fun hideConnecting() {

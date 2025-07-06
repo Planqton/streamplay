@@ -90,6 +90,8 @@
     <!-- Meta log -->
     <string name="search_logs_hint">Search logs</string>
     <string name="clear_logs">Clear Logs</string>
+    <string name="filter_manual_logs">Show only manual logs</string>
+    <string name="manual_log_saved">Manual log saved</string>
 
     <string name="drag_handle_desc">Move station</string>
 

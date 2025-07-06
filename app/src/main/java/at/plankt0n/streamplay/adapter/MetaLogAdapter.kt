@@ -1,10 +1,12 @@
 package at.plankt0n.streamplay.adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.MetaLogEntry
@@ -39,6 +41,13 @@ class MetaLogAdapter(
         val item = items[position]
         holder.line1.text = "${item.formattedTime()} - ${item.station}"
         holder.line2.text = "${item.title} - ${item.artist}"
+        if (item.manual) {
+            holder.itemView.setBackgroundColor(
+                ContextCompat.getColor(holder.itemView.context, R.color.highlight)
+            )
+        } else {
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT)
+        }
         if (!item.url.isNullOrBlank()) {
             holder.button.visibility = View.VISIBLE
             holder.button.setOnClickListener { onUrlClick(item.url!!) }
