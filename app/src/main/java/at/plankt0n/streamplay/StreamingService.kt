@@ -26,6 +26,8 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Metadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import at.plankt0n.streamplay.Keys
@@ -109,10 +111,16 @@ class StreamingService : MediaSessionService() {
         val mediaSourceFactory = DefaultMediaSourceFactory(this)
             .setDataSourceFactory(DefaultDataSource.Factory(this, httpDataSourceFactory))
 
+        val audioAttributes = AudioAttributes.Builder()
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .setUsage(C.USAGE_MEDIA)
+            .build()
+
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(mediaSourceFactory)
-
             .build().apply {
+                setAudioAttributes(audioAttributes, true)
+                setHandleAudioBecomingNoisy(true)
                 repeatMode = Player.REPEAT_MODE_OFF
                 addListener(object : Player.Listener {
                     //Listener für ICY META aus EXOPLAYER (nicht MediaMetadata)
