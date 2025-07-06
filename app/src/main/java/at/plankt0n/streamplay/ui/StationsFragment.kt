@@ -160,7 +160,9 @@ class StationsFragment : Fragment() {
             onPlaybackChanged = {},
             onStreamIndexChanged = { idx -> adapter.setCurrentPlayingIndex(idx) },
             onMetadataChanged = {},
-            onTimelineChanged = {}
+            onTimelineChanged = {},
+            onPlaybackStateChanged = {},
+            onPlayerError = {}
         )
 
         view.findViewById<View>(R.id.buttonAddStation).setOnClickListener {

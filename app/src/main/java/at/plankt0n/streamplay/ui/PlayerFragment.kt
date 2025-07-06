@@ -35,6 +35,7 @@ import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.Keys
+import androidx.media3.common.Player
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
@@ -60,8 +61,11 @@ class PlayerFragment : Fragment() {
     private lateinit var shortcutRecyclerView: RecyclerView
     private lateinit var shortcutAdapter: ShortcutAdapter
     private lateinit var countdownTextView: TextView
+    private lateinit var connectionBanner: TextView
     private val countdownHandler = Handler(Looper.getMainLooper())
+    private val bannerHandler = Handler(Looper.getMainLooper())
     private var countdownRunnable: Runnable? = null
+    private var bannerRunnable: Runnable? = null
 
     private val autoplayReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -117,6 +121,7 @@ class PlayerFragment : Fragment() {
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
+        connectionBanner = view.findViewById(R.id.connection_banner)
 
         // Grundlegende Button-Listener setzen, auch wenn die Playlist leer ist
         playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
@@ -190,13 +195,37 @@ class PlayerFragment : Fragment() {
             },
             onPlaybackChanged = { updatePlayPauseIcon(it) },
             onStreamIndexChanged = { index ->
+            onStreamIndexChanged = { index ->
                 viewPager.setCurrentItem(index, true)
                 updateOverlayUI(index)
             },
             onMetadataChanged = {},
             onTimelineChanged = {
-                Log.d("PlayerFragment", "\ud83d\udd01 Timeline ge\u00e4ndert! Grund: $it")
+                Log.d("PlayerFragment", "\uD83D\uDD01 Timeline ge\u00e4ndert! Grund: $it")
                 reloadPlaylist()
+            },
+            onPlaybackStateChanged = { state ->
+                when (state) {
+                    Player.STATE_BUFFERING -> showBanner(
+                        getString(R.string.banner_connecting),
+                        R.drawable.banner_bg_blue,
+                        false
+                    )
+                    Player.STATE_READY -> if (mediaServiceController.isPlaying()) {
+                        showBanner(
+                            getString(R.string.banner_connected),
+                            R.drawable.banner_bg_green,
+                            true
+                        )
+                    }
+                }
+            },
+            onPlayerError = { error ->
+                showBanner(
+                    getString(R.string.banner_error, error.errorCodeName),
+                    R.drawable.banner_bg_red,
+                    false
+                )
             }
         )
 
@@ -466,5 +495,16 @@ class PlayerFragment : Fragment() {
     private fun hideCountdown() {
         countdownRunnable?.let { countdownHandler.removeCallbacks(it) }
         countdownTextView.visibility = View.GONE
+    }
+
+    private fun showBanner(text: String, backgroundRes: Int, hide: Boolean) {
+        bannerRunnable?.let { bannerHandler.removeCallbacks(it) }
+        connectionBanner.setBackgroundResource(backgroundRes)
+        connectionBanner.text = text
+        connectionBanner.visibility = View.VISIBLE
+        if (hide) {
+            bannerRunnable = Runnable { connectionBanner.visibility = View.GONE }
+            bannerHandler.postDelayed(bannerRunnable!!, Keys.BANNER_HIDE_DELAY_MS)
+        }
     }
 }

@@ -109,4 +109,9 @@
     <color name="default_background">#CCCCCC</color> <!-- Hellgrau -->
     <color name="default_transparent">#00ffffff</color>
 
+    <!-- Banner colors -->
+    <color name="banner_blue">#8000B0FF</color>
+    <color name="banner_red">#80FF0000</color>
+    <color name="banner_green">#8000FF00</color>
+
 </resources>

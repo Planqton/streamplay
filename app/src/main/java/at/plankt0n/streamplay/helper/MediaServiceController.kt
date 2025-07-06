@@ -11,6 +11,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import androidx.media3.common.PlaybackException
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import at.plankt0n.streamplay.StreamingService
@@ -28,7 +29,9 @@ class MediaServiceController(private val context: Context) {
         onPlaybackChanged: (Boolean) -> Unit,
         onStreamIndexChanged: (Int) -> Unit,
         onMetadataChanged: (String) -> Unit,
-        onTimelineChanged: (Int) -> Unit
+        onTimelineChanged: (Int) -> Unit,
+        onPlaybackStateChanged: (Int) -> Unit,
+        onPlayerError: (PlaybackException) -> Unit
     ) {
         // Service als Foreground starten
         val serviceIntent = Intent(context, StreamingService::class.java)
@@ -68,6 +71,14 @@ class MediaServiceController(private val context: Context) {
                             Log.d("MediaServiceController", "ℹ️ Timeline-Änderung ignoriert (Grund: $reason)")
                         }
 
+                    }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        onPlaybackStateChanged(playbackState)
+                    }
+
+                    override fun onPlayerError(error: PlaybackException) {
+                        onPlayerError(error)
                     }
 
                     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
