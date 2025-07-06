@@ -109,4 +109,8 @@
     <color name="default_background">#CCCCCC</color> <!-- Hellgrau -->
     <color name="default_transparent">#00ffffff</color>
 
+    <!-- Banner backgrounds -->
+    <color name="connect_banner_connecting_bg">#802196F3</color>
+    <color name="connect_banner_connected_bg">#804CAF50</color>
+
 </resources>

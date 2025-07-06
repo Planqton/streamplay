@@ -64,6 +64,8 @@ class PlayerFragment : Fragment() {
     private lateinit var connectingBanner: TextView
     private val countdownHandler = Handler(Looper.getMainLooper())
     private var countdownRunnable: Runnable? = null
+    private val bannerHandler = Handler(Looper.getMainLooper())
+    private var bannerRunnable: Runnable? = null
 
     private val autoplayReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -202,10 +204,9 @@ class PlayerFragment : Fragment() {
                 reloadPlaylist()
             },
             onPlaybackStateChanged = { state ->
-                if (state == Player.STATE_BUFFERING) {
-                    showConnecting()
-                } else if (state == Player.STATE_READY) {
-                    hideConnecting()
+                when (state) {
+                    Player.STATE_BUFFERING -> showConnecting()
+                    Player.STATE_READY -> showConnected()
                 }
             }
         )
@@ -439,6 +440,7 @@ class PlayerFragment : Fragment() {
         if (initialized) {
             requireContext().unregisterReceiver(autoplayReceiver)
             countdownHandler.removeCallbacksAndMessages(null)
+            bannerHandler.removeCallbacksAndMessages(null)
             mediaServiceController.disconnect()
         }
         super.onDestroyView()
@@ -479,12 +481,27 @@ class PlayerFragment : Fragment() {
     }
 
     private fun showConnecting() {
+        bannerRunnable?.let { bannerHandler.removeCallbacks(it) }
         if (::connectingBanner.isInitialized) {
+            connectingBanner.text = getString(R.string.connecting)
+            connectingBanner.setBackgroundResource(R.drawable.rounded_blue_transparent_bg)
             connectingBanner.visibility = View.VISIBLE
         }
     }
 
+    private fun showConnected() {
+        bannerRunnable?.let { bannerHandler.removeCallbacks(it) }
+        if (::connectingBanner.isInitialized) {
+            connectingBanner.text = getString(R.string.connected)
+            connectingBanner.setBackgroundResource(R.drawable.rounded_green_transparent_bg)
+            connectingBanner.visibility = View.VISIBLE
+            bannerRunnable = Runnable { hideConnecting() }
+            bannerHandler.postDelayed(bannerRunnable!!, Keys.CONNECTED_BANNER_DURATION_MS)
+        }
+    }
+
     private fun hideConnecting() {
+        bannerRunnable?.let { bannerHandler.removeCallbacks(it) }
         if (::connectingBanner.isInitialized) {
             connectingBanner.visibility = View.GONE
         }

@@ -48,4 +48,6 @@ object Keys {
     const val DEFAULT_RFC2822_DATE: String = "Thu, 01 Jan 1970 01:00:00 +0100" // --> Date(0)
     const val EMPTY_STRING_RESOURCE: Int = 0
 
+    const val CONNECTED_BANNER_DURATION_MS: Long = 1000L
+
 }
