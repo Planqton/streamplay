@@ -5,6 +5,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import at.plankt0n.streamplay.Keys
+import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.helper.GitHubUpdateChecker
 import android.content.SharedPreferences
 import kotlinx.coroutines.launch
@@ -19,7 +20,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         preferenceManager.sharedPreferencesName = Keys.PREFS_NAME
-        preferenceManager.sharedPreferences.registerOnSharedPreferenceChangeListener(prefListener)
+        preferenceManager.sharedPreferences?.registerOnSharedPreferenceChangeListener(prefListener)
         initSettingsScreen()
 
         findPreference<Preference>("check_updates")?.setOnPreferenceClickListener {
@@ -45,7 +46,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     override fun onDestroy() {
-        preferenceManager.sharedPreferences.unregisterOnSharedPreferenceChangeListener(prefListener)
+        preferenceManager.sharedPreferences?.unregisterOnSharedPreferenceChangeListener(prefListener)
         super.onDestroy()
     }
 
