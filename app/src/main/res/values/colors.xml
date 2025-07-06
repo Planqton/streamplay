@@ -113,5 +113,7 @@
     <color name="connect_banner_connecting_bg">#802196F3</color>
     <color name="connect_banner_connected_bg">#804CAF50</color>
     <color name="connect_banner_error_bg">#80F44336</color>
+    <!-- Color for update available text -->
+    <color name="update_available_orange">#FFA500</color>
 
 </resources>

@@ -1,6 +1,9 @@
 package at.plankt0n.streamplay.ui
 
 import android.content.Context
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import androidx.preference.*
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.Keys
@@ -86,7 +89,18 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         title = getString(R.string.settings_check_updates)
         val updateAvailable = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
             .getBoolean(Keys.PREF_UPDATE_AVAILABLE, false)
-        summary = if (updateAvailable) context.getString(R.string.update_available_title) else null
+        summary = if (updateAvailable) {
+            val text = context.getString(R.string.update_available_title)
+            val color = context.getColor(R.color.update_available_orange)
+            SpannableString(text).apply {
+                setSpan(
+                    ForegroundColorSpan(color),
+                    0,
+                    text.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+        } else null
         category = SettingsCategory.ABOUT
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }
