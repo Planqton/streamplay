@@ -193,17 +193,34 @@
                 android:contentDescription="@string/desc_button_share"
                 app:tint="@color/primary_dark_material_dark" />
 
-            <ImageButton
-                android:id="@+id/button_menu"
+            <FrameLayout
                 android:layout_width="24dp"
                 android:layout_height="0dp"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="0dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_button_menu"
-                android:contentDescription="@string/desc_button_menu"
-                app:tint="@color/primary_dark_material_dark" />
+                android:layout_weight="1">
+
+                <ImageButton
+                    android:id="@+id/button_menu"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="0dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_button_menu"
+                    android:contentDescription="@string/desc_button_menu"
+                    app:tint="@color/primary_dark_material_dark" />
+
+                <TextView
+                    android:id="@+id/update_badge"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_gravity="end|top"
+                    android:background="@drawable/badge_update_background"
+                    android:gravity="center"
+                    android:text="i"
+                    android:textColor="@android:color/white"
+                    android:textSize="8sp"
+                    android:visibility="gone" />
+            </FrameLayout>
         </LinearLayout>
     </FrameLayout>
 

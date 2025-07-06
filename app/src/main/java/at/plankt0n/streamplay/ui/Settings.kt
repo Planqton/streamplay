@@ -1,7 +1,9 @@
 package at.plankt0n.streamplay.ui
 
+import android.content.Context
 import androidx.preference.*
 import at.plankt0n.streamplay.R
+import at.plankt0n.streamplay.Keys
 
 /** Possible categories a preference can belong to. */
 enum class SettingsCategory { PLAYBACK, UI, METAINFO, ABOUT }
@@ -82,6 +84,9 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     val updatePref = Preference(context).apply {
         key = "check_updates"
         title = getString(R.string.settings_check_updates)
+        val updateAvailable = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(Keys.PREF_UPDATE_AVAILABLE, false)
+        summary = if (updateAvailable) context.getString(R.string.update_available_title) else null
         category = SettingsCategory.ABOUT
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }

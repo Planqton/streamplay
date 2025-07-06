@@ -56,6 +56,7 @@ class PlayerFragment : Fragment() {
     private lateinit var buttonBack: ImageButton
     private lateinit var buttonForward: ImageButton
     private lateinit var buttonMenu: ImageButton
+    private lateinit var updateBadge: TextView
     private lateinit var buttonSpotify: ImageButton
     private lateinit var buttonMute: ImageButton
     private lateinit var buttonShare: ImageButton
@@ -73,6 +74,10 @@ class PlayerFragment : Fragment() {
         if (key == "show_exoplayer_banner") {
             showInfoBanner = shared.getBoolean(key, true)
             if (!showInfoBanner) hideConnecting()
+        }
+        if (key == Keys.PREF_UPDATE_AVAILABLE) {
+            val showBadge = shared.getBoolean(key, false)
+            updateBadge.visibility = if (showBadge) View.VISIBLE else View.GONE
         }
     }
 
@@ -101,6 +106,7 @@ class PlayerFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         buttonMenu = view.findViewById(R.id.button_menu)
+        updateBadge = view.findViewById(R.id.update_badge)
         buttonMenu.setOnClickListener { showBottomSheet() }
 
         if (PreferencesHelper.getStations(requireContext()).isEmpty()) {
@@ -133,6 +139,7 @@ class PlayerFragment : Fragment() {
         connectingBanner = view.findViewById(R.id.connecting_banner)
         prefs = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         showInfoBanner = prefs.getBoolean("show_exoplayer_banner", true)
+        updateBadge.visibility = if (prefs.getBoolean(Keys.PREF_UPDATE_AVAILABLE, false)) View.VISIBLE else View.GONE
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
 
         // Grundlegende Button-Listener setzen, auch wenn die Playlist leer ist

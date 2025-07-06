@@ -7,6 +7,7 @@ object Keys {
     const val KEY_STATIONS = "stations"
     const val PREF_LAST_PLAYED_STREAM_INDEX = "last_played_stream_index" //Letzte Gespielte Index
     const val PREFS_UPDATE_URL = "https://fytfiles.printspace.at/update/updateinfo_streamplay.json"
+    const val PREF_UPDATE_AVAILABLE = "update_available"
     const val ACTION_SHOW_COUNTDOWN = "at.plankt0n.streamplay.SHOW_COUNTDOWN"
     const val ACTION_HIDE_COUNTDOWN = "at.plankt0n.streamplay.HIDE_COUNTDOWN"
     const val EXTRA_COUNTDOWN_DURATION = "countdown_duration"

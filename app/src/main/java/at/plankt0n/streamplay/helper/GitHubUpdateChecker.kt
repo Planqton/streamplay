@@ -7,6 +7,7 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import at.plankt0n.streamplay.R
+import at.plankt0n.streamplay.Keys
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -57,8 +58,11 @@ class GitHubUpdateChecker(private val context: Context) {
             } catch (_: Exception) {
                 "0"
             }
+            val newer = isNewerVersion(remoteVersion, localVersion)
+            context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+                .edit().putBoolean(Keys.PREF_UPDATE_AVAILABLE, newer).apply()
             withContext(Dispatchers.Main) { progress.dismiss() }
-            if ((force || isNewerVersion(remoteVersion, localVersion)) && !apkUrl.isNullOrEmpty()) {
+            if ((force || newer) && !apkUrl.isNullOrEmpty()) {
                 if (force) {
                     downloadAndInstall(apkUrl!!)
                 } else {
@@ -88,6 +92,29 @@ class GitHubUpdateChecker(private val context: Context) {
 
     suspend fun forceUpdate() {
         checkForUpdate(true)
+    }
+
+    suspend fun silentCheckForUpdate(): Boolean {
+        return try {
+            val request = Request.Builder().url(apiUrl).build()
+            val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+            val bodyStr = response.body?.string()
+            if (!response.isSuccessful || bodyStr.isNullOrEmpty()) return false
+            val json = JSONObject(bodyStr)
+            val remoteVersion = json.getString("tag_name").removePrefix("v")
+            val localVersion = try {
+                val info = context.packageManager.getPackageInfo(context.packageName, 0)
+                info.versionName ?: "0"
+            } catch (_: Exception) {
+                "0"
+            }
+            val newer = isNewerVersion(remoteVersion, localVersion)
+            context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+                .edit().putBoolean(Keys.PREF_UPDATE_AVAILABLE, newer).apply()
+            newer
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun isNewerVersion(remote: String, local: String): Boolean {
