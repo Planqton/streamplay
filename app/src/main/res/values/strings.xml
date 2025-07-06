@@ -125,5 +125,6 @@
     <string name="no_metadata_available">Keine Informationen verfügbar</string>
     <string name="settings_show_exoplayer_status">Show ExoPlayer Status</string>
     <string name="exo_status_connecting">Connecting…</string>
+    <string name="exo_status_connected">Connected!</string>
     <string name="desc_exoplayer_status_banner">Status of ExoPlayer</string>
 </resources>

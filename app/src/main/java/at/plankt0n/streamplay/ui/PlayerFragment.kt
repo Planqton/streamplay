@@ -77,8 +77,10 @@ class PlayerFragment : Fragment() {
         }
     }
 
-    var isMuted = false
-    private var showStatusEnabled = true
+var isMuted = false
+private var showStatusEnabled = true
+private var lastPlayerState: Int = Player.STATE_IDLE
+private var hideStatusRunnable: Runnable? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -207,12 +209,21 @@ class PlayerFragment : Fragment() {
             },
             onPlayerStateChanged = { state ->
                 when (state) {
-                    Player.STATE_BUFFERING -> showStatus(getString(R.string.exo_status_connecting), false)
-                    Player.STATE_READY -> hideStatus()
+                    Player.STATE_BUFFERING -> {
+                        showStatus(getString(R.string.exo_status_connecting), StatusType.CONNECTING)
+                    }
+                    Player.STATE_READY -> {
+                        if (lastPlayerState == Player.STATE_BUFFERING || lastPlayerState == Player.STATE_IDLE) {
+                            showStatus(getString(R.string.exo_status_connected), StatusType.SUCCESS)
+                        } else {
+                            hideStatus()
+                        }
+                    }
                 }
+                lastPlayerState = state
             },
             onPlayerError = { error ->
-                showStatus(error.message ?: "Unknown error", true)
+                showStatus(error.message ?: "Unknown error", StatusType.ERROR)
             }
         )
 
@@ -460,16 +471,32 @@ class PlayerFragment : Fragment() {
         countdownTextView.visibility = View.GONE
     }
 
-    private fun showStatus(text: String, isError: Boolean) {
+    private enum class StatusType { CONNECTING, ERROR, SUCCESS }
+
+    private fun showStatus(text: String, type: StatusType) {
         if (!showStatusEnabled) return
+        hideStatusRunnable?.let { countdownHandler.removeCallbacks(it) }
+
         exoStatusBanner.text = text
-        exoStatusBanner.setBackgroundResource(
-            if (isError) R.drawable.banner_error_bg else R.drawable.banner_connecting_bg
-        )
+        val bg = when (type) {
+            StatusType.CONNECTING -> R.drawable.banner_connecting_bg
+            StatusType.ERROR -> R.drawable.banner_error_bg
+            StatusType.SUCCESS -> R.drawable.banner_connected_bg
+        }
+        exoStatusBanner.setBackgroundResource(bg)
         exoStatusBanner.visibility = View.VISIBLE
+
+        if (type == StatusType.SUCCESS) {
+            hideStatusRunnable = Runnable { hideStatus() }
+            countdownHandler.postDelayed(hideStatusRunnable!!, 2000)
+        } else {
+            hideStatusRunnable = null
+        }
     }
 
     private fun hideStatus() {
+        hideStatusRunnable?.let { countdownHandler.removeCallbacks(it) }
+        hideStatusRunnable = null
         exoStatusBanner.visibility = View.GONE
     }
 }
