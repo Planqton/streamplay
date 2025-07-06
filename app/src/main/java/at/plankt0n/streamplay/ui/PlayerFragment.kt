@@ -335,7 +335,7 @@ class PlayerFragment : Fragment() {
 
             val recyclerView = viewPager.getChildAt(0) as? RecyclerView
             val holder = recyclerView?.findViewHolderForAdapterPosition(viewPager.currentItem)
-                    as? CoverPageAdapter.CoverViewHolder ?: return@observe
+                    as? CoverPageAdapter.CoverViewHolder
 
             val defaultIconUrl = mediaServiceController.mediaController
                 ?.getMediaItemAt(viewPager.currentItem)
@@ -344,37 +344,39 @@ class PlayerFragment : Fragment() {
             val metaCoverUrl = trackInfo.bestCoverUrl?.takeIf { it.isNotBlank() }
             val imageUrlToLoad = metaCoverUrl ?: defaultIconUrl
 
-            LiveCoverHelper.loadCoverWithBackgroundFade(
-                context = requireContext(),
-                imageUrl = imageUrlToLoad,
-                imageView = holder.coverImage,
-                backgroundTarget = holder.itemView,
-                defaultColor = requireContext().getColor(R.color.default_background),
-                lastColor = holder.lastColor,
-                onNewColor = { holder.lastColor = it }
-            )
+            holder?.let { coverHolder ->
+                LiveCoverHelper.loadCoverWithBackgroundFade(
+                    context = requireContext(),
+                    imageUrl = imageUrlToLoad,
+                    imageView = coverHolder.coverImage,
+                    backgroundTarget = coverHolder.itemView,
+                    defaultColor = requireContext().getColor(R.color.default_background),
+                    lastColor = coverHolder.lastColor,
+                    onNewColor = { coverHolder.lastColor = it }
+                )
 
-            showingMetaCover = true
-            holder.coverImage.setOnClickListener { view ->
-                val targetUrl = if (showingMetaCover) defaultIconUrl else metaCoverUrl ?: defaultIconUrl
-                view.animate()
-                    .rotationY(90f)
-                    .setDuration(150)
-                    .withEndAction {
-                        LiveCoverHelper.loadCoverWithBackgroundFade(
-                            context = requireContext(),
-                            imageUrl = targetUrl,
-                            imageView = holder.coverImage,
-                            backgroundTarget = holder.itemView,
-                            defaultColor = requireContext().getColor(R.color.default_background),
-                            lastColor = holder.lastColor,
-                            onNewColor = { holder.lastColor = it }
-                        )
-                        holder.coverImage.rotationY = -90f
-                        holder.coverImage.animate().rotationY(0f).setDuration(150).start()
-                    }
-                    .start()
-                showingMetaCover = !showingMetaCover
+                showingMetaCover = true
+                coverHolder.coverImage.setOnClickListener { view ->
+                    val targetUrl = if (showingMetaCover) defaultIconUrl else metaCoverUrl ?: defaultIconUrl
+                    view.animate()
+                        .rotationY(90f)
+                        .setDuration(150)
+                        .withEndAction {
+                            LiveCoverHelper.loadCoverWithBackgroundFade(
+                                context = requireContext(),
+                                imageUrl = targetUrl,
+                                imageView = coverHolder.coverImage,
+                                backgroundTarget = coverHolder.itemView,
+                                defaultColor = requireContext().getColor(R.color.default_background),
+                                lastColor = coverHolder.lastColor,
+                                onNewColor = { coverHolder.lastColor = it }
+                            )
+                            coverHolder.coverImage.rotationY = -90f
+                            coverHolder.coverImage.animate().rotationY(0f).setDuration(150).start()
+                        }
+                        .start()
+                    showingMetaCover = !showingMetaCover
+                }
             }
 
             titleTextView?.text = trackInfo.trackName.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_title)
