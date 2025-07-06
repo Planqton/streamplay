@@ -79,7 +79,7 @@ object LiveCoverHelper {
             )
             BackgroundEffect.AQUA -> GradientDrawable(
                 GradientDrawable.Orientation.BL_TR,
-                intArrayOf(Color.parseColor("#00d4ff"), Color.TRANSPARENT)
+                intArrayOf(color, Color.TRANSPARENT)
             )
             BackgroundEffect.RADIAL -> GradientDrawable().apply {
                 gradientType = GradientDrawable.RADIAL_GRADIENT
