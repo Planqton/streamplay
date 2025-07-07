@@ -128,10 +128,13 @@ class StreamingService : MediaSessionService() {
 
                         Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
                         currentStationUuid = mediaItem?.mediaMetadata?.extras?.getString("EXTRA_UUID")
+                        val fallbackartworkUri = mediaItem?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
                         UITrackRepository.clearTrackInfo()
                         lastIcyMetadata = null
                         lastshowedMetadata = null
                         lastArtworkUri = null
+
+                        updateMediaItemMetadata("", "", fallbackartworkUri)
 
 
                         PreferencesHelper.setLastPlayedStreamIndex(
@@ -381,6 +384,7 @@ class StreamingService : MediaSessionService() {
                 withContext(Dispatchers.Main) {
                     if (stationUuidAtFetchStart != currentStationUuid) {
                         Log.d("StreamingService", "ℹ️ Station changed during metadata fetch, ignoring results")
+                        updateMediaItemMetadata("", "", fallbackartworkUri ?: "")
                         return@withContext
                     }
                     if (extendedInfo != null) {
@@ -453,7 +457,10 @@ class StreamingService : MediaSessionService() {
             )
             // Sicherstellen, dass auch dieser Aufruf im Main-Thread läuft!
             GlobalScope.launch(Dispatchers.Main) {
-                if (stationUuidAtFetchStart != currentStationUuid) return@launch
+                if (stationUuidAtFetchStart != currentStationUuid) {
+                    updateMediaItemMetadata("", "", fallbackartworkUri ?: "")
+                    return@launch
+                }
                 updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
             }
             UITrackRepository.updateTrackInfo(
