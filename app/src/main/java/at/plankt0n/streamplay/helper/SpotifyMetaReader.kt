@@ -131,6 +131,7 @@ object SpotifyMetaReader {
             val trackId = trackItem.getString("id")
             val trackUri = trackItem.getJSONObject("external_urls").getString("spotify")
             val trackName = trackItem.getString("name")
+            val previewUrl = trackItem.optString("preview_url", "")
             val trackPopularity = trackItem.getInt("popularity")
             val trackDurationMs = trackItem.getLong("duration_ms")
             val album = trackItem.getJSONObject("album")
@@ -157,9 +158,35 @@ object SpotifyMetaReader {
                 null
             }
 
+            // Genre ermitteln
+            val artistId = trackItem.getJSONArray("artists").optJSONObject(0)?.getString("id")
+            val genre = if (!artistId.isNullOrBlank()) {
+                val artistUrl = "https://api.spotify.com/v1/artists/$artistId"
+                val artistRequest = Request.Builder()
+                    .url(artistUrl)
+                    .header("Authorization", "Bearer $token")
+                    .build()
+
+                client.newCall(artistRequest).execute().use { artistResponse ->
+                    if (artistResponse.isSuccessful) {
+                        val artistJson = JSONObject(artistResponse.body?.string() ?: "")
+                        val genres = artistJson.getJSONArray("genres")
+                        if (genres.length() > 0) genres.getString(0) else ""
+                    } else {
+                        Log.w("SpotifyMetaReader", "⚠️ Spotify Artist API-Fehler: ${artistResponse.code}")
+                        ""
+                    }
+                }
+            } else {
+                ""
+            }
+
+            Log.d("SpotifyMetaReader", "📄 PreviewUrl=$previewUrl | Genre=$genre")
+
             return@withContext ExtendedMetaInfo(
                 trackName, artist, albumName, albumReleaseDate,
-                trackUri, bestAlbumCoverUrl ?: bestCoverUrl, trackDurationMs, trackPopularity
+                trackUri, bestAlbumCoverUrl ?: bestCoverUrl, trackDurationMs, trackPopularity,
+                previewUrl, genre
             )
         }
 

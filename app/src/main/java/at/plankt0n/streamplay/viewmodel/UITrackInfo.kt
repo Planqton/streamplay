@@ -13,7 +13,9 @@ data class UITrackInfo(
     val durationMs: Long = 0L,
     val albumReleaseDate: String = "",
     val popularity: Int = 0,
-    val spotifyUrl: String = ""
+    val spotifyUrl: String = "",
+    val previewUrl: String = "",
+    val genre: String = ""
 )
 
 /**

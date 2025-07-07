@@ -390,7 +390,9 @@ class StreamingService : MediaSessionService() {
                                 durationMs = extendedInfo.durationMs,
                                 albumReleaseDate = extendedInfo.albumReleaseDate,
                                 popularity = extendedInfo.popularity,
-                                spotifyUrl = extendedInfo.spotifyUrl
+                                spotifyUrl = extendedInfo.spotifyUrl,
+                                previewUrl = extendedInfo.previewUrl,
+                                genre = extendedInfo.genre
                             )
                         )
 
