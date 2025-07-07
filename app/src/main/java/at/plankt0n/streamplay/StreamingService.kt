@@ -64,6 +64,7 @@ class StreamingService : MediaSessionService() {
     var lastIcyMetadata: Metadata? = null
     private var lastshowedMetadata: MediaMetadata? = null
     private var lastArtworkUri: String? = null
+    private var currentStationUuid: String? = null
 
     companion object {
         const val CHANNEL_ID = "stream_service_channel"
@@ -126,6 +127,7 @@ class StreamingService : MediaSessionService() {
                         currentIndex = currentMediaItemIndex
 
                         Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
+                        currentStationUuid = mediaItem?.mediaMetadata?.extras?.getString("EXTRA_UUID")
                         UITrackRepository.clearTrackInfo()
                         lastIcyMetadata = null
                         lastshowedMetadata = null
@@ -224,6 +226,7 @@ class StreamingService : MediaSessionService() {
         }
 
         player.setMediaItems(mediaItems, currentIndex, 0L)
+        currentStationUuid = mediaItems[currentIndex].mediaMetadata.extras?.getString("EXTRA_UUID")
         player.prepare()
         maybeAutoplay()
     }
@@ -262,6 +265,7 @@ class StreamingService : MediaSessionService() {
         }
 
         player.setMediaItems(mediaItems, currentIndex, 0L)
+        currentStationUuid = mediaItems[currentIndex].mediaMetadata.extras?.getString("EXTRA_UUID")
         player.prepare()
         maybeAutoplay(wasPlaying)
 
@@ -323,6 +327,7 @@ class StreamingService : MediaSessionService() {
 
     fun fetchMetadata(metadata: Metadata) {
 
+        val stationUuidAtFetchStart = currentStationUuid
         val fallbackartworkUri = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL")
         var title = ""
         var artist = ""
@@ -374,6 +379,10 @@ class StreamingService : MediaSessionService() {
                 val extendedInfo =
                     SpotifyMetaReader.getExtendedMetaInfo(this@StreamingService, artist, title)
                 withContext(Dispatchers.Main) {
+                    if (stationUuidAtFetchStart != currentStationUuid) {
+                        Log.d("StreamingService", "ℹ️ Station changed during metadata fetch, ignoring results")
+                        return@withContext
+                    }
                     if (extendedInfo != null) {
                         Log.d(
                             "SpotifyMetaReader",
@@ -444,6 +453,7 @@ class StreamingService : MediaSessionService() {
             )
             // Sicherstellen, dass auch dieser Aufruf im Main-Thread läuft!
             GlobalScope.launch(Dispatchers.Main) {
+                if (stationUuidAtFetchStart != currentStationUuid) return@launch
                 updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
             }
             UITrackRepository.updateTrackInfo(
