@@ -40,6 +40,7 @@ import at.plankt0n.streamplay.helper.MetaLogHelper
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.viewmodel.UITrackInfo
 import at.plankt0n.streamplay.data.MetaLogEntry
+import at.plankt0n.streamplay.data.ExtendedMetaInfo
 import at.plankt0n.streamplay.Keys
 import androidx.media3.common.Player
 import com.bumptech.glide.Glide
@@ -566,13 +567,29 @@ class PlayerFragment : Fragment() {
         val station = extras.getString("EXTRA_STATION_NAME") ?: ""
         val trackInfo = spotifyTrackViewModel.trackInfo.value
 
+        val extended = trackInfo?.let {
+            ExtendedMetaInfo(
+                trackName = it.trackName,
+                artistName = it.artistName,
+                albumName = it.albumName,
+                albumReleaseDate = it.albumReleaseDate,
+                spotifyUrl = it.spotifyUrl,
+                bestCoverUrl = it.bestCoverUrl,
+                durationMs = it.durationMs,
+                popularity = it.popularity,
+                previewUrl = it.previewUrl,
+                genre = it.genre
+            )
+        }
+
         val entry = MetaLogEntry(
             timestamp = System.currentTimeMillis(),
             station = station,
             title = trackInfo?.trackName ?: "",
             artist = trackInfo?.artistName ?: "",
             url = trackInfo?.spotifyUrl?.takeIf { it.isNotBlank() },
-            manual = true
+            manual = true,
+            extendedInfo = extended
         )
 
         MetaLogHelper.addLog(requireContext(), entry)
