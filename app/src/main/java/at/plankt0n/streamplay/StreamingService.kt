@@ -423,7 +423,8 @@ class StreamingService : MediaSessionService() {
                                 station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
                                 title = extendedInfo.trackName,
                                 artist = extendedInfo.artistName,
-                                url = extendedInfo.spotifyUrl.takeIf { it.isNotBlank() }
+                                url = extendedInfo.spotifyUrl.takeIf { it.isNotBlank() },
+                                extendedInfo = extendedInfo
                             )
                         )
                     } else {

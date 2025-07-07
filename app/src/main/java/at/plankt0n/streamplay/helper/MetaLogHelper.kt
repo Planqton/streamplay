@@ -1,6 +1,7 @@
 package at.plankt0n.streamplay.helper
 
 import android.content.Context
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import at.plankt0n.streamplay.data.MetaLogEntry
@@ -27,6 +28,7 @@ object MetaLogHelper {
                 list[0] = entry
                 val json = Gson().toJson(list)
                 prefs(context).edit().putString(KEY_LOGS, json).apply()
+                Log.d("MetaLogHelper", "Saved log entry: ${Gson().toJson(entry)}")
                 return
             }
         }
@@ -34,6 +36,7 @@ object MetaLogHelper {
         list.add(0, entry) // newest first
         val json = Gson().toJson(list)
         prefs(context).edit().putString(KEY_LOGS, json).apply()
+        Log.d("MetaLogHelper", "Saved log entry: ${Gson().toJson(entry)}")
     }
 
     fun getLogs(context: Context): MutableList<MetaLogEntry> {
