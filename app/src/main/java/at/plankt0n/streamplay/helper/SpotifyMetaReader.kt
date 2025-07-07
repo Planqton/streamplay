@@ -133,12 +133,39 @@ object SpotifyMetaReader {
             val trackName = trackItem.getString("name")
             val trackPopularity = trackItem.getInt("popularity")
             val trackDurationMs = trackItem.getLong("duration_ms")
+            val previewUrl = trackItem.optString("preview_url", null)
             val album = trackItem.getJSONObject("album")
             val albumId = album.getString("id")
             val albumName = album.getString("name")
             val albumReleaseDate = album.getString("release_date")
             val images = album.getJSONArray("images")
             val bestCoverUrl = if (images.length() > 0) images.getJSONObject(0).getString("url") else null
+
+            val artistArray = trackItem.getJSONArray("artists")
+            val firstArtist = artistArray.optJSONObject(0)
+            val artistId = firstArtist?.getString("id")
+
+            var genre = ""
+            if (!artistId.isNullOrEmpty()) {
+                val artistUrl = "https://api.spotify.com/v1/artists/$artistId"
+                val artistRequest = Request.Builder()
+                    .url(artistUrl)
+                    .header("Authorization", "Bearer $token")
+                    .build()
+
+                val artistResponse = client.newCall(artistRequest).execute()
+                if (artistResponse.isSuccessful) {
+                    val artistJson = JSONObject(artistResponse.body?.string() ?: "")
+                    val genres = artistJson.optJSONArray("genres")
+                    if (genres != null && genres.length() > 0) {
+                        genre = genres.getString(0)
+                    }
+                } else {
+                    Log.w("SpotifyMetaReader", "⚠️ Spotify Artist API-Fehler: ${artistResponse.code}")
+                }
+            }
+
+            Log.d("SpotifyMetaReader", "ℹ️ Preview: $previewUrl Genre: $genre")
 
             // Album-Infos holen
             val albumUrl = "https://api.spotify.com/v1/albums/$albumId"
@@ -158,8 +185,16 @@ object SpotifyMetaReader {
             }
 
             return@withContext ExtendedMetaInfo(
-                trackName, artist, albumName, albumReleaseDate,
-                trackUri, bestAlbumCoverUrl ?: bestCoverUrl, trackDurationMs, trackPopularity
+                trackName = trackName,
+                artistName = artist,
+                albumName = albumName,
+                albumReleaseDate = albumReleaseDate,
+                spotifyUrl = trackUri,
+                bestCoverUrl = bestAlbumCoverUrl ?: bestCoverUrl,
+                durationMs = trackDurationMs,
+                popularity = trackPopularity,
+                previewUrl = previewUrl,
+                genre = genre
             )
         }
 

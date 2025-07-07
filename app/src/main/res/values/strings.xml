@@ -69,6 +69,8 @@
     <string name="unknown_station">Unknown Statio</string>
     <string name="unknown_album">Unknown Album</string>
     <string name="album_prefix">Album: %1$s</string>
+    <string name="genre_prefix">Genre: %1$s</string>
+    <string name="unknown_genre">Unknown Genre</string>
     <string name="share_text">Hey! I am listening: %1$s from %2$s\nCheck it out: %3$s</string>
     <string name="share_chooser_title">Share with…</string>
 

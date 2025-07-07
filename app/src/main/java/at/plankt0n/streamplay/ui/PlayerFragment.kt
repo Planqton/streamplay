@@ -357,6 +357,7 @@ class PlayerFragment : Fragment() {
             val flipper = view?.findViewById<ViewFlipper>(R.id.meta_flipper)
             val titleTextView = view?.findViewById<TextView>(R.id.meta_overlay_Title)
             val artistTextView = view?.findViewById<TextView>(R.id.meta_overlay_Artist)
+            val genreTextView = view?.findViewById<TextView>(R.id.meta_overlay_Genre)
             val albumTextView = view?.findViewById<TextView>(R.id.meta_overlay_Album)
             val stationIconView = view?.findViewById<ShapeableImageView>(R.id.meta_cover_image)
 
@@ -372,6 +373,7 @@ class PlayerFragment : Fragment() {
             if (trackInfo == null) {
                 titleTextView?.text = getString(R.string.unknown_title)
                 artistTextView?.text = getString(R.string.unknown_artist)
+                genreTextView?.text = getString(R.string.unknown_genre)
                 albumTextView?.text = getString(R.string.unknown_album)
                 flipper?.stopFlipping()
                 flipper?.setDisplayedChild(0)
@@ -444,6 +446,7 @@ class PlayerFragment : Fragment() {
 
             titleTextView?.text = trackInfo.trackName.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_title)
             artistTextView?.text = trackInfo.artistName.takeIf { it.isNotBlank() } ?: getString(R.string.unknown_artist)
+            genreTextView?.text = if (trackInfo.genre.isNotBlank()) getString(R.string.genre_prefix, trackInfo.genre) else getString(R.string.unknown_genre)
 
             if (trackInfo.albumName.isNotBlank()) {
                 albumTextView?.text = getString(R.string.album_prefix, trackInfo.albumName)
@@ -469,7 +472,7 @@ class PlayerFragment : Fragment() {
                     .into(stationIconView!!)
             }
 
-            enableMarquee(titleTextView!!, artistTextView!!, albumTextView!!)
+            enableMarquee(titleTextView!!, artistTextView!!, genreTextView!!, albumTextView!!)
             updateManualLogButtonState(trackInfo)
         }
     }

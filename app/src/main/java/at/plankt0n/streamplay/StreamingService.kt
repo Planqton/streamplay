@@ -403,7 +403,9 @@ class StreamingService : MediaSessionService() {
                                 durationMs = extendedInfo.durationMs,
                                 albumReleaseDate = extendedInfo.albumReleaseDate,
                                 popularity = extendedInfo.popularity,
-                                spotifyUrl = extendedInfo.spotifyUrl
+                                spotifyUrl = extendedInfo.spotifyUrl,
+                                previewUrl = extendedInfo.previewUrl,
+                                genre = extendedInfo.genre
                             )
                         )
 
@@ -434,7 +436,9 @@ class StreamingService : MediaSessionService() {
                             UITrackInfo(
                                 trackName = title,
                                 artistName = artist,
-                                bestCoverUrl = fallbackartworkUri
+                                bestCoverUrl = fallbackartworkUri,
+                                previewUrl = null,
+                                genre = ""
                             )
                         )
                         MetaLogHelper.addLog(
@@ -569,7 +573,9 @@ class StreamingService : MediaSessionService() {
                 UITrackInfo(
                     trackName = title,
                     artistName = artist,
-                    bestCoverUrl = artworkUri
+                    bestCoverUrl = artworkUri,
+                    previewUrl = null,
+                    genre = ""
                 )
             )
 

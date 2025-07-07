@@ -334,6 +334,21 @@
                             android:focusable="false"
                             android:focusableInTouchMode="false"
                             android:scrollHorizontally="true" />
+
+                        <TextView
+                            android:id="@+id/meta_overlay_Genre"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/primary_text_default_material_dark"
+                            android:text="@string/unknown_genre"
+                            android:textSize="12sp"
+                            android:maxLines="1"
+                            android:ellipsize="marquee"
+                            android:marqueeRepeatLimit="marquee_forever"
+                            android:singleLine="true"
+                            android:focusable="false"
+                            android:focusableInTouchMode="false"
+                            android:scrollHorizontally="true" />
                     </LinearLayout>
 
                     <!-- Seite 2: Kombinierter Text -->

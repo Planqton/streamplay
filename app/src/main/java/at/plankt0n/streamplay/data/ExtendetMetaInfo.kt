@@ -8,5 +8,7 @@ data class ExtendedMetaInfo(
     val spotifyUrl: String,
     val bestCoverUrl: String?,
     val durationMs: Long,
-    val popularity: Int
+    val popularity: Int,
+    val previewUrl: String?,
+    val genre: String
 )
