@@ -21,6 +21,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.ViewFlipper
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -32,11 +33,14 @@ import at.plankt0n.streamplay.adapter.CoverPageAdapter
 import at.plankt0n.streamplay.adapter.ShortcutAdapter
 import at.plankt0n.streamplay.data.ShortcutItem
 import at.plankt0n.streamplay.data.CoverMode
+import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
+import at.plankt0n.streamplay.helper.MetaLogHelper
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
+import at.plankt0n.streamplay.viewmodel.UITrackInfo
 import at.plankt0n.streamplay.Keys
 import androidx.media3.common.Player
 import com.bumptech.glide.Glide
@@ -60,6 +64,7 @@ class PlayerFragment : Fragment() {
     private lateinit var buttonMenu: ImageButton
     private lateinit var updateBadge: TextView
     private lateinit var buttonSpotify: ImageButton
+    private lateinit var buttonManualLog: ImageButton
     private lateinit var buttonMute: ImageButton
     private lateinit var buttonShare: ImageButton
     private lateinit var shortcutRecyclerView: RecyclerView
@@ -155,6 +160,7 @@ class PlayerFragment : Fragment() {
         buttonBack = view.findViewById(R.id.button_back)
         buttonForward = view.findViewById(R.id.button_forward)
         buttonSpotify = view.findViewById(R.id.button_spotify)
+        buttonManualLog = view.findViewById(R.id.button_manual_log)
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
@@ -290,6 +296,24 @@ class PlayerFragment : Fragment() {
                 .show()
         }
 
+        buttonManualLog.setOnClickListener {
+            val trackInfo = spotifyTrackViewModel.trackInfo.value ?: return@setOnClickListener
+            val station = mediaServiceController.mediaController
+                ?.getMediaItemAt(viewPager.currentItem)
+                ?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: ""
+            val entry = MetaLogEntry(
+                timestamp = System.currentTimeMillis(),
+                station = station,
+                title = trackInfo.trackName,
+                artist = trackInfo.artistName,
+                url = trackInfo.spotifyUrl.takeIf { it.isNotBlank() },
+                manual = true
+            )
+            MetaLogHelper.addLog(requireContext(), entry)
+            Toast.makeText(requireContext(), getString(R.string.manual_log_saved), Toast.LENGTH_SHORT).show()
+            updateManualLogButton(trackInfo)
+        }
+
         buttonShare.setOnClickListener {
             val trackInfo = spotifyTrackViewModel.trackInfo.value
             val spotifyUrl = trackInfo?.spotifyUrl
@@ -320,6 +344,7 @@ class PlayerFragment : Fragment() {
             }
             isMuted = !isMuted
         }
+        updateManualLogButton(spotifyTrackViewModel.trackInfo.value)
         initialized = true
     }
 
@@ -457,6 +482,7 @@ class PlayerFragment : Fragment() {
             }
 
             enableMarquee(titleTextView!!, artistTextView!!, albumTextView!!)
+            updateManualLogButton(trackInfo)
         }
     }
 
@@ -479,6 +505,21 @@ class PlayerFragment : Fragment() {
     private fun updatePlayPauseIcon(isPlaying: Boolean) {
         val iconRes = if (isPlaying) R.drawable.ic_button_pause else R.drawable.ic_button_play
         playPauseButton.setImageResource(iconRes)
+    }
+
+    private fun updateManualLogButton(trackInfo: UITrackInfo?) {
+        val station = mediaServiceController.mediaController
+            ?.getMediaItemAt(viewPager.currentItem)
+            ?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: ""
+        val last = MetaLogHelper.getLogs(requireContext()).firstOrNull()
+        val sameAsLastManual = last != null && last.manual &&
+            last.station == station &&
+            last.title == (trackInfo?.trackName ?: "") &&
+            last.artist == (trackInfo?.artistName ?: "") &&
+            (last.url ?: "") == (trackInfo?.spotifyUrl ?: "")
+
+        buttonManualLog.isEnabled = trackInfo != null && !sameAsLastManual
+        buttonManualLog.alpha = if (buttonManualLog.isEnabled) 1.0f else 0.5f
     }
 
     private fun reloadPlaylist() {
