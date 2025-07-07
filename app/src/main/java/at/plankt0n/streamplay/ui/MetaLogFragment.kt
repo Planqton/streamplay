@@ -1,7 +1,9 @@
 package at.plankt0n.streamplay.ui
 
 import android.content.Intent
-import android.media.MediaPlayer
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.Player
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -27,7 +29,7 @@ class MetaLogFragment : Fragment() {
     private lateinit var manualFilter: CheckBox
     private var showManualOnly = false
     private var allLogs = mutableListOf<MetaLogEntry>()
-    private var previewPlayer: MediaPlayer? = null
+    private var previewPlayer: ExoPlayer? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -100,13 +102,24 @@ class MetaLogFragment : Fragment() {
     }
 
     private fun playPreview(url: String) {
-        previewPlayer?.release()
-        previewPlayer = MediaPlayer().apply {
-            setDataSource(url)
-            setOnPreparedListener { start() }
-            setOnCompletionListener { releasePlayer() }
-            prepareAsync()
+        if (previewPlayer == null) {
+            previewPlayer = ExoPlayer.Builder(requireContext()).build().apply {
+                addListener(object : Player.Listener {
+                    override fun onPlaybackStateChanged(state: Int) {
+                        if (state == Player.STATE_ENDED || state == Player.STATE_IDLE) {
+                            releasePlayer()
+                        }
+                    }
+                })
+            }
+        } else {
+            previewPlayer?.stop()
+            previewPlayer?.clearMediaItems()
         }
+
+        previewPlayer?.setMediaItem(MediaItem.fromUri(url))
+        previewPlayer?.prepare()
+        previewPlayer?.play()
     }
 
     private fun releasePlayer() {
