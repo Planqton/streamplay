@@ -36,12 +36,16 @@ import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
+import at.plankt0n.streamplay.helper.MetaLogHelper
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
+import at.plankt0n.streamplay.viewmodel.UITrackInfo
+import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.Keys
 import androidx.media3.common.Player
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
+import android.widget.Toast
 
 class PlayerFragment : Fragment() {
 
@@ -62,6 +66,7 @@ class PlayerFragment : Fragment() {
     private lateinit var buttonSpotify: ImageButton
     private lateinit var buttonMute: ImageButton
     private lateinit var buttonShare: ImageButton
+    private lateinit var buttonManualLog: ImageButton
     private lateinit var shortcutRecyclerView: RecyclerView
     private lateinit var shortcutAdapter: ShortcutAdapter
     private lateinit var countdownTextView: TextView
@@ -157,6 +162,7 @@ class PlayerFragment : Fragment() {
         buttonSpotify = view.findViewById(R.id.button_spotify)
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
+        buttonManualLog = view.findViewById(R.id.button_manual_log)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
         connectingBanner = view.findViewById(R.id.connecting_banner)
         prefs = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
@@ -237,6 +243,7 @@ class PlayerFragment : Fragment() {
                 viewPager.setCurrentItem(currentIndex, false)
                 updateOverlayUI(currentIndex)
                 updatePlayPauseIcon(controller.isPlaying)
+                updateManualLogButtonState(spotifyTrackViewModel.trackInfo.value)
 
                 requireContext().startService(
                     Intent(requireContext(), StreamingService::class.java).apply {
@@ -255,6 +262,7 @@ class PlayerFragment : Fragment() {
             onStreamIndexChanged = { index ->
                 viewPager.setCurrentItem(index, true)
                 updateOverlayUI(index)
+                updateManualLogButtonState(spotifyTrackViewModel.trackInfo.value)
             },
             onMetadataChanged = {},
             onTimelineChanged = {
@@ -309,6 +317,10 @@ class PlayerFragment : Fragment() {
             startActivity(Intent.createChooser(intent, chooserTitle))
         }
 
+        buttonManualLog.setOnClickListener {
+            saveManualLog()
+        }
+
         buttonMute.setOnClickListener {
             val audioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as AudioManager
             if (isMuted) {
@@ -320,6 +332,7 @@ class PlayerFragment : Fragment() {
             }
             isMuted = !isMuted
         }
+        updateManualLogButtonState(spotifyTrackViewModel.trackInfo.value)
         initialized = true
     }
 
@@ -457,6 +470,7 @@ class PlayerFragment : Fragment() {
             }
 
             enableMarquee(titleTextView!!, artistTextView!!, albumTextView!!)
+            updateManualLogButtonState(trackInfo)
         }
     }
 
@@ -531,6 +545,43 @@ class PlayerFragment : Fragment() {
 
     fun enableMarquee(vararg views: TextView) {
         views.forEach { it.isSelected = true }
+    }
+
+    private fun saveManualLog() {
+        val controller = mediaServiceController.mediaController ?: return
+        val extras = controller.currentMediaItem?.mediaMetadata?.extras ?: return
+        val station = extras.getString("EXTRA_STATION_NAME") ?: ""
+        val trackInfo = spotifyTrackViewModel.trackInfo.value
+
+        val entry = MetaLogEntry(
+            timestamp = System.currentTimeMillis(),
+            station = station,
+            title = trackInfo?.trackName ?: "",
+            artist = trackInfo?.artistName ?: "",
+            url = trackInfo?.spotifyUrl?.takeIf { it.isNotBlank() },
+            manual = true
+        )
+
+        MetaLogHelper.addLog(requireContext(), entry)
+        Toast.makeText(requireContext(), getString(R.string.manual_log_saved), Toast.LENGTH_SHORT).show()
+        updateManualLogButtonState(trackInfo)
+    }
+
+    private fun updateManualLogButtonState(trackInfo: UITrackInfo?) {
+        val logs = MetaLogHelper.getLogs(requireContext())
+        val last = logs.firstOrNull()
+        val extras = mediaServiceController.mediaController
+            ?.currentMediaItem?.mediaMetadata?.extras
+        val station = extras?.getString("EXTRA_STATION_NAME") ?: ""
+        val same = last != null &&
+            last.station == station &&
+            last.title == (trackInfo?.trackName ?: "") &&
+            last.artist == (trackInfo?.artistName ?: "") &&
+            last.url == (trackInfo?.spotifyUrl?.takeIf { it.isNotBlank() }) &&
+            last.manual
+
+        buttonManualLog.isEnabled = !same
+        buttonManualLog.alpha = if (same) 0.5f else 1.0f
     }
 
     private fun showCountdown(duration: Int) {
