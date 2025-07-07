@@ -127,6 +127,9 @@ class StreamingService : MediaSessionService() {
 
                         Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
                         UITrackRepository.clearTrackInfo()
+                        lastIcyMetadata = null
+                        lastshowedMetadata = null
+                        lastArtworkUri = null
 
 
                         PreferencesHelper.setLastPlayedStreamIndex(
