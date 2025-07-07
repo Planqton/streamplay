@@ -325,6 +325,16 @@
                             android:textSize="12sp"
                             android:maxLines="1"
                             android:ellipsize="end" />
+
+                        <TextView
+                            android:id="@+id/meta_overlay_Genre"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/primary_text_default_material_dark"
+                            android:text="@string/unknown_genre"
+                            android:textSize="12sp"
+                            android:maxLines="1"
+                            android:ellipsize="end" />
                     </LinearLayout>
 
                     <!-- Seite 2: Kombinierter Text -->
