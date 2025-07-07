@@ -71,6 +71,7 @@ class PlayerFragment : Fragment() {
     private lateinit var shortcutAdapter: ShortcutAdapter
     private lateinit var countdownTextView: TextView
     private lateinit var connectingBanner: TextView
+    private lateinit var metaFlipper: ViewFlipper
     private val countdownHandler = Handler(Looper.getMainLooper())
     private var countdownRunnable: Runnable? = null
     private val bannerHandler = Handler(Looper.getMainLooper())
@@ -165,6 +166,16 @@ class PlayerFragment : Fragment() {
         buttonManualLog = view.findViewById(R.id.button_manual_log)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
         connectingBanner = view.findViewById(R.id.connecting_banner)
+        metaFlipper = view.findViewById(R.id.meta_flipper)
+        metaFlipper.setOnClickListener {
+            if (metaFlipper.childCount > 1) {
+                if (metaFlipper.displayedChild == metaFlipper.childCount - 1) {
+                    metaFlipper.displayedChild = 0
+                } else {
+                    metaFlipper.showNext()
+                }
+            }
+        }
         prefs = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         showInfoBanner = prefs.getBoolean("show_exoplayer_banner", true)
         backgroundEffect = try {
@@ -354,7 +365,6 @@ class PlayerFragment : Fragment() {
     private fun observeSpotifyTrackInfo() {
         spotifyTrackViewModel.trackInfo.removeObservers(viewLifecycleOwner)
         spotifyTrackViewModel.trackInfo.observe(viewLifecycleOwner) { trackInfo ->
-            val flipper = view?.findViewById<ViewFlipper>(R.id.meta_flipper)
             val titleTextView = view?.findViewById<TextView>(R.id.meta_overlay_Title)
             val artistTextView = view?.findViewById<TextView>(R.id.meta_overlay_Artist)
             val genreTextView = view?.findViewById<TextView>(R.id.meta_overlay_Genre)
@@ -375,8 +385,8 @@ class PlayerFragment : Fragment() {
                 artistTextView?.text = getString(R.string.unknown_artist)
                 genreTextView?.text = getString(R.string.unknown_genre)
                 albumTextView?.text = getString(R.string.unknown_album)
-                flipper?.stopFlipping()
-                flipper?.setDisplayedChild(0)
+                metaFlipper.stopFlipping()
+                metaFlipper.displayedChild = 0
 
                 Glide.with(requireContext())
                     .load(R.drawable.placeholder_spotify_dark)
@@ -450,11 +460,11 @@ class PlayerFragment : Fragment() {
 
             if (trackInfo.albumName.isNotBlank()) {
                 albumTextView?.text = getString(R.string.album_prefix, trackInfo.albumName)
-                if (flipper?.displayedChild != 0) flipper?.setDisplayedChild(0)
-                flipper?.startFlipping()
+                if (metaFlipper.displayedChild != 0) metaFlipper.displayedChild = 0
+                metaFlipper.startFlipping()
             } else {
-                flipper?.stopFlipping()
-                flipper?.setDisplayedChild(0)
+                metaFlipper.stopFlipping()
+                metaFlipper.displayedChild = 0
                 albumTextView?.text = getString(R.string.unknown_album)
             }
 
