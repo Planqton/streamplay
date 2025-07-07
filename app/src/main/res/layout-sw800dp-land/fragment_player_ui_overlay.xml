@@ -326,6 +326,28 @@
                             android:maxLines="1"
                             android:ellipsize="end" />
 
+                    </LinearLayout>
+
+                    <!-- Seite 2: Kombinierter Text -->
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/meta_overlay_Album"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="marquee"
+                            android:marqueeRepeatLimit="marquee_forever"
+                            android:singleLine="true"
+                            android:scrollHorizontally="true"
+                            android:textColor="@color/primary_text_default_material_dark"
+                            android:text="@string/unknown_album"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:maxLines="1" />
+
                         <TextView
                             android:id="@+id/meta_overlay_Genre"
                             android:layout_width="wrap_content"
@@ -336,22 +358,6 @@
                             android:maxLines="1"
                             android:ellipsize="end" />
                     </LinearLayout>
-
-                    <!-- Seite 2: Kombinierter Text -->
-                    <TextView
-                        android:id="@+id/meta_overlay_Album"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:ellipsize="marquee"
-                        android:marqueeRepeatLimit="marquee_forever"
-                        android:singleLine="true"
-                        android:scrollHorizontally="true"
-                        android:textColor="@color/primary_text_default_material_dark"
-                        android:text="@string/unknown_album"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:maxLines="1"
-                     />
                 </ViewFlipper>
 
             </LinearLayout>
