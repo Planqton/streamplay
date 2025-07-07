@@ -572,6 +572,7 @@ class PlayerFragment : Fragment() {
             title = trackInfo?.trackName ?: "",
             artist = trackInfo?.artistName ?: "",
             url = trackInfo?.spotifyUrl?.takeIf { it.isNotBlank() },
+            previewUrl = trackInfo?.previewUrl,
             manual = true
         )
 
@@ -591,6 +592,7 @@ class PlayerFragment : Fragment() {
             last.title == (trackInfo?.trackName ?: "") &&
             last.artist == (trackInfo?.artistName ?: "") &&
             last.url == (trackInfo?.spotifyUrl?.takeIf { it.isNotBlank() }) &&
+            last.previewUrl == trackInfo?.previewUrl &&
             last.manual
 
         buttonManualLog.isEnabled = !same

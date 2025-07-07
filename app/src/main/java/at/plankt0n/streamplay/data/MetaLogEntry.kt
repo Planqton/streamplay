@@ -10,6 +10,7 @@ data class MetaLogEntry(
     val title: String,
     val artist: String,
     val url: String? = null,
+    val previewUrl: String? = null,
     val manual: Boolean = false
 ) {
     fun formattedTime(): String {

@@ -1,6 +1,7 @@
 package at.plankt0n.streamplay.ui
 
 import android.content.Intent
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -26,6 +27,7 @@ class MetaLogFragment : Fragment() {
     private lateinit var manualFilter: CheckBox
     private var showManualOnly = false
     private var allLogs = mutableListOf<MetaLogEntry>()
+    private var previewPlayer: MediaPlayer? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,10 +44,15 @@ class MetaLogFragment : Fragment() {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 
-        adapter = MetaLogAdapter { url ->
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(intent)
-        }
+        adapter = MetaLogAdapter(
+            onUrlClick = { url ->
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                startActivity(intent)
+            },
+            onPreviewClick = { url ->
+                playPreview(url)
+            }
+        )
         val recycler = view.findViewById<RecyclerView>(R.id.recyclerMetaLog)
         recycler.layoutManager = LinearLayoutManager(requireContext())
         recycler.adapter = adapter
@@ -90,5 +97,25 @@ class MetaLogFragment : Fragment() {
             matchesQuery && manualOk
         }
         adapter.setItems(filtered)
+    }
+
+    private fun playPreview(url: String) {
+        previewPlayer?.release()
+        previewPlayer = MediaPlayer().apply {
+            setDataSource(url)
+            setOnPreparedListener { start() }
+            setOnCompletionListener { releasePlayer() }
+            prepareAsync()
+        }
+    }
+
+    private fun releasePlayer() {
+        previewPlayer?.release()
+        previewPlayer = null
+    }
+
+    override fun onDestroy() {
+        releasePlayer()
+        super.onDestroy()
     }
 }

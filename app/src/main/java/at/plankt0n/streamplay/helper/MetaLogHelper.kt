@@ -21,7 +21,8 @@ object MetaLogHelper {
             val sameMeta = newest.station == entry.station &&
                 newest.title == entry.title &&
                 newest.artist == entry.artist &&
-                newest.url == entry.url
+                newest.url == entry.url &&
+                newest.previewUrl == entry.previewUrl
 
             if (sameMeta && entry.manual && !newest.manual) {
                 list[0] = entry

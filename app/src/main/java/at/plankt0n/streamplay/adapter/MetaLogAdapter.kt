@@ -12,7 +12,8 @@ import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.MetaLogEntry
 
 class MetaLogAdapter(
-    private val onUrlClick: (String) -> Unit
+    private val onUrlClick: (String) -> Unit,
+    private val onPreviewClick: (String) -> Unit
 ) : RecyclerView.Adapter<MetaLogAdapter.ViewHolder>() {
 
     private val items = mutableListOf<MetaLogEntry>()
@@ -26,7 +27,8 @@ class MetaLogAdapter(
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val line1: TextView = view.findViewById(R.id.log_line1)
         val line2: TextView = view.findViewById(R.id.log_line2)
-        val button: ImageButton = view.findViewById(R.id.log_open_button)
+        val previewButton: ImageButton = view.findViewById(R.id.log_preview_button)
+        val openButton: ImageButton = view.findViewById(R.id.log_open_button)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -48,11 +50,18 @@ class MetaLogAdapter(
         } else {
             holder.itemView.setBackgroundColor(Color.TRANSPARENT)
         }
-        if (!item.url.isNullOrBlank()) {
-            holder.button.visibility = View.VISIBLE
-            holder.button.setOnClickListener { onUrlClick(item.url!!) }
+        if (!item.previewUrl.isNullOrBlank()) {
+            holder.previewButton.visibility = View.VISIBLE
+            holder.previewButton.setOnClickListener { onPreviewClick(item.previewUrl!!) }
         } else {
-            holder.button.visibility = View.GONE
+            holder.previewButton.visibility = View.GONE
+        }
+
+        if (!item.url.isNullOrBlank()) {
+            holder.openButton.visibility = View.VISIBLE
+            holder.openButton.setOnClickListener { onUrlClick(item.url!!) }
+        } else {
+            holder.openButton.visibility = View.GONE
         }
     }
 }

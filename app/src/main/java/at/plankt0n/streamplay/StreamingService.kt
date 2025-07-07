@@ -423,7 +423,8 @@ class StreamingService : MediaSessionService() {
                                 station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
                                 title = extendedInfo.trackName,
                                 artist = extendedInfo.artistName,
-                                url = extendedInfo.spotifyUrl.takeIf { it.isNotBlank() }
+                                url = extendedInfo.spotifyUrl.takeIf { it.isNotBlank() },
+                                previewUrl = extendedInfo.previewUrl
                             )
                         )
                     } else {
@@ -448,7 +449,8 @@ class StreamingService : MediaSessionService() {
                                 station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
                                 title = title,
                                 artist = artist,
-                                url = null
+                                url = null,
+                                previewUrl = null
                             )
                         )
                     }
@@ -481,7 +483,8 @@ class StreamingService : MediaSessionService() {
                     station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
                     title = title,
                     artist = artist,
-                    url = null
+                    url = null,
+                    previewUrl = null
                 )
             )
         }
