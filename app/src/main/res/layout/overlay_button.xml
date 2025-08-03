@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImageButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/overlay_button"
+    android:layout_width="56dp"
+    android:layout_height="56dp"
+    android:background="@drawable/rounded_white_semitransparent_bg"
+    android:src="@drawable/ic_button_menu"
+    android:contentDescription="@string/app_name"
+    android:scaleType="centerInside"/>
