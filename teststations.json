@@ -53,5 +53,20 @@
     "name": "WCTR",
     "url": "https://audio.gtaradio.net/sa/wctr",
     "iconUrl": "https://gtaradio.net/sa/images/stations/wctr.png"
+  },
+  {
+    "name": "Game",
+    "url": "https://audio.gtaradio.net/3/game",
+    "iconUrl": "https://gtaradio.net/3/images/stations/game.png"
+  },
+  {
+    "name": "Flash",
+    "url": "https://audio.gtaradio.net/vc/flash",
+    "iconUrl": "https://gtaradio.net/vc/images/stations/flash.png"
+  },
+  {
+    "name": "Wave",
+    "url": "https://audio.gtaradio.net/vc/wave",
+    "iconUrl": "https://gtaradio.net/vc/images/stations/wave.png"
   }
 ]
