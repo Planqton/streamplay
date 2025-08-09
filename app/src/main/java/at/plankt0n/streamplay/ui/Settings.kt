@@ -131,6 +131,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         key = "personal_sync_url"
         title = getString(R.string.settings_personal_sync_url)
         setDefaultValue("")
+        summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
+            val value = pref.text
+            if (value.isNullOrBlank()) {
+                pref.context.getString(R.string.settings_personal_sync_url_empty)
+            } else {
+                value
+            }
+        }
         category = SettingsCategory.PERSONAL_SYNC
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
