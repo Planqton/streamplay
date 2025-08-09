@@ -139,6 +139,7 @@
     <string name="bg_effect_forest">Forest</string>
     <string name="bg_effect_diagonal">Diagonal</string>
     <string name="bg_effect_spotlight">Spotlight</string>
+    <string name="bg_effect_blur">Blur</string>
     <string name="settings_cover_mode">Cover Source</string>
     <string name="cover_mode_station">Station Cover</string>
     <string name="cover_mode_meta">Metadata Cover</string>

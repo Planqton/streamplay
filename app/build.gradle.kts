@@ -74,6 +74,7 @@ dependencies {
         implementation("com.google.code.gson:gson:2.10.1")
     //Glide
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("jp.wasabeef:glide-transformations:4.3.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
 
