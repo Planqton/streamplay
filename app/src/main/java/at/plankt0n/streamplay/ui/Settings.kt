@@ -49,12 +49,12 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
     }
 
-    val autoplaySwitch = SwitchPreferenceCompat(context).apply {
-        key = "autoplay_enabled"
-        title = getString(R.string.settings_autoplay)
+    val minimizeSwitch = SwitchPreferenceCompat(context).apply {
+        key = "minimize_after_autoplay"
+        title = getString(R.string.settings_minimize)
         setDefaultValue(false)
-        category = SettingsCategory.PLAYBACK
-        icon = context.getDrawable(R.drawable.ic_autoplay)
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_pip)
     }
 
     val delayPreference = SeekBarPreference(context).apply {
@@ -63,16 +63,8 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         min = 0
         max = 30
         showSeekBarValue = true
-        category = SettingsCategory.PLAYBACK
-        icon = context.getDrawable(R.drawable.ic_timer)
-    }
-
-    val minimizeSwitch = SwitchPreferenceCompat(context).apply {
-        key = "minimize_after_autoplay"
-        title = getString(R.string.settings_minimize)
-        setDefaultValue(false)
         category = SettingsCategory.UI
-        icon = context.getDrawable(R.drawable.ic_pip)
+        icon = context.getDrawable(R.drawable.ic_timer)
     }
 
     val bannerSwitch = SwitchPreferenceCompat(context).apply {
@@ -235,9 +227,8 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     }
 
     val preferences = listOf(
-        autoplaySwitch,
-        delayPreference,
         minimizeSwitch,
+        delayPreference,
         bannerSwitch,
         backgroundEffectPref,
         coverModePref,
@@ -250,8 +241,11 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
 
     SettingsCategory.values().forEach { cat ->
         val catPref = categoryMap[cat]!!
-        screen.addPreference(catPref)
-        preferences.filter { it.category == cat }.forEach { catPref.addPreference(it) }
+        val catPrefs = preferences.filter { it.category == cat }
+        if (catPrefs.isNotEmpty()) {
+            screen.addPreference(catPref)
+            catPrefs.forEach { catPref.addPreference(it) }
+        }
     }
 
     preferenceScreen = screen
