@@ -122,6 +122,7 @@
     <string name="update_latest">Aktuellste Version installiert</string>
     <string name="settings_personal_sync_url">Personal JSON URL</string>
     <string name="settings_sync_personal_json">Sync Personal JSON</string>
+    <string name="settings_add_test_stations">Add Test Stations</string>
     <string name="update_checking">Checking for updates…</string>
     <string name="update_available_title">Update Available</string>
     <string name="update_available_message">Version %1$s is available. Download?</string>

@@ -6,6 +6,9 @@ import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.data.StationItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.URL
 import java.util.UUID
 
 object StationImportHelper {
@@ -65,6 +68,24 @@ object StationImportHelper {
         context.startService(intent)
 
         return ImportResult(added, updated, stationList)
+    }
+
+    suspend fun importStationsFromUrl(
+        context: Context,
+        url: String,
+        replaceAll: Boolean
+    ): ImportResult {
+        val normalizedUrl = if (url.contains("github.com") && url.contains("/blob/")) {
+            url.replace("github.com/", "raw.githubusercontent.com/")
+                .replace("/blob/", "/")
+        } else {
+            url
+        }
+
+        val json = withContext(Dispatchers.IO) {
+            URL(normalizedUrl).openStream().bufferedReader().use { it.readText() }
+        }
+        return importStationsFromJson(context, json, replaceAll)
     }
 }
 

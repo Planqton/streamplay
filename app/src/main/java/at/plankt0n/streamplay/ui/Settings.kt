@@ -12,10 +12,7 @@ import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.StationImportHelper
 import at.plankt0n.streamplay.data.CoverMode
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.net.URL
 
 /** Possible categories a preference can belong to. */
 enum class SettingsCategory { PLAYBACK, UI, METAINFO, PERSONAL_SYNC, ABOUT }
@@ -150,10 +147,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
             } else {
                 this@initSettingsScreen.lifecycleScope.launch {
                     try {
-                        val json = withContext(Dispatchers.IO) {
-                            URL(url).openStream().bufferedReader().use { it.readText() }
-                        }
-                        val result = StationImportHelper.importStationsFromJson(context, json, true)
+                        val result = StationImportHelper.importStationsFromUrl(context, url, true)
                         Toast.makeText(
                             context,
                             "Sync abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert.",
@@ -202,6 +196,36 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }
 
+    val addTestPref = Preference(context).apply {
+        key = "add_test_stations"
+        title = getString(R.string.settings_add_test_stations)
+        category = SettingsCategory.ABOUT
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        setOnPreferenceClickListener {
+            this@initSettingsScreen.lifecycleScope.launch {
+                try {
+                    val result = StationImportHelper.importStationsFromUrl(
+                        context,
+                        "https://raw.githubusercontent.com/Planqton/streamplay/main/teststations.json",
+                        false
+                    )
+                    Toast.makeText(
+                        context,
+                        "Sync abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        context,
+                        "Fehler beim Sync: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+            true
+        }
+    }
+
     val preferences = listOf(
         autoplaySwitch,
         delayPreference,
@@ -212,7 +236,8 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         personalUrlPref,
         personalSyncPref,
         versionPref,
-        updatePref
+        updatePref,
+        addTestPref
     )
 
     SettingsCategory.values().forEach { cat ->
