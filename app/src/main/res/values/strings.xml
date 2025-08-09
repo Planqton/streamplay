@@ -115,10 +115,13 @@
     <string name="settings_category_playback">Playback</string>
     <string name="settings_category_ui">UI Settings</string>
     <string name="settings_category_metainfo">Metainfo Settings</string>
+    <string name="settings_category_personal_sync">Personal Sync</string>
     <string name="settings_category_about">About</string>
     <string name="settings_app_version">App Version</string>
     <string name="settings_check_updates">Check for Updates</string>
     <string name="update_latest">Aktuellste Version installiert</string>
+    <string name="settings_personal_sync_url">Personal JSON URL</string>
+    <string name="settings_sync_personal_json">Sync Personal JSON</string>
     <string name="update_checking">Checking for updates…</string>
     <string name="update_available_title">Update Available</string>
     <string name="update_available_message">Version %1$s is available. Download?</string>

@@ -4,14 +4,21 @@ import android.content.Context
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
+import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.*
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.helper.LiveCoverHelper
+import at.plankt0n.streamplay.helper.StationImportHelper
 import at.plankt0n.streamplay.data.CoverMode
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.URL
 
 /** Possible categories a preference can belong to. */
-enum class SettingsCategory { PLAYBACK, UI, METAINFO, ABOUT }
+enum class SettingsCategory { PLAYBACK, UI, METAINFO, PERSONAL_SYNC, ABOUT }
 
 private const val EXTRA_CATEGORY = "category"
 
@@ -32,12 +39,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 SettingsCategory.PLAYBACK -> getString(R.string.settings_category_playback)
                 SettingsCategory.UI -> getString(R.string.settings_category_ui)
                 SettingsCategory.METAINFO -> getString(R.string.settings_category_metainfo)
+                SettingsCategory.PERSONAL_SYNC -> getString(R.string.settings_category_personal_sync)
                 SettingsCategory.ABOUT -> getString(R.string.settings_category_about)
             }
             icon = when (cat) {
                 SettingsCategory.PLAYBACK -> context.getDrawable(R.drawable.ic_button_play)
                 SettingsCategory.UI -> context.getDrawable(R.drawable.ic_sheet_settings)
                 SettingsCategory.METAINFO -> context.getDrawable(R.drawable.ic_sheet_discover)
+                SettingsCategory.PERSONAL_SYNC -> context.getDrawable(R.drawable.ic_sheet_settings)
                 SettingsCategory.ABOUT -> context.getDrawable(R.mipmap.ic_launcher)
             }
         }
@@ -121,6 +130,48 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
+    val personalUrlPref = EditTextPreference(context).apply {
+        key = "personal_sync_url"
+        title = getString(R.string.settings_personal_sync_url)
+        setDefaultValue("")
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    val personalSyncPref = Preference(context).apply {
+        key = "personal_sync_now"
+        title = getString(R.string.settings_sync_personal_json)
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        setOnPreferenceClickListener {
+            val url = personalUrlPref.text ?: ""
+            if (url.isBlank()) {
+                Toast.makeText(context, "URL erforderlich", Toast.LENGTH_SHORT).show()
+            } else {
+                this@initSettingsScreen.lifecycleScope.launch {
+                    try {
+                        val json = withContext(Dispatchers.IO) {
+                            URL(url).openStream().bufferedReader().use { it.readText() }
+                        }
+                        val result = StationImportHelper.importStationsFromJson(context, json, true)
+                        Toast.makeText(
+                            context,
+                            "Sync abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            context,
+                            "Fehler beim Sync: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+            true
+        }
+    }
+
     val versionPref = Preference(context).apply {
         key = "app_version"
         title = getString(R.string.settings_app_version)
@@ -158,6 +209,8 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         bannerSwitch,
         backgroundEffectPref,
         coverModePref,
+        personalUrlPref,
+        personalSyncPref,
         versionPref,
         updatePref
     )

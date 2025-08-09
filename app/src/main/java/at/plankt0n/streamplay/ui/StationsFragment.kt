@@ -32,8 +32,7 @@ import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.MainActivity
 import androidx.viewpager2.widget.ViewPager2
 import androidx.activity.OnBackPressedCallback
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import at.plankt0n.streamplay.helper.StationImportHelper
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -246,51 +245,30 @@ class StationsFragment : Fragment() {
                 ?: throw Exception("Datei konnte nicht geöffnet werden")
             val json = inputStream.bufferedReader().use { it.readText() }
 
-            val type = object : TypeToken<List<ImportStation>>() {}.type
-            val importedList: List<ImportStation> = Gson().fromJson(json, type)
+            val result = StationImportHelper.importStationsFromJson(
+                requireContext(),
+                json,
+                replaceAll = false
+            )
 
-            var updated = 0
-            var added = 0
-
-            for (imported in importedList) {
-                val index = stationList.indexOfFirst { it.stationName.equals(imported.name, ignoreCase = true) }
-                if (index >= 0) {
-                    val old = stationList[index]
-                    stationList[index] = StationItem(
-                        uuid = old.uuid,
-                        stationName = imported.name,
-                        streamURL = imported.url,
-                        iconURL = imported.iconUrl
-                    )
-                    updated++
-                } else {
-                    stationList.add(
-                        StationItem(
-                            uuid = UUID.randomUUID().toString(),
-                            stationName = imported.name,
-                            streamURL = imported.url,
-                            iconURL = imported.iconUrl
-                        )
-                    )
-                    added++
-                }
-            }
-
-            PreferencesHelper.saveStations(requireContext(), stationList)
+            stationList.clear()
+            stationList.addAll(result.newList)
             adapter.notifyDataSetChanged()
 
-            Toast.makeText(requireContext(), "Import abgeschlossen: $added neu, $updated aktualisiert.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                requireContext(),
+                "Import abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert.",
+                Toast.LENGTH_LONG
+            ).show()
 
         } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Fehler beim Import: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                requireContext(),
+                "Fehler beim Import: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
-
-    data class ImportStation(
-        val name: String,
-        val url: String,
-        val iconUrl: String
-    )
 
     override fun onResume() {
         super.onResume()
