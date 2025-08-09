@@ -1,26 +1,19 @@
 package at.plankt0n.streamplay.ui
 
-import android.content.Context
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ImageView
-import android.widget.Switch
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.ui.DiscoverFragment
 import at.plankt0n.streamplay.MainActivity
 import at.plankt0n.streamplay.ui.SettingsFragment
 import at.plankt0n.streamplay.ui.MetaLogFragment
-import at.plankt0n.streamplay.Keys
 
 class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
-
-    private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var switchAutostart: Switch
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -28,18 +21,6 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.bottom_sheet, container, false)
-
-        sharedPreferences = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
-        switchAutostart = view.findViewById(R.id.switch_autostart)
-
-        // Autostart-Wert setzen
-        switchAutostart.isChecked = sharedPreferences.getBoolean("autoplay_enabled", false)
-
-        // Listener für Autoplay
-        switchAutostart.setOnCheckedChangeListener { _, isChecked ->
-            sharedPreferences.edit().putBoolean("autoplay_enabled", isChecked).apply()
-        }
-
         // Station Setup
         view.findViewById<LinearLayout>(R.id.option_stations).setOnClickListener {
             dismiss()

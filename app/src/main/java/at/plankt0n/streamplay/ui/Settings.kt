@@ -49,6 +49,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
     }
 
+    val autoplaySwitch = SwitchPreferenceCompat(context).apply {
+        key = "autoplay_enabled"
+        title = getString(R.string.settings_autoplay)
+        setDefaultValue(false)
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_autoplay)
+    }
+
     val minimizeSwitch = SwitchPreferenceCompat(context).apply {
         key = "minimize_after_autoplay"
         title = getString(R.string.settings_minimize)
@@ -227,6 +235,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     }
 
     val preferences = listOf(
+        autoplaySwitch,
         minimizeSwitch,
         delayPreference,
         bannerSwitch,

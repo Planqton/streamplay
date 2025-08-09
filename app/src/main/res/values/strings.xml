@@ -76,13 +76,11 @@
 
 
     <!-- Sheet Menu -->
-    !-- Bottom Sheet -->
+    <!-- Bottom Sheet -->
     <string name="bottom_sheet_title">Aktionen</string>
     <!-- Option 1: Station Setup -->
     <string name="bottom_sheet_station_text">Stations öffnen</string>
     <string name="bottom_sheet_station_content_desc">Zur Playlist hinzufügen</string>
-    <!-- Option 4: Autostart -->
-    <string name="bottom_sheet_autostart">Autostart</string>
     <!-- Option Discover -->
     <string name="bottom_sheet_discover_text">Discover Stations</string>
     <string name="bottom_sheet_discover_content_desc">Browse online stations</string>

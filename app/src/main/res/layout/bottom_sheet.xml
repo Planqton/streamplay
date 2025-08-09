@@ -109,30 +109,6 @@
         android:layout_width="match_parent"
         android:layout_height="16dp" />
 
-    <!-- Eintrag 4: Autostart Switch -->
-    <LinearLayout
-        android:id="@+id/option_autostart"
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingVertical="12dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/bottom_sheet_autostart"
-            android:textAppearance="?attr/textAppearanceBody1"
-            android:paddingStart="8dp"
-            android:gravity="center_vertical" />
-
-        <Switch
-            android:id="@+id/switch_autostart"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false" />
-    </LinearLayout>
-
         <!-- Settings Header -->
         <TextView
             android:layout_width="match_parent"
