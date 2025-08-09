@@ -115,10 +115,15 @@
     <string name="settings_category_playback">Playback</string>
     <string name="settings_category_ui">UI Settings</string>
     <string name="settings_category_metainfo">Metainfo Settings</string>
+    <string name="settings_category_personal_sync">Personal Sync</string>
     <string name="settings_category_about">About</string>
     <string name="settings_app_version">App Version</string>
     <string name="settings_check_updates">Check for Updates</string>
     <string name="update_latest">Aktuellste Version installiert</string>
+    <string name="settings_personal_sync_url">Personal JSON URL</string>
+    <string name="settings_personal_sync_url_empty">EMPTY</string>
+    <string name="settings_sync_personal_json">Sync Personal JSON</string>
+    <string name="settings_add_test_stations">Add Test Stations</string>
     <string name="update_checking">Checking for updates…</string>
     <string name="update_available_title">Update Available</string>
     <string name="update_available_message">Version %1$s is available. Download?</string>
@@ -139,6 +144,7 @@
     <string name="bg_effect_forest">Forest</string>
     <string name="bg_effect_diagonal">Diagonal</string>
     <string name="bg_effect_spotlight">Spotlight</string>
+    <string name="bg_effect_blur">Blur</string>
     <string name="settings_cover_mode">Cover Source</string>
     <string name="cover_mode_station">Station Cover</string>
     <string name="cover_mode_meta">Metadata Cover</string>

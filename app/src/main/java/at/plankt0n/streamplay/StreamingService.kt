@@ -8,6 +8,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.net.ConnectivityManager
+import android.net.Network
 import android.os.Binder
 import android.os.Build
 import android.os.Bundle
@@ -66,6 +68,20 @@ class StreamingService : MediaSessionService() {
     private var lastArtworkUri: String? = null
     private var currentStationUuid: String? = null
 
+    private lateinit var connectivityManager: ConnectivityManager
+    private var resumeOnNetwork = false
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            Handler(Looper.getMainLooper()).post {
+                if (resumeOnNetwork && !player.isPlaying) {
+                    resumeOnNetwork = false
+                    player.prepare()
+                    player.play()
+                }
+            }
+        }
+    }
+
     companion object {
         const val CHANNEL_ID = "stream_service_channel"
     }
@@ -101,6 +117,9 @@ class StreamingService : MediaSessionService() {
         super.onCreate()
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(lifecycleObserver)
+
+        connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        connectivityManager.registerDefaultNetworkCallback(networkCallback)
 
         // ⚠️ ZUERST player initialisieren!
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
@@ -152,8 +171,12 @@ class StreamingService : MediaSessionService() {
                         updateMediaItemMetadata(
                             "Error",
                             error.cause?.message ?: "unbekannt",
-                    lastArtworkUri ?: ""
+                            lastArtworkUri ?: "",
                         )
+
+                        resumeOnNetwork = player.playWhenReady &&
+                            (error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+                             error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT)
                     }
 
                     override fun onMediaMetadataChanged(metadata: MediaMetadata) {
@@ -319,6 +342,7 @@ class StreamingService : MediaSessionService() {
 
     override fun onDestroy() {
         ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
+        connectivityManager.unregisterNetworkCallback(networkCallback)
         mediaSession.release()
         player.release()
         super.onDestroy()
