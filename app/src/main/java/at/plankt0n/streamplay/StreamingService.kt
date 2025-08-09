@@ -72,8 +72,8 @@ class StreamingService : MediaSessionService() {
     private var resumeOnNetwork = false
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
-            if (resumeOnNetwork && !player.isPlaying) {
-                Handler(Looper.getMainLooper()).post {
+            Handler(Looper.getMainLooper()).post {
+                if (resumeOnNetwork && !player.isPlaying) {
                     resumeOnNetwork = false
                     player.prepare()
                     player.play()
