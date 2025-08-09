@@ -10,8 +10,15 @@ object Keys {
     const val ACTION_SHOW_COUNTDOWN = "at.plankt0n.streamplay.SHOW_COUNTDOWN"
     const val ACTION_HIDE_COUNTDOWN = "at.plankt0n.streamplay.HIDE_COUNTDOWN"
     const val ACTION_REFRESH_METADATA = "at.plankt0n.streamplay.ACTION_REFRESH_METADATA"
+    const val ACTION_SHOW_BANNER = "at.plankt0n.streamplay.ACTION_SHOW_BANNER"
     const val EXTRA_COUNTDOWN_DURATION = "countdown_duration"
+    const val EXTRA_BANNER_MESSAGE = "banner_message"
+    const val EXTRA_BANNER_TYPE = "banner_type"
     const val UPDATE_FORCE_TAP_COUNT = 5
+
+    const val BANNER_TYPE_INFO = 0
+    const val BANNER_TYPE_SUCCESS = 1
+    const val BANNER_TYPE_ERROR = 2
 
 
 

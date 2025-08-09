@@ -1,10 +1,10 @@
 package at.plankt0n.streamplay.ui
 
 import android.content.Context
+import android.content.Intent
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
-import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.*
 import at.plankt0n.streamplay.R
@@ -151,22 +151,32 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         setOnPreferenceClickListener {
             val url = personalUrlPref.text ?: ""
             if (url.isBlank()) {
-                Toast.makeText(context, "URL erforderlich", Toast.LENGTH_SHORT).show()
+                context.sendBroadcast(
+                    Intent(Keys.ACTION_SHOW_BANNER).apply {
+                        putExtra(Keys.EXTRA_BANNER_MESSAGE, "URL erforderlich")
+                        putExtra(Keys.EXTRA_BANNER_TYPE, Keys.BANNER_TYPE_ERROR)
+                    }
+                )
             } else {
                 this@initSettingsScreen.lifecycleScope.launch {
                     try {
                         val result = StationImportHelper.importStationsFromUrl(context, url, true)
-                        Toast.makeText(
-                            context,
-                            "Sync abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert.",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        context.sendBroadcast(
+                            Intent(Keys.ACTION_SHOW_BANNER).apply {
+                                putExtra(
+                                    Keys.EXTRA_BANNER_MESSAGE,
+                                    "Sync abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert."
+                                )
+                                putExtra(Keys.EXTRA_BANNER_TYPE, Keys.BANNER_TYPE_SUCCESS)
+                            }
+                        )
                     } catch (e: Exception) {
-                        Toast.makeText(
-                            context,
-                            "Fehler beim Sync: ${e.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        context.sendBroadcast(
+                            Intent(Keys.ACTION_SHOW_BANNER).apply {
+                                putExtra(Keys.EXTRA_BANNER_MESSAGE, "Fehler beim Sync: ${e.message}")
+                                putExtra(Keys.EXTRA_BANNER_TYPE, Keys.BANNER_TYPE_ERROR)
+                            }
+                        )
                     }
                 }
             }
@@ -217,17 +227,22 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                         "https://raw.githubusercontent.com/Planqton/streamplay/main/teststations.json",
                         false
                     )
-                    Toast.makeText(
-                        context,
-                        "Sync abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert.",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    context.sendBroadcast(
+                        Intent(Keys.ACTION_SHOW_BANNER).apply {
+                            putExtra(
+                                Keys.EXTRA_BANNER_MESSAGE,
+                                "Sync abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert."
+                            )
+                            putExtra(Keys.EXTRA_BANNER_TYPE, Keys.BANNER_TYPE_SUCCESS)
+                        }
+                    )
                 } catch (e: Exception) {
-                    Toast.makeText(
-                        context,
-                        "Fehler beim Sync: ${e.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    context.sendBroadcast(
+                        Intent(Keys.ACTION_SHOW_BANNER).apply {
+                            putExtra(Keys.EXTRA_BANNER_MESSAGE, "Fehler beim Sync: ${e.message}")
+                            putExtra(Keys.EXTRA_BANNER_TYPE, Keys.BANNER_TYPE_ERROR)
+                        }
+                    )
                 }
             }
             true

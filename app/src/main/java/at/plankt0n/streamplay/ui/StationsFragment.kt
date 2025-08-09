@@ -10,7 +10,6 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -33,6 +32,7 @@ import at.plankt0n.streamplay.MainActivity
 import androidx.viewpager2.widget.ViewPager2
 import androidx.activity.OnBackPressedCallback
 import at.plankt0n.streamplay.helper.StationImportHelper
+import at.plankt0n.streamplay.Keys
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -204,7 +204,12 @@ class StationsFragment : Fragment() {
                 val url = editUrl.text.toString().trim()
                 val icon = editIcon.text.toString().trim()
                 if (url.isBlank()) {
-                    Toast.makeText(requireContext(), "URL erforderlich", Toast.LENGTH_SHORT).show()
+                    requireContext().sendBroadcast(
+                        Intent(Keys.ACTION_SHOW_BANNER).apply {
+                            putExtra(Keys.EXTRA_BANNER_MESSAGE, "URL erforderlich")
+                            putExtra(Keys.EXTRA_BANNER_TYPE, Keys.BANNER_TYPE_ERROR)
+                        }
+                    )
                     return@setPositiveButton
                 }
                 lifecycleScope.launch {
@@ -255,18 +260,23 @@ class StationsFragment : Fragment() {
             stationList.addAll(result.newList)
             adapter.notifyDataSetChanged()
 
-            Toast.makeText(
-                requireContext(),
-                "Import abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert.",
-                Toast.LENGTH_LONG
-            ).show()
+            requireContext().sendBroadcast(
+                Intent(Keys.ACTION_SHOW_BANNER).apply {
+                    putExtra(
+                        Keys.EXTRA_BANNER_MESSAGE,
+                        "Import abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert."
+                    )
+                    putExtra(Keys.EXTRA_BANNER_TYPE, Keys.BANNER_TYPE_SUCCESS)
+                }
+            )
 
         } catch (e: Exception) {
-            Toast.makeText(
-                requireContext(),
-                "Fehler beim Import: ${e.message}",
-                Toast.LENGTH_LONG
-            ).show()
+            requireContext().sendBroadcast(
+                Intent(Keys.ACTION_SHOW_BANNER).apply {
+                    putExtra(Keys.EXTRA_BANNER_MESSAGE, "Fehler beim Import: ${e.message}")
+                    putExtra(Keys.EXTRA_BANNER_TYPE, Keys.BANNER_TYPE_ERROR)
+                }
+            )
         }
     }
 

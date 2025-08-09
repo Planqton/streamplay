@@ -109,7 +109,7 @@ class PlayerFragment : Fragment() {
         }
     }
 
-    private val autoplayReceiver = object : BroadcastReceiver() {
+    private val uiReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 Keys.ACTION_SHOW_COUNTDOWN -> {
@@ -117,6 +117,11 @@ class PlayerFragment : Fragment() {
                     showCountdown(duration)
                 }
                 Keys.ACTION_HIDE_COUNTDOWN -> hideCountdown()
+                Keys.ACTION_SHOW_BANNER -> {
+                    val message = intent.getStringExtra(Keys.EXTRA_BANNER_MESSAGE) ?: return
+                    val type = intent.getIntExtra(Keys.EXTRA_BANNER_TYPE, Keys.BANNER_TYPE_INFO)
+                    showBanner(message, type)
+                }
             }
         }
     }
@@ -202,11 +207,12 @@ class PlayerFragment : Fragment() {
         val filter = IntentFilter().apply {
             addAction(Keys.ACTION_SHOW_COUNTDOWN)
             addAction(Keys.ACTION_HIDE_COUNTDOWN)
+            addAction(Keys.ACTION_SHOW_BANNER)
         }
         val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Context.RECEIVER_NOT_EXPORTED
         } else 0
-        requireContext().registerReceiver(autoplayReceiver, filter, flags)
+        requireContext().registerReceiver(uiReceiver, filter, flags)
 
         mediaServiceController = MediaServiceController(requireContext())
         mediaServiceController.initializeAndConnect(
@@ -542,7 +548,7 @@ class PlayerFragment : Fragment() {
 
     override fun onDestroyView() {
         if (initialized) {
-            requireContext().unregisterReceiver(autoplayReceiver)
+            requireContext().unregisterReceiver(uiReceiver)
             countdownHandler.removeCallbacksAndMessages(null)
             bannerHandler.removeCallbacksAndMessages(null)
             prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
@@ -622,36 +628,39 @@ class PlayerFragment : Fragment() {
         countdownTextView.visibility = View.GONE
     }
 
-    private fun showConnecting() {
+    private fun showBanner(message: String, type: Int, autoHide: Boolean = true) {
         if (!showInfoBanner) return
         bannerRunnable?.let { bannerHandler.removeCallbacks(it) }
         if (::connectingBanner.isInitialized) {
-            connectingBanner.text = getString(R.string.connecting)
-            connectingBanner.setBackgroundResource(R.drawable.rounded_blue_transparent_bg)
+            connectingBanner.text = message
+            val bgRes = when (type) {
+                Keys.BANNER_TYPE_SUCCESS -> R.drawable.rounded_green_transparent_bg
+                Keys.BANNER_TYPE_ERROR -> R.drawable.rounded_red_transparent_bg
+                else -> R.drawable.rounded_blue_transparent_bg
+            }
+            connectingBanner.setBackgroundResource(bgRes)
             connectingBanner.visibility = View.VISIBLE
+            if (autoHide) {
+                bannerRunnable = Runnable { hideConnecting() }
+                bannerHandler.postDelayed(bannerRunnable!!, Keys.CONNECTED_BANNER_DURATION_MS)
+            }
         }
+    }
+
+    private fun showConnecting() {
+        showBanner(getString(R.string.connecting), Keys.BANNER_TYPE_INFO, autoHide = false)
     }
 
     private fun showConnected() {
-        if (!showInfoBanner) return
-        bannerRunnable?.let { bannerHandler.removeCallbacks(it) }
-        if (::connectingBanner.isInitialized) {
-            connectingBanner.text = getString(R.string.connected)
-            connectingBanner.setBackgroundResource(R.drawable.rounded_green_transparent_bg)
-            connectingBanner.visibility = View.VISIBLE
-            bannerRunnable = Runnable { hideConnecting() }
-            bannerHandler.postDelayed(bannerRunnable!!, Keys.CONNECTED_BANNER_DURATION_MS)
-        }
+        showBanner(getString(R.string.connected), Keys.BANNER_TYPE_SUCCESS)
     }
 
     private fun showError(message: String?) {
-        if (!showInfoBanner) return
-        bannerRunnable?.let { bannerHandler.removeCallbacks(it) }
-        if (::connectingBanner.isInitialized) {
-            connectingBanner.text = getString(R.string.playback_error, message ?: "unknown")
-            connectingBanner.setBackgroundResource(R.drawable.rounded_red_transparent_bg)
-            connectingBanner.visibility = View.VISIBLE
-        }
+        showBanner(
+            getString(R.string.playback_error, message ?: "unknown"),
+            Keys.BANNER_TYPE_ERROR,
+            autoHide = false
+        )
     }
 
     private fun hideConnecting() {
