@@ -3,4 +3,6 @@
     android:id="@+id/volume_seekbar"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:contentDescription="@string/desc_volume_slider" />
+    android:contentDescription="@string/desc_volume_slider"
+    android:thumb="@drawable/volume_slider_thumb"
+    android:thumbOffset="16dp" />
