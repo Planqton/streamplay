@@ -78,7 +78,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
-    private fun startScan(target: EditTextPreference) {
+    fun startScan(target: EditTextPreference) {
         scanTarget = target
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) ==
             PackageManager.PERMISSION_GRANTED
@@ -121,22 +121,40 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     preference.key == Keys.PREF_SPOTIFY_CLIENT_SECRET ||
                     preference.key == "personal_sync_url")
         ) {
-            val dialogFragment = object : EditTextPreferenceDialogFragmentCompat() {
-                override fun onPrepareDialogBuilder(builder: AlertDialog.Builder) {
-                    super.onPrepareDialogBuilder(builder)
-                    builder.setNeutralButton(R.string.scan, null)
-                }
-
-                override fun onStart() {
-                    super.onStart()
-                    (dialog as AlertDialog).getButton(DialogInterface.BUTTON_NEUTRAL)
-                        .setOnClickListener { startScan(preference) }
-                }
-            }
+            val dialogFragment = ScanEditTextPreferenceDialogFragment.newInstance(preference.key)
             dialogFragment.setTargetFragment(this, 0)
             dialogFragment.show(parentFragmentManager, "androidx.preference.PreferenceFragment.DIALOG")
         } else {
             super.onDisplayPreferenceDialog(preference)
+        }
+    }
+
+    class ScanEditTextPreferenceDialogFragment : EditTextPreferenceDialogFragmentCompat() {
+        override fun onPrepareDialogBuilder(builder: AlertDialog.Builder) {
+            super.onPrepareDialogBuilder(builder)
+            builder.setNeutralButton(R.string.scan, null)
+        }
+
+        override fun onStart() {
+            super.onStart()
+            val parent = targetFragment as? SettingsFragment
+            (dialog as AlertDialog).getButton(DialogInterface.BUTTON_NEUTRAL)
+                .setOnClickListener {
+                    val pref = preference as? EditTextPreference
+                    if (pref != null) {
+                        parent?.startScan(pref)
+                    }
+                }
+        }
+
+        companion object {
+            fun newInstance(key: String): ScanEditTextPreferenceDialogFragment {
+                val fragment = ScanEditTextPreferenceDialogFragment()
+                val bundle = Bundle(1)
+                bundle.putString(ARG_KEY, key)
+                fragment.arguments = bundle
+                return fragment
+            }
         }
     }
 
