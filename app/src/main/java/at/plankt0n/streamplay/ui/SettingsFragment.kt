@@ -44,6 +44,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     private var scanTarget: EditTextPreference? = null
+    private var scanDialog: ScanEditTextPreferenceDialogFragment? = null
 
     private val scanLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -52,6 +53,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 val text = result.data?.getStringExtra("scanned_text")?.trim()
                 if (!text.isNullOrBlank()) {
                     target.text = text
+                    scanDialog?.setText(text)
                     updateSpotifyToggle()
                 } else {
                     Toast.makeText(requireContext(), R.string.scan_no_text, Toast.LENGTH_SHORT).show()
@@ -112,6 +114,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     preference.key == "personal_sync_url")
         ) {
             val dialogFragment = ScanEditTextPreferenceDialogFragment.newInstance(preference.key)
+            scanDialog = dialogFragment
             dialogFragment.setTargetFragment(this, 0)
             dialogFragment.show(parentFragmentManager, "androidx.preference.PreferenceFragment.DIALOG")
         } else {
@@ -135,6 +138,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
                         parent?.startScan(pref)
                     }
                 }
+        }
+
+        fun setText(value: String) {
+            dialog?.findViewById<android.widget.EditText>(android.R.id.edit)?.setText(value)
         }
 
         companion object {
