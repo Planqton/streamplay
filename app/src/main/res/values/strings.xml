@@ -17,6 +17,8 @@
     <string name="desc_button_share">Share button</string>
     <string name="desc_button_menu">Menu button</string>
 
+    <string name="desc_volume_slider">Volume slider</string>
+
     <string name="desc_metainfo_overlay_container">Metainfo overlay container</string>
     <string name="desc_metainfo_overlay_image">Meta image</string>
     <string name="desc_metainfo_overlay_texts_container">Container for overlay texts</string>

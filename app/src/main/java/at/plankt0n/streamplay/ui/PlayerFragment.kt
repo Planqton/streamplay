@@ -21,6 +21,8 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.ViewFlipper
+import android.widget.PopupWindow
+import android.widget.SeekBar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -343,6 +345,7 @@ class PlayerFragment : Fragment() {
             }
             isMuted = !isMuted
         }
+        buttonMute.setOnLongClickListener { showVolumePopup(it); true }
         updateManualLogButtonState(spotifyTrackViewModel.trackInfo.value)
         initialized = true
     }
@@ -506,6 +509,43 @@ class PlayerFragment : Fragment() {
     private fun updatePlayPauseIcon(isPlaying: Boolean) {
         val iconRes = if (isPlaying) R.drawable.ic_button_pause else R.drawable.ic_button_play
         playPauseButton.setImageResource(iconRes)
+    }
+
+    private fun showVolumePopup(anchor: View) {
+        val popupView = LayoutInflater.from(requireContext()).inflate(R.layout.volume_slider_popup, null)
+        val seekBar = popupView.findViewById<SeekBar>(R.id.volume_seekbar)
+        val audioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        seekBar.max = maxVolume
+        val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        seekBar.progress = currentVolume
+
+        val popup = PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+        popup.isOutsideTouchable = true
+
+        popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        val popupHeight = popupView.measuredHeight
+        popup.showAsDropDown(anchor, 0, -anchor.height - popupHeight)
+
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (!fromUser) return
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0)
+                if (progress == 0) {
+                    audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
+                    isMuted = true
+                    buttonMute.setImageResource(R.drawable.ic_button_muted)
+                } else {
+                    audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
+                    isMuted = false
+                    buttonMute.setImageResource(R.drawable.ic_button_unmuted)
+                }
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) { }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) { }
+        })
     }
 
     private fun reloadPlaylist() {
