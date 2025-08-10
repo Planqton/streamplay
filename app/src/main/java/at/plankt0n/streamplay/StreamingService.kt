@@ -402,81 +402,113 @@ class StreamingService : MediaSessionService() {
         }
 
         if (artist.isNotEmpty() && title.isNotEmpty()) {
-            GlobalScope.launch(Dispatchers.IO) {
-                val extendedInfo =
-                    SpotifyMetaReader.getExtendedMetaInfo(this@StreamingService, artist, title)
-                withContext(Dispatchers.Main) {
-                    if (stationUuidAtFetchStart != currentStationUuid) {
-                        Log.d("StreamingService", "ℹ️ Station changed during metadata fetch, ignoring results")
-                        updateMediaItemMetadata("", "", fallbackartworkUri ?: "")
-                        return@withContext
-                    }
-                    if (extendedInfo != null) {
-                        Log.d(
-                            "SpotifyMetaReader",
-                            "✅ Spotify-Infos gefunden: ${extendedInfo.trackName}"
-                        )
+            val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+            val useSpotify = prefs.getBoolean(Keys.PREF_USE_SPOTIFY_META, false)
+            val hasKeys = !prefs.getString(Keys.PREF_SPOTIFY_CLIENT_ID, "").isNullOrBlank() &&
+                    !prefs.getString(Keys.PREF_SPOTIFY_CLIENT_SECRET, "").isNullOrBlank()
 
-
-                        UITrackRepository.updateTrackInfo(
-                            UITrackInfo(
-                                trackName = extendedInfo.trackName,
-                                artistName = extendedInfo.artistName,
-                                bestCoverUrl = extendedInfo.bestCoverUrl,
-                                albumName = extendedInfo.albumName,
-                                durationMs = extendedInfo.durationMs,
-                                albumReleaseDate = extendedInfo.albumReleaseDate,
-                                popularity = extendedInfo.popularity,
-                                spotifyUrl = extendedInfo.spotifyUrl,
-                                previewUrl = extendedInfo.previewUrl,
-                                genre = extendedInfo.genre
+            if (useSpotify && hasKeys) {
+                GlobalScope.launch(Dispatchers.IO) {
+                    val extendedInfo =
+                        SpotifyMetaReader.getExtendedMetaInfo(this@StreamingService, artist, title)
+                    withContext(Dispatchers.Main) {
+                        if (stationUuidAtFetchStart != currentStationUuid) {
+                            Log.d("StreamingService", "ℹ️ Station changed during metadata fetch, ignoring results")
+                            updateMediaItemMetadata("", "", fallbackartworkUri ?: "")
+                            return@withContext
+                        }
+                        if (extendedInfo != null) {
+                            Log.d(
+                                "SpotifyMetaReader",
+                                "✅ Spotify-Infos gefunden: ${extendedInfo.trackName}"
                             )
-                        )
 
+                            UITrackRepository.updateTrackInfo(
+                                UITrackInfo(
+                                    trackName = extendedInfo.trackName,
+                                    artistName = extendedInfo.artistName,
+                                    bestCoverUrl = extendedInfo.bestCoverUrl,
+                                    albumName = extendedInfo.albumName,
+                                    durationMs = extendedInfo.durationMs,
+                                    albumReleaseDate = extendedInfo.albumReleaseDate,
+                                    popularity = extendedInfo.popularity,
+                                    spotifyUrl = extendedInfo.spotifyUrl,
+                                    previewUrl = extendedInfo.previewUrl,
+                                    genre = extendedInfo.genre
+                                )
+                            )
 
-                        updateMediaItemMetadata(
-                            title = extendedInfo.trackName,
-                            artist = extendedInfo.artistName,
-                            artworkUri = extendedInfo.bestCoverUrl ?: ""
-                        )
-
-                        MetaLogHelper.addLog(
-                            this@StreamingService,
-                            MetaLogEntry(
-                                timestamp = System.currentTimeMillis(),
-                                station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
+                            updateMediaItemMetadata(
                                 title = extendedInfo.trackName,
                                 artist = extendedInfo.artistName,
-                                url = extendedInfo.spotifyUrl.takeIf { it.isNotBlank() }
+                                artworkUri = extendedInfo.bestCoverUrl ?: ""
                             )
-                        )
-                    } else {
-                        Log.w(
-                            "SpotifyMetaReader",
-                            "❌ Keine Spotify-Daten gefunden für: $artist - $title"
-                        )
-                        updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
-                        UITrackRepository.updateTrackInfo(
-                            UITrackInfo(
-                                trackName = title,
-                                artistName = artist,
-                                bestCoverUrl = fallbackartworkUri,
-                                previewUrl = null,
-                                genre = ""
+
+                            MetaLogHelper.addLog(
+                                this@StreamingService,
+                                MetaLogEntry(
+                                    timestamp = System.currentTimeMillis(),
+                                    station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
+                                    title = extendedInfo.trackName,
+                                    artist = extendedInfo.artistName,
+                                    url = extendedInfo.spotifyUrl.takeIf { it.isNotBlank() }
+                                )
                             )
-                        )
-                        MetaLogHelper.addLog(
-                            this@StreamingService,
-                            MetaLogEntry(
-                                timestamp = System.currentTimeMillis(),
-                                station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
-                                title = title,
-                                artist = artist,
-                                url = null
+                        } else {
+                            Log.w(
+                                "SpotifyMetaReader",
+                                "❌ Keine Spotify-Daten gefunden für: $artist - $title"
                             )
-                        )
+                            updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
+                            UITrackRepository.updateTrackInfo(
+                                UITrackInfo(
+                                    trackName = title,
+                                    artistName = artist,
+                                    bestCoverUrl = fallbackartworkUri,
+                                    previewUrl = null,
+                                    genre = ""
+                                )
+                            )
+                            MetaLogHelper.addLog(
+                                this@StreamingService,
+                                MetaLogEntry(
+                                    timestamp = System.currentTimeMillis(),
+                                    station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
+                                    title = title,
+                                    artist = artist,
+                                    url = null
+                                )
+                            )
+                        }
                     }
                 }
+            } else {
+                GlobalScope.launch(Dispatchers.Main) {
+                    if (stationUuidAtFetchStart != currentStationUuid) {
+                        updateMediaItemMetadata("", "", fallbackartworkUri ?: "")
+                        return@launch
+                    }
+                    updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
+                }
+                UITrackRepository.updateTrackInfo(
+                    UITrackInfo(
+                        trackName = title,
+                        artistName = artist,
+                        bestCoverUrl = fallbackartworkUri,
+                        previewUrl = null,
+                        genre = ""
+                    )
+                )
+                MetaLogHelper.addLog(
+                    this@StreamingService,
+                    MetaLogEntry(
+                        timestamp = System.currentTimeMillis(),
+                        station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
+                        title = title,
+                        artist = artist,
+                        url = null
+                    )
+                )
             }
         } else {
             Log.d(

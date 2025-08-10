@@ -19,8 +19,10 @@ object SpotifyMetaReader {
     private var tokenExpirationTime: Long = 0 // Millisekunden
 
     private suspend fun getAccessToken(context: Context): String = withContext(Dispatchers.IO) {
-        val clientId = Keys.KEY_SPOTIFY_CLIENT_ID
-        val clientSecret = Keys.KEY_SPOTIFY_CLIENT_SECRET
+        val prefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        val clientId = prefs.getString(Keys.PREF_SPOTIFY_CLIENT_ID, "") ?: ""
+        val clientSecret = prefs.getString(Keys.PREF_SPOTIFY_CLIENT_SECRET, "") ?: ""
+        if (clientId.isBlank() || clientSecret.isBlank()) throw IOException("Spotify credentials missing")
         val credentials = "$clientId:$clientSecret"
         val encodedCredentials = Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
 
