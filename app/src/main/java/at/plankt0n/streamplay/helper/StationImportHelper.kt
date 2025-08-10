@@ -13,9 +13,12 @@ import java.util.UUID
 
 object StationImportHelper {
     data class ImportStation(
-        val name: String,
-        val url: String,
-        val iconUrl: String
+        val name: String? = null,
+        val stationName: String? = null,
+        val url: String? = null,
+        val streamURL: String? = null,
+        val iconUrl: String? = null,
+        val iconURL: String? = null
     )
 
     data class ImportResult(
@@ -37,23 +40,27 @@ object StationImportHelper {
         var added = 0
 
         for (imported in importedList) {
-            val index = stationList.indexOfFirst { it.stationName.equals(imported.name, ignoreCase = true) }
+            val name = imported.name ?: imported.stationName ?: continue
+            val url = imported.url ?: imported.streamURL ?: continue
+            val icon = imported.iconUrl ?: imported.iconURL ?: ""
+
+            val index = stationList.indexOfFirst { it.stationName.equals(name, ignoreCase = true) }
             if (index >= 0) {
                 val old = stationList[index]
                 stationList[index] = StationItem(
                     uuid = old.uuid,
-                    stationName = imported.name,
-                    streamURL = imported.url,
-                    iconURL = imported.iconUrl
+                    stationName = name,
+                    streamURL = url,
+                    iconURL = icon
                 )
                 updated++
             } else {
                 stationList.add(
                     StationItem(
                         uuid = UUID.randomUUID().toString(),
-                        stationName = imported.name,
-                        streamURL = imported.url,
-                        iconURL = imported.iconUrl
+                        stationName = name,
+                        streamURL = url,
+                        iconURL = icon
                     )
                 )
                 added++
