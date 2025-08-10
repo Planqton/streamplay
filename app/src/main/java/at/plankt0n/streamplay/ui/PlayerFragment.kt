@@ -517,7 +517,7 @@ class PlayerFragment : Fragment() {
         val rootView = view ?: return
         val overlayContainer = rootView.findViewById<FrameLayout>(R.id.station_overlay_container)
         val previousContent = overlayContainer.getChildAt(0)
-        previousContent?.visibility = View.GONE
+        previousContent?.visibility = View.INVISIBLE
 
         val seekBar = LayoutInflater.from(requireContext()).inflate(
             R.layout.volume_slider_popup, overlayContainer, false
