@@ -16,8 +16,9 @@ object Keys {
 
 
     //Spotify
-    const val KEY_SPOTIFY_CLIENT_ID = "cc55a94b922c496a84c4a725242a313b"
-    const val KEY_SPOTIFY_CLIENT_SECRET = "1893b26ecec74a4984152f0d86200b63"
+    const val PREF_USE_SPOTIFY_META = "use_spotify_meta"
+    const val PREF_SPOTIFY_CLIENT_ID = "spotify_client_id"
+    const val PREF_SPOTIFY_CLIENT_SECRET = "spotify_client_secret"
 
     const val KEY_META_LOGS_PREFS = "meta_log_prefs"
     const val KEY_META_LOGS = "metadata_logs"
