@@ -77,6 +77,9 @@ dependencies {
     implementation("jp.wasabeef:glide-transformations:4.3.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
+    // ML Kit text recognition for camera scanning
+    implementation("com.google.mlkit:text-recognition:16.0.0")
+
 
 
 
