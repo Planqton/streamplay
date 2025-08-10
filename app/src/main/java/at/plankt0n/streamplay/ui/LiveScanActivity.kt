@@ -59,8 +59,8 @@ class LiveScanActivity : AppCompatActivity() {
             val cropHeight = mediaImage.height / 5
             val top = mediaImage.height / 2 - cropHeight / 2
             val rect = Rect(0, top, mediaImage.width, top + cropHeight)
-            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees).apply {
-                cropRect = rect
+            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees).also {
+                it.setCropRect(rect)
             }
             textRecognizer.process(image)
                 .addOnSuccessListener { text ->
