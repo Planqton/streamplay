@@ -60,10 +60,19 @@ class LiveScanActivity : AppCompatActivity() {
             val top = mediaImage.height / 2 - cropHeight / 2
             val rect = Rect(0, top, mediaImage.width, top + cropHeight)
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-            image.setCropRect(rect)
             textRecognizer.process(image)
                 .addOnSuccessListener { text ->
-                    val result = text.text.trim()
+                    val filtered = buildString {
+                        text.textBlocks.forEach { block ->
+                            block.lines.forEach { line ->
+                                val box = line.boundingBox
+                                if (box != null && rect.contains(box.centerX(), box.centerY())) {
+                                    append(line.text)
+                                }
+                            }
+                        }
+                    }
+                    val result = filtered.trim()
                     if (result.isNotBlank()) {
                         val data = Intent().putExtra("scanned_text", result)
                         setResult(RESULT_OK, data)
