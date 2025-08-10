@@ -153,9 +153,7 @@
     <string name="settings_use_spotify_meta">Use Spotify Meta</string>
     <string name="settings_spotify_api_key">Spotify API Key</string>
     <string name="settings_spotify_secret_key">Spotify Secret Key</string>
-    <string name="settings_scan_spotify_api_key">Scan Spotify API Key</string>
-    <string name="settings_scan_spotify_secret_key">Scan Spotify Secret Key</string>
-    <string name="settings_scan_personal_sync_url">Scan Personal JSON URL</string>
+    <string name="scan">Scan</string>
     <string name="scan_permission_denied">Camera permission denied</string>
     <string name="scan_failed">Scan failed</string>
     <string name="scan_no_text">No text found</string>

@@ -5,10 +5,7 @@ import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.widget.Toast
-import android.Manifest
-import android.content.pm.PackageManager
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.*
 import at.plankt0n.streamplay.R
@@ -18,9 +15,6 @@ import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StationImportHelper
 import com.google.gson.Gson
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,6 +30,18 @@ var Preference.category: SettingsCategory?
     set(value) {
         extras.putString(EXTRA_CATEGORY, value?.name)
     }
+
+fun PreferenceFragmentCompat.updateSpotifyToggle(
+    api: String? = findPreference<EditTextPreference>(Keys.PREF_SPOTIFY_CLIENT_ID)?.text,
+    secret: String? = findPreference<EditTextPreference>(Keys.PREF_SPOTIFY_CLIENT_SECRET)?.text
+) {
+    val toggle = findPreference<SwitchPreferenceCompat>(Keys.PREF_USE_SPOTIFY_META)
+    val hasKeys = !api.isNullOrBlank() && !secret.isNullOrBlank()
+    toggle?.isEnabled = hasKeys
+    if (!hasKeys) {
+        toggle?.isChecked = false
+    }
+}
 
 fun PreferenceFragmentCompat.initSettingsScreen() {
     val context = preferenceManager.context
@@ -195,93 +201,17 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
-    fun updateSpotifyToggle(api: String? = spotifyApiKeyPref.text, secret: String? = spotifySecretKeyPref.text) {
-        val hasKeys = !api.isNullOrBlank() && !secret.isNullOrBlank()
-        useSpotifyMetaPref.isEnabled = hasKeys
-        if (!hasKeys) {
-            useSpotifyMetaPref.isChecked = false
-        }
-    }
-
     spotifyApiKeyPref.setOnPreferenceChangeListener { _, newValue ->
-        val newText = newValue as String
-        updateSpotifyToggle(newText, spotifySecretKeyPref.text)
+        updateSpotifyToggle(api = newValue as String)
         true
     }
 
     spotifySecretKeyPref.setOnPreferenceChangeListener { _, newValue ->
-        val newText = newValue as String
-        updateSpotifyToggle(spotifyApiKeyPref.text, newText)
+        updateSpotifyToggle(secret = newValue as String)
         true
     }
 
     updateSpotifyToggle()
-
-    val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-    var scanTarget: EditTextPreference? = null
-
-    val scanLauncher =
-        registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
-            val target = scanTarget
-            if (bitmap != null && target != null) {
-                val image = InputImage.fromBitmap(bitmap, 0)
-                textRecognizer.process(image)
-                    .addOnSuccessListener { visionText ->
-                        val result = visionText.text.trim()
-                        if (result.isNotBlank()) {
-                            target.text = result
-                            updateSpotifyToggle()
-                        } else {
-                            Toast.makeText(context, R.string.scan_no_text, Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    .addOnFailureListener {
-                        Toast.makeText(context, R.string.scan_failed, Toast.LENGTH_SHORT).show()
-                    }
-            }
-        }
-
-    val permissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) {
-                scanLauncher.launch(null)
-            } else {
-                Toast.makeText(context, R.string.scan_permission_denied, Toast.LENGTH_SHORT).show()
-            }
-        }
-
-    fun startScan(target: EditTextPreference) {
-        scanTarget = target
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            scanLauncher.launch(null)
-        } else {
-            permissionLauncher.launch(Manifest.permission.CAMERA)
-        }
-    }
-
-    val scanSpotifyApiPref = Preference(context).apply {
-        key = "scan_spotify_api_key"
-        title = getString(R.string.settings_scan_spotify_api_key)
-        category = SettingsCategory.SPOTIFY_META
-        icon = context.getDrawable(R.drawable.ic_sheet_settings)
-        setOnPreferenceClickListener {
-            startScan(spotifyApiKeyPref)
-            true
-        }
-    }
-
-    val scanSpotifySecretPref = Preference(context).apply {
-        key = "scan_spotify_secret_key"
-        title = getString(R.string.settings_scan_spotify_secret_key)
-        category = SettingsCategory.SPOTIFY_META
-        icon = context.getDrawable(R.drawable.ic_sheet_settings)
-        setOnPreferenceClickListener {
-            startScan(spotifySecretKeyPref)
-            true
-        }
-    }
 
     val personalUrlPref = EditTextPreference(context).apply {
         key = "personal_sync_url"
@@ -297,17 +227,6 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
         category = SettingsCategory.PERSONAL_SYNC
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
-    }
-
-    val scanPersonalUrlPref = Preference(context).apply {
-        key = "scan_personal_sync_url"
-        title = getString(R.string.settings_scan_personal_sync_url)
-        category = SettingsCategory.PERSONAL_SYNC
-        icon = context.getDrawable(R.drawable.ic_sheet_settings)
-        setOnPreferenceClickListener {
-            startScan(personalUrlPref)
-            true
-        }
     }
 
     val personalSyncPref = Preference(context).apply {
@@ -420,12 +339,9 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         backgroundEffectPref,
         coverModePref,
         spotifyApiKeyPref,
-        scanSpotifyApiPref,
         spotifySecretKeyPref,
-        scanSpotifySecretPref,
         useSpotifyMetaPref,
         personalUrlPref,
-        scanPersonalUrlPref,
         personalSyncPref,
         personalExportPref,
         versionPref,
