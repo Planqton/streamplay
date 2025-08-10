@@ -5,14 +5,19 @@ import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.*
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.Keys
-import at.plankt0n.streamplay.helper.LiveCoverHelper
-import at.plankt0n.streamplay.helper.StationImportHelper
 import at.plankt0n.streamplay.data.CoverMode
+import at.plankt0n.streamplay.helper.LiveCoverHelper
+import at.plankt0n.streamplay.helper.PreferencesHelper
+import at.plankt0n.streamplay.helper.StationImportHelper
+import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Possible categories a preference can belong to. */
 enum class SettingsCategory { PLAYBACK, UI, METAINFO, PERSONAL_SYNC, ABOUT }
@@ -29,6 +34,20 @@ var Preference.category: SettingsCategory?
 fun PreferenceFragmentCompat.initSettingsScreen() {
     val context = preferenceManager.context
     val screen = preferenceManager.createPreferenceScreen(context)
+
+    val exportJsonLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+            uri?.let {
+                lifecycleScope.launch {
+                    val json = Gson().toJson(PreferencesHelper.getStations(context))
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openOutputStream(it)?.use { output ->
+                            output.write(json.toByteArray())
+                        }
+                    }
+                }
+            }
+        }
 
     val categoryMap = SettingsCategory.values().associateWith { cat ->
         PreferenceCategory(context).apply {
@@ -174,6 +193,17 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
     }
 
+    val personalExportPref = Preference(context).apply {
+        key = "personal_export_json"
+        title = getString(R.string.settings_export_personal_json)
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        setOnPreferenceClickListener {
+            exportJsonLauncher.launch("stations.json")
+            true
+        }
+    }
+
     val versionPref = Preference(context).apply {
         key = "app_version"
         title = getString(R.string.settings_app_version)
@@ -243,6 +273,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         coverModePref,
         personalUrlPref,
         personalSyncPref,
+        personalExportPref,
         versionPref,
         updatePref,
         addTestPref
