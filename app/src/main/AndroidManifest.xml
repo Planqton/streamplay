@@ -37,6 +37,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.LiveScanActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
         <service
             android:name=".StreamingService"
             android:exported="true"

@@ -80,6 +80,13 @@ dependencies {
     // ML Kit text recognition for camera scanning
     implementation("com.google.mlkit:text-recognition:16.0.0")
 
+    // CameraX for live text scanning
+    val cameraXVersion = "1.3.3"
+    implementation("androidx.camera:camera-core:$cameraXVersion")
+    implementation("androidx.camera:camera-camera2:$cameraXVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraXVersion")
+    implementation("androidx.camera:camera-view:$cameraXVersion")
+
 
 
 

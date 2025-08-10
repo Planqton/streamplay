@@ -2,6 +2,7 @@ package at.plankt0n.streamplay.ui
 
 import android.Manifest
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -20,9 +21,6 @@ import androidx.preference.PreferenceFragmentCompat
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.helper.GitHubUpdateChecker
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.launch
 
 class SettingsFragment : PreferenceFragmentCompat() {
@@ -45,34 +43,26 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
-    private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     private var scanTarget: EditTextPreference? = null
 
     private val scanLauncher =
-        registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             val target = scanTarget
-            if (bitmap != null && target != null) {
-                val image = InputImage.fromBitmap(bitmap, 0)
-                textRecognizer.process(image)
-                    .addOnSuccessListener { visionText ->
-                        val result = visionText.text.trim()
-                        if (result.isNotBlank()) {
-                            target.text = result
-                            updateSpotifyToggle()
-                        } else {
-                            Toast.makeText(requireContext(), R.string.scan_no_text, Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    .addOnFailureListener {
-                        Toast.makeText(requireContext(), R.string.scan_failed, Toast.LENGTH_SHORT).show()
-                    }
+            if (result.resultCode == android.app.Activity.RESULT_OK && target != null) {
+                val text = result.data?.getStringExtra("scanned_text")?.trim()
+                if (!text.isNullOrBlank()) {
+                    target.text = text
+                    updateSpotifyToggle()
+                } else {
+                    Toast.makeText(requireContext(), R.string.scan_no_text, Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
-                scanLauncher.launch(null)
+                scanLauncher.launch(Intent(requireContext(), LiveScanActivity::class.java))
             } else {
                 Toast.makeText(requireContext(), R.string.scan_permission_denied, Toast.LENGTH_SHORT).show()
             }
@@ -83,7 +73,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) ==
             PackageManager.PERMISSION_GRANTED
         ) {
-            scanLauncher.launch(null)
+            scanLauncher.launch(Intent(requireContext(), LiveScanActivity::class.java))
         } else {
             permissionLauncher.launch(Manifest.permission.CAMERA)
         }
