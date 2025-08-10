@@ -21,8 +21,8 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.ViewFlipper
-import android.widget.PopupWindow
 import android.widget.SeekBar
+import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -67,6 +67,7 @@ class PlayerFragment : Fragment() {
     private lateinit var updateBadge: TextView
     private lateinit var buttonSpotify: ImageButton
     private lateinit var buttonMute: ImageButton
+    private var volumeSlider: SeekBar? = null
     private lateinit var buttonShare: ImageButton
     private lateinit var buttonManualLog: ImageButton
     private lateinit var shortcutRecyclerView: RecyclerView
@@ -511,21 +512,25 @@ class PlayerFragment : Fragment() {
         playPauseButton.setImageResource(iconRes)
     }
 
-    private fun showVolumePopup(anchor: View) {
-        val popupView = LayoutInflater.from(requireContext()).inflate(R.layout.volume_slider_popup, null)
-        val seekBar = popupView.findViewById<SeekBar>(R.id.volume_seekbar)
+    private fun showVolumePopup(@Suppress("UNUSED_PARAMETER") anchor: View) {
+        if (volumeSlider != null) return
+        val rootView = view ?: return
+        val overlayContainer = rootView.findViewById<FrameLayout>(R.id.station_overlay_container)
+        val previousContent = overlayContainer.getChildAt(0)
+        previousContent?.visibility = View.GONE
+
+        val seekBar = LayoutInflater.from(requireContext()).inflate(
+            R.layout.volume_slider_popup, overlayContainer, false
+        ) as SeekBar
+        volumeSlider = seekBar
+
         val audioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         seekBar.max = maxVolume
         val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         seekBar.progress = currentVolume
 
-        val popup = PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
-        popup.isOutsideTouchable = true
-
-        popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
-        val popupHeight = popupView.measuredHeight
-        popup.showAsDropDown(anchor, 0, -anchor.height - popupHeight)
+        overlayContainer.addView(seekBar)
 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -544,7 +549,11 @@ class PlayerFragment : Fragment() {
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) { }
 
-            override fun onStopTrackingTouch(seekBar: SeekBar?) { }
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                overlayContainer.removeView(seekBar)
+                previousContent?.visibility = View.VISIBLE
+                volumeSlider = null
+            }
         })
     }
 
