@@ -11,6 +11,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import at.plankt0n.streamplay.R
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -58,7 +59,9 @@ class LiveScanActivity : AppCompatActivity() {
             val cropHeight = mediaImage.height / 5
             val top = mediaImage.height / 2 - cropHeight / 2
             val rect = Rect(0, top, mediaImage.width, top + cropHeight)
-            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees, rect)
+            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees).apply {
+                cropRect = rect
+            }
             textRecognizer.process(image)
                 .addOnSuccessListener { text ->
                     val result = text.text.trim()
