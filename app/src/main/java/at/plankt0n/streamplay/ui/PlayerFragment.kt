@@ -532,9 +532,19 @@ class PlayerFragment : Fragment() {
 
         overlayContainer.addView(seekBar)
 
+        val handler = Handler(Looper.getMainLooper())
+        val dismissRunnable = Runnable {
+            overlayContainer.removeView(seekBar)
+            previousContent?.visibility = View.VISIBLE
+            volumeSlider = null
+        }
+        handler.postDelayed(dismissRunnable, 5000)
+
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (!fromUser) return
+                handler.removeCallbacks(dismissRunnable)
+                handler.postDelayed(dismissRunnable, 5000)
                 audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0)
                 if (progress == 0) {
                     audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
@@ -547,12 +557,13 @@ class PlayerFragment : Fragment() {
                 }
             }
 
-            override fun onStartTrackingTouch(seekBar: SeekBar?) { }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                handler.removeCallbacks(dismissRunnable)
+            }
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                overlayContainer.removeView(seekBar)
-                previousContent?.visibility = View.VISIBLE
-                volumeSlider = null
+                handler.removeCallbacks(dismissRunnable)
+                dismissRunnable.run()
             }
         })
     }
