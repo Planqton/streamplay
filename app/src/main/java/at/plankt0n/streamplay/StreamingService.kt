@@ -44,6 +44,7 @@ import at.plankt0n.streamplay.helper.MetaLogHelper
 import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.viewmodel.UITrackRepository
 import at.plankt0n.streamplay.viewmodel.UITrackInfo
+import androidx.preference.PreferenceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -401,7 +402,10 @@ class StreamingService : MediaSessionService() {
             }
         }
 
-        if (artist.isNotEmpty() && title.isNotEmpty()) {
+        val useSpotify = PreferenceManager.getDefaultSharedPreferences(this)
+            .getString(Keys.PREF_META_SOURCE, Keys.META_SOURCE_EXOPLAYER) == Keys.META_SOURCE_SPOTIFY
+
+        if (useSpotify && artist.isNotEmpty() && title.isNotEmpty()) {
             GlobalScope.launch(Dispatchers.IO) {
                 val extendedInfo =
                     SpotifyMetaReader.getExtendedMetaInfo(this@StreamingService, artist, title)
@@ -437,7 +441,7 @@ class StreamingService : MediaSessionService() {
                         updateMediaItemMetadata(
                             title = extendedInfo.trackName,
                             artist = extendedInfo.artistName,
-                            artworkUri = extendedInfo.bestCoverUrl ?: ""
+                            artworkUri = extendedInfo.bestCoverUrl ?: "",
                         )
 
                         MetaLogHelper.addLog(
@@ -462,7 +466,7 @@ class StreamingService : MediaSessionService() {
                                 artistName = artist,
                                 bestCoverUrl = fallbackartworkUri,
                                 previewUrl = null,
-                                genre = ""
+                                genre = "",
                             )
                         )
                         MetaLogHelper.addLog(
@@ -481,9 +485,8 @@ class StreamingService : MediaSessionService() {
         } else {
             Log.d(
                 "StreamingService",
-                "⚠️ Artist oder Title fehlen – kein Spotify-Request. Fallback auf alte meta"
+                "⚠️ Spotify disabled or metadata missing – using fallback"
             )
-            // Sicherstellen, dass auch dieser Aufruf im Main-Thread läuft!
             GlobalScope.launch(Dispatchers.Main) {
                 if (stationUuidAtFetchStart != currentStationUuid) {
                     updateMediaItemMetadata("", "", fallbackartworkUri ?: "")

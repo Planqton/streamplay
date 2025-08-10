@@ -14,6 +14,7 @@ import at.plankt0n.streamplay.data.CoverMode
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StationImportHelper
+import at.plankt0n.streamplay.helper.SpotifyMetaReader
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -146,6 +147,80 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
+    val spotifyClientIdPref = EditTextPreference(context).apply {
+        key = Keys.KEY_SPOTIFY_CLIENT_ID
+        title = getString(R.string.settings_spotify_client_id)
+        setDefaultValue("")
+        category = SettingsCategory.METAINFO
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    val spotifyClientSecretPref = EditTextPreference(context).apply {
+        key = Keys.KEY_SPOTIFY_CLIENT_SECRET
+        title = getString(R.string.settings_spotify_client_secret)
+        setDefaultValue("")
+        category = SettingsCategory.METAINFO
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    val metaSourcePref = ListPreference(context).apply {
+        key = Keys.PREF_META_SOURCE
+        title = getString(R.string.settings_meta_source)
+        entries = arrayOf(
+            getString(R.string.meta_source_exoplayer),
+            getString(R.string.meta_source_spotify)
+        )
+        entryValues = arrayOf(
+            Keys.META_SOURCE_EXOPLAYER,
+            Keys.META_SOURCE_SPOTIFY
+        )
+        setDefaultValue(Keys.META_SOURCE_EXOPLAYER)
+        category = SettingsCategory.METAINFO
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    fun updateMetaSourceEnabled() {
+        metaSourcePref.isEnabled = !spotifyClientIdPref.text.isNullOrBlank() && !spotifyClientSecretPref.text.isNullOrBlank()
+        if (!metaSourcePref.isEnabled) {
+            metaSourcePref.value = Keys.META_SOURCE_EXOPLAYER
+        }
+    }
+
+    updateMetaSourceEnabled()
+
+    spotifyClientIdPref.setOnPreferenceChangeListener { _, newValue ->
+        val after = newValue as String
+        metaSourcePref.isEnabled = after.isNotBlank() && !spotifyClientSecretPref.text.isNullOrBlank()
+        if (!metaSourcePref.isEnabled) metaSourcePref.value = Keys.META_SOURCE_EXOPLAYER
+        true
+    }
+
+    spotifyClientSecretPref.setOnPreferenceChangeListener { _, newValue ->
+        val after = newValue as String
+        metaSourcePref.isEnabled = !spotifyClientIdPref.text.isNullOrBlank() && after.isNotBlank()
+        if (!metaSourcePref.isEnabled) metaSourcePref.value = Keys.META_SOURCE_EXOPLAYER
+        true
+    }
+
+    metaSourcePref.setOnPreferenceChangeListener { _, newValue ->
+        if (newValue == Keys.META_SOURCE_SPOTIFY) {
+            val id = spotifyClientIdPref.text ?: ""
+            val secret = spotifyClientSecretPref.text ?: ""
+            if (id.isBlank() || secret.isBlank()) {
+                Toast.makeText(context, getString(R.string.settings_spotify_keys_missing), Toast.LENGTH_SHORT).show()
+                return@setOnPreferenceChangeListener false
+            }
+            this@initSettingsScreen.lifecycleScope.launch {
+                val valid = SpotifyMetaReader.validateCredentials(id, secret)
+                if (!valid) {
+                    Toast.makeText(context, getString(R.string.settings_spotify_keys_invalid), Toast.LENGTH_SHORT).show()
+                    metaSourcePref.value = Keys.META_SOURCE_EXOPLAYER
+                }
+            }
+        }
+        true
+    }
+
     val personalUrlPref = EditTextPreference(context).apply {
         key = "personal_sync_url"
         title = getString(R.string.settings_personal_sync_url)
@@ -271,6 +346,9 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         bannerSwitch,
         backgroundEffectPref,
         coverModePref,
+        metaSourcePref,
+        spotifyClientIdPref,
+        spotifyClientSecretPref,
         personalUrlPref,
         personalSyncPref,
         personalExportPref,

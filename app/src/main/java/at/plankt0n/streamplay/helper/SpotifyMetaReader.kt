@@ -6,6 +6,7 @@ import android.util.Base64
 import android.util.Log
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.R
+import androidx.preference.PreferenceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
@@ -19,8 +20,10 @@ object SpotifyMetaReader {
     private var tokenExpirationTime: Long = 0 // Millisekunden
 
     private suspend fun getAccessToken(context: Context): String = withContext(Dispatchers.IO) {
-        val clientId = Keys.KEY_SPOTIFY_CLIENT_ID
-        val clientSecret = Keys.KEY_SPOTIFY_CLIENT_SECRET
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        val clientId = prefs.getString(Keys.KEY_SPOTIFY_CLIENT_ID, "") ?: ""
+        val clientSecret = prefs.getString(Keys.KEY_SPOTIFY_CLIENT_SECRET, "") ?: ""
+        if (clientId.isBlank() || clientSecret.isBlank()) throw IOException("Missing Spotify keys")
         val credentials = "$clientId:$clientSecret"
         val encodedCredentials = Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
 
@@ -52,9 +55,32 @@ object SpotifyMetaReader {
         }
     }
 
+    suspend fun validateCredentials(clientId: String, clientSecret: String): Boolean = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val credentials = "$clientId:$clientSecret"
+            val encodedCredentials = Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
+            val requestBody = FormBody.Builder()
+                .add("grant_type", "client_credentials")
+                .build()
+            val request = Request.Builder()
+                .url("https://accounts.spotify.com/api/token")
+                .header("Authorization", "Basic $encodedCredentials")
+                .post(requestBody)
+                .build()
+            OkHttpClient().newCall(request).execute().use { it.isSuccessful }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     suspend fun getExtendedMetaInfo(context: Context, artist: String, title: String): ExtendedMetaInfo? =
         withContext(Dispatchers.IO) {
-            val token = getAccessToken(context)
+            val token = try {
+                getAccessToken(context)
+            } catch (e: Exception) {
+                Log.e("SpotifyMetaReader", "❌ Auth failed: ${e.message}")
+                return@withContext null
+            }
             val client = OkHttpClient()
 
             fun logAttempt(step: String, queryArtist: String?, queryTitle: String?) {
