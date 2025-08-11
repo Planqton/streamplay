@@ -103,8 +103,10 @@ class LiveScanActivity : AppCompatActivity() {
                     }
                     val result = builder.toString().trim()
                     runOnUiThread {
-                        currentText = result
-                        resultView.text = result
+                        if (result.length > currentText.length) {
+                            currentText = result
+                            resultView.text = result
+                        }
                     }
                 }
                 .addOnCompleteListener { imageProxy.close() }
