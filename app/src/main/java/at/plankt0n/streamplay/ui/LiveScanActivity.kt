@@ -73,23 +73,18 @@ class LiveScanActivity : AppCompatActivity() {
     private fun processImage(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         if (mediaImage != null) {
-            val cropHeight = mediaImage.height / 12
+            val cropHeight = mediaImage.height / 24
             val top = mediaImage.height / 2 - cropHeight / 2
             val rect = Rect(0, top, mediaImage.width, top + cropHeight)
-            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+            val image = InputImage.fromMediaImage(
+                mediaImage,
+                imageProxy.imageInfo.rotationDegrees
+            ).apply {
+                cropRect = rect
+            }
             textRecognizer.process(image)
                 .addOnSuccessListener { text ->
-                    val filtered = buildString {
-                        text.textBlocks.forEach { block ->
-                            block.lines.forEach { line ->
-                                val box = line.boundingBox
-                                if (box != null && rect.contains(box.centerX(), box.centerY())) {
-                                    append(line.text)
-                                }
-                            }
-                        }
-                    }
-                    val result = filtered.trim()
+                    val result = text.text.trim()
                     runOnUiThread {
                         currentText = result
                         resultView.text = result
