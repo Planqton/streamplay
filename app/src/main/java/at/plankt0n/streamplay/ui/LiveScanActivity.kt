@@ -75,15 +75,23 @@ class LiveScanActivity : AppCompatActivity() {
         if (mediaImage != null) {
             val cropHeight = mediaImage.height / 24
             val top = mediaImage.height / 2 - cropHeight / 2
-            val rect = Rect(0, top, mediaImage.width, top + cropHeight)
-            imageProxy.cropRect = rect
+            val allowedRect = Rect(0, top, mediaImage.width, top + cropHeight)
             val image = InputImage.fromMediaImage(
                 mediaImage,
                 imageProxy.imageInfo.rotationDegrees
             )
             textRecognizer.process(image)
                 .addOnSuccessListener { text ->
-                    val result = text.text.trim()
+                    val builder = StringBuilder()
+                    for (block in text.textBlocks) {
+                        for (line in block.lines) {
+                            val box = line.boundingBox
+                            if (box != null && Rect.intersects(box, allowedRect)) {
+                                builder.append(line.text).append('\n')
+                            }
+                        }
+                    }
+                    val result = builder.toString().trim()
                     runOnUiThread {
                         currentText = result
                         resultView.text = result
