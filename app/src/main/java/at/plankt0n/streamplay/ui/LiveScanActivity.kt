@@ -3,6 +3,8 @@ package at.plankt0n.streamplay.ui
 import android.content.Intent
 import android.graphics.Rect
 import android.os.Bundle
+import android.widget.FrameLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -20,16 +22,31 @@ import java.util.concurrent.Executors
 
 class LiveScanActivity : AppCompatActivity() {
     private lateinit var previewView: PreviewView
+    private lateinit var root: FrameLayout
+    private lateinit var resultView: TextView
     private lateinit var cameraExecutor: ExecutorService
     private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    private var currentText: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_live_scan)
 
         previewView = findViewById(R.id.previewView)
+        root = findViewById(R.id.root)
+        resultView = findViewById(R.id.recognizedText)
+
         cameraExecutor = Executors.newSingleThreadExecutor()
         startCamera()
+
+        root.setOnClickListener {
+            val text = currentText.trim()
+            if (text.isNotEmpty()) {
+                val data = Intent().putExtra("scanned_text", text)
+                setResult(RESULT_OK, data)
+                finish()
+            }
+        }
     }
 
     private fun startCamera() {
@@ -56,7 +73,7 @@ class LiveScanActivity : AppCompatActivity() {
     private fun processImage(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         if (mediaImage != null) {
-            val cropHeight = mediaImage.height / 5
+            val cropHeight = mediaImage.height / 12
             val top = mediaImage.height / 2 - cropHeight / 2
             val rect = Rect(0, top, mediaImage.width, top + cropHeight)
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
@@ -73,10 +90,9 @@ class LiveScanActivity : AppCompatActivity() {
                         }
                     }
                     val result = filtered.trim()
-                    if (result.isNotBlank()) {
-                        val data = Intent().putExtra("scanned_text", result)
-                        setResult(RESULT_OK, data)
-                        finish()
+                    runOnUiThread {
+                        currentText = result
+                        resultView.text = result
                     }
                 }
                 .addOnCompleteListener { imageProxy.close() }
