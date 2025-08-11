@@ -76,12 +76,11 @@ class LiveScanActivity : AppCompatActivity() {
             val cropHeight = mediaImage.height / 24
             val top = mediaImage.height / 2 - cropHeight / 2
             val rect = Rect(0, top, mediaImage.width, top + cropHeight)
+            imageProxy.cropRect = rect
             val image = InputImage.fromMediaImage(
                 mediaImage,
                 imageProxy.imageInfo.rotationDegrees
-            ).apply {
-                cropRect = rect
-            }
+            )
             textRecognizer.process(image)
                 .addOnSuccessListener { text ->
                     val result = text.text.trim()
