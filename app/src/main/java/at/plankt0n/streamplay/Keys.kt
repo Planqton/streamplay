@@ -53,4 +53,7 @@ object Keys {
 
     const val CONNECTED_BANNER_DURATION_MS: Long = 1000L
 
+    const val VOLUME_SLIDER_INITIAL_HIDE_DELAY_MS: Long = 5000L
+    const val VOLUME_SLIDER_POST_ADJUST_HIDE_DELAY_MS: Long = 3000L
+
 }
