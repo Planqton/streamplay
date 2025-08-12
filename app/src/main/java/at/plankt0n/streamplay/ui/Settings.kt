@@ -11,6 +11,7 @@ import androidx.preference.*
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.data.CoverMode
+import at.plankt0n.streamplay.data.AudioFocusMode
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StationImportHelper
@@ -20,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Possible categories a preference can belong to. */
-enum class SettingsCategory { PLAYBACK, UI, METAINFO, SPOTIFY_META, PERSONAL_SYNC, ABOUT }
+enum class SettingsCategory { PLAYBACK, PLAYER, UI, METAINFO, SPOTIFY_META, PERSONAL_SYNC, ABOUT }
 
 private const val EXTRA_CATEGORY = "category"
 
@@ -53,6 +54,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         PreferenceCategory(context).apply {
             title = when (cat) {
                 SettingsCategory.PLAYBACK -> getString(R.string.settings_category_playback)
+                SettingsCategory.PLAYER -> getString(R.string.settings_category_player)
                 SettingsCategory.UI -> getString(R.string.settings_category_ui)
                 SettingsCategory.METAINFO -> getString(R.string.settings_category_metainfo)
                 SettingsCategory.SPOTIFY_META -> getString(R.string.settings_category_spotify_meta)
@@ -61,6 +63,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
             }
             icon = when (cat) {
                 SettingsCategory.PLAYBACK -> context.getDrawable(R.drawable.ic_button_play)
+                SettingsCategory.PLAYER -> context.getDrawable(R.drawable.ic_button_play)
                 SettingsCategory.UI -> context.getDrawable(R.drawable.ic_sheet_settings)
                 SettingsCategory.METAINFO -> context.getDrawable(R.drawable.ic_sheet_discover)
                 SettingsCategory.SPOTIFY_META -> context.getDrawable(R.drawable.ic_sheet_settings)
@@ -102,6 +105,24 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         setDefaultValue(true)
         category = SettingsCategory.UI
         icon = context.getDrawable(R.drawable.ic_autoplay)
+    }
+
+    val audioFocusPref = ListPreference(context).apply {
+        key = Keys.PREF_AUDIO_FOCUS_MODE
+        title = getString(R.string.settings_audio_focus_mode)
+        entries = arrayOf(
+            getString(R.string.audio_focus_stop),
+            getString(R.string.audio_focus_resume),
+            getString(R.string.audio_focus_duck)
+        )
+        entryValues = arrayOf(
+            AudioFocusMode.STOP.name,
+            AudioFocusMode.RESUME.name,
+            AudioFocusMode.DUCK.name
+        )
+        setDefaultValue(AudioFocusMode.RESUME.name)
+        category = SettingsCategory.PLAYER
+        icon = context.getDrawable(R.drawable.ic_button_play)
     }
 
     val backgroundEffectPref = ListPreference(context).apply {
@@ -330,6 +351,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     }
 
     val preferences = listOf(
+        audioFocusPref,
         autoplaySwitch,
         minimizeSwitch,
         delayPreference,

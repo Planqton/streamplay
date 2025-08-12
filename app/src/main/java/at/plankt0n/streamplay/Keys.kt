@@ -19,6 +19,7 @@ object Keys {
     const val PREF_USE_SPOTIFY_META = "use_spotify_meta"
     const val PREF_SPOTIFY_CLIENT_ID = "spotify_client_id"
     const val PREF_SPOTIFY_CLIENT_SECRET = "spotify_client_secret"
+    const val PREF_AUDIO_FOCUS_MODE = "audio_focus_mode"
 
     const val KEY_META_LOGS_PREFS = "meta_log_prefs"
     const val KEY_META_LOGS = "metadata_logs"

@@ -118,6 +118,7 @@
     <string name="settings_category_spotify_meta">Spotify Meta</string>
     <string name="settings_category_personal_sync">Personal Sync</string>
     <string name="settings_category_about">About</string>
+    <string name="settings_category_player">Player</string>
     <string name="settings_app_version">App Version</string>
     <string name="settings_check_updates">Check for Updates</string>
     <string name="update_latest">Aktuellste Version installiert</string>
@@ -153,4 +154,8 @@
     <string name="settings_use_spotify_meta">Use Spotify Meta</string>
     <string name="settings_spotify_api_key">Spotify API Key</string>
     <string name="settings_spotify_secret_key">Spotify Secret Key</string>
+    <string name="settings_audio_focus_mode">Audio Focus Mode</string>
+    <string name="audio_focus_stop">Stop Playback</string>
+    <string name="audio_focus_resume">Resume After Focus</string>
+    <string name="audio_focus_duck">Duck Volume</string>
 </resources>

@@ -3,6 +3,8 @@ package at.plankt0n.streamplay.helper
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
+import at.plankt0n.streamplay.Keys
+import at.plankt0n.streamplay.data.AudioFocusMode
 import at.plankt0n.streamplay.data.StationItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -46,5 +48,11 @@ object PreferencesHelper {
             .edit()
             .putInt(PREF_LAST_PLAYED_STREAM_INDEX, index)
             .apply()
+    }
+
+    fun getAudioFocusMode(context: Context): AudioFocusMode {
+        val prefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        val value = prefs.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.RESUME.name)
+        return AudioFocusMode.valueOf(value ?: AudioFocusMode.RESUME.name)
     }
 }

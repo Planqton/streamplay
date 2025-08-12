@@ -17,6 +17,9 @@ import android.os.Handler
 import android.os.Looper
 import android.text.Html
 import android.util.Log
+import android.media.AudioManager
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
@@ -37,6 +40,7 @@ import androidx.media3.extractor.metadata.icy.IcyInfo
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.data.AudioFocusMode
 import at.plankt0n.streamplay.helper.IcyStreamReader
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.SpotifyMetaReader
@@ -70,6 +74,60 @@ class StreamingService : MediaSessionService() {
 
     private lateinit var connectivityManager: ConnectivityManager
     private var resumeOnNetwork = false
+    private lateinit var audioManager: AudioManager
+    private var audioFocusRequest: AudioFocusRequest? = null
+    private var resumeAfterFocusLoss = false
+    private var isDucking = false
+    private var pausedForFocus = false
+    private var currentFocusMode: AudioFocusMode = AudioFocusMode.RESUME
+    private val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        when (focusChange) {
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                resumeAfterFocusLoss = false
+                pausedForFocus = true
+                player.pause()
+                abandonAudioFocus()
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                pausedForFocus = true
+                if (currentFocusMode == AudioFocusMode.RESUME || currentFocusMode == AudioFocusMode.DUCK) {
+                    resumeAfterFocusLoss = player.isPlaying
+                    player.pause()
+                } else {
+                    resumeAfterFocusLoss = false
+                    player.pause()
+                }
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                when (currentFocusMode) {
+                    AudioFocusMode.DUCK -> {
+                        isDucking = true
+                        player.volume = 0.2f
+                    }
+                    AudioFocusMode.RESUME -> {
+                        pausedForFocus = true
+                        resumeAfterFocusLoss = player.isPlaying
+                        player.pause()
+                    }
+                    AudioFocusMode.STOP -> {
+                        pausedForFocus = true
+                        resumeAfterFocusLoss = false
+                        player.pause()
+                    }
+                }
+            }
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                if (isDucking) {
+                    player.volume = 1f
+                    isDucking = false
+                }
+                if (resumeAfterFocusLoss) {
+                    player.play()
+                    resumeAfterFocusLoss = false
+                }
+            }
+        }
+    }
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
             Handler(Looper.getMainLooper()).post {
@@ -80,6 +138,27 @@ class StreamingService : MediaSessionService() {
                 }
             }
         }
+    }
+
+    private fun requestAudioFocus(): Boolean {
+        currentFocusMode = PreferencesHelper.getAudioFocusMode(this)
+        val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            .setOnAudioFocusChangeListener(audioFocusChangeListener)
+            .build()
+        audioFocusRequest = request
+        val result = audioManager.requestAudioFocus(request)
+        return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+    }
+
+    private fun abandonAudioFocus() {
+        audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+        audioFocusRequest = null
     }
 
     companion object {
@@ -121,6 +200,8 @@ class StreamingService : MediaSessionService() {
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         connectivityManager.registerDefaultNetworkCallback(networkCallback)
 
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
         // ⚠️ ZUERST player initialisieren!
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
             .setAllowCrossProtocolRedirects(true)
@@ -161,6 +242,18 @@ class StreamingService : MediaSessionService() {
                             currentIndex
                         )
 
+                    }
+                    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                        if (playWhenReady) {
+                            if (!requestAudioFocus()) {
+                                this@StreamingService.player.pause()
+                            }
+                        } else {
+                            if (!pausedForFocus) {
+                                abandonAudioFocus()
+                            }
+                            pausedForFocus = false
+                        }
                     }
                     //Listener für errors
                     override fun onPlayerError(error: PlaybackException) {
@@ -345,6 +438,7 @@ class StreamingService : MediaSessionService() {
         connectivityManager.unregisterNetworkCallback(networkCallback)
         mediaSession.release()
         player.release()
+        abandonAudioFocus()
         super.onDestroy()
     }
 
