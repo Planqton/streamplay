@@ -283,6 +283,12 @@ class PlayerFragment : Fragment() {
             onStreamIndexChanged = { index ->
                 viewPager.setCurrentItem(index, true)
                 updateOverlayUI(index)
+                val recyclerView = viewPager.getChildAt(0) as? RecyclerView
+                val holder = recyclerView?.findViewHolderForAdapterPosition(index)
+                        as? CoverPageAdapter.CoverViewHolder
+                val color = holder?.lastColor
+                    ?: requireContext().getColor(R.color.default_background)
+                updateOverlayColors(color)
                 updateManualLogButtonState(spotifyTrackViewModel.trackInfo.value)
             },
             onMetadataChanged = {},
@@ -347,9 +353,17 @@ class PlayerFragment : Fragment() {
             if (isMuted) {
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
                 buttonMute.setImageResource(R.drawable.ic_button_unmuted)
+                ImageViewCompat.setImageTintList(
+                    buttonMute,
+                    ColorStateList.valueOf(currentForeground)
+                )
             } else {
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
                 buttonMute.setImageResource(R.drawable.ic_button_muted)
+                ImageViewCompat.setImageTintList(
+                    buttonMute,
+                    ColorStateList.valueOf(currentForeground)
+                )
             }
             isMuted = !isMuted
         }
@@ -592,10 +606,18 @@ class PlayerFragment : Fragment() {
                     audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
                     isMuted = true
                     buttonMute.setImageResource(R.drawable.ic_button_muted)
+                    ImageViewCompat.setImageTintList(
+                        buttonMute,
+                        ColorStateList.valueOf(currentForeground)
+                    )
                 } else {
                     audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
                     isMuted = false
                     buttonMute.setImageResource(R.drawable.ic_button_unmuted)
+                    ImageViewCompat.setImageTintList(
+                        buttonMute,
+                        ColorStateList.valueOf(currentForeground)
+                    )
                 }
             }
 

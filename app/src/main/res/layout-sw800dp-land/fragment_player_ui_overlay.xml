@@ -73,7 +73,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/desc_button_back"
             android:src="@drawable/ic_button_back"
-            app:tint="@color/primary_material_light" />
+            app:tint="@null" />
 
         <ImageButton
             android:id="@+id/button_play_pause"
@@ -85,7 +85,7 @@
             android:contentDescription="@string/desc_button_play_pause"
             android:scaleType="fitXY"
             android:src="@drawable/ic_button_play"
-            app:tint="@color/primary_material_light" />
+            app:tint="@null" />
 
         <ImageButton
             android:id="@+id/button_forward"
@@ -94,7 +94,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/desc_button_forward"
             android:src="@drawable/ic_button_forward"
-            app:tint="@color/primary_material_light" />
+            app:tint="@null" />
     </LinearLayout>
 
     <!-- Station Info Overlay -->
@@ -179,7 +179,7 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_button_unmuted"
                 android:contentDescription="@string/desc_button_mute_unmute"
-                app:tint="@color/primary_dark_material_dark" />
+                app:tint="@null" />
 
             <ImageButton
                 android:id="@+id/button_share"
@@ -191,7 +191,7 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_button_share"
                 android:contentDescription="@string/desc_button_share"
-                app:tint="@color/primary_dark_material_dark" />
+                app:tint="@null" />
 
             <FrameLayout
                 android:layout_width="24dp"
@@ -207,7 +207,7 @@
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_button_menu"
                     android:contentDescription="@string/desc_button_menu"
-                    app:tint="@color/primary_dark_material_dark" />
+                    app:tint="@null" />
 
                 <TextView
                     android:id="@+id/update_badge"
@@ -371,7 +371,7 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_button_spotify"
                 android:contentDescription="@string/desc_button_manual_log"
-                app:tint="@color/primary_dark_material_dark" />
+                app:tint="@null" />
             <ImageButton
                 android:id="@+id/button_manual_log"
                 android:layout_width="24dp"
@@ -382,7 +382,7 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_button_manuallog"
                 android:contentDescription="@string/desc_button_manual_log"
-                app:tint="@color/primary_dark_material_dark" />
+                app:tint="@null" />
         </LinearLayout>
     </FrameLayout>
 
