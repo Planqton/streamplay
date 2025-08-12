@@ -48,6 +48,7 @@ import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
 import android.widget.Toast
+import kotlin.math.min
 
 class PlayerFragment : Fragment() {
 
@@ -246,6 +247,7 @@ class PlayerFragment : Fragment() {
                 val coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
                 viewPager.adapter = coverPageAdapter
                 dotsIndicator.setViewPager2(viewPager)
+                adjustDotsIndicatorScale()
 
                 coverPageAdapter.mediaItems.forEach { item ->
                     Glide.with(requireContext())
@@ -600,6 +602,7 @@ class PlayerFragment : Fragment() {
         val coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
         viewPager.adapter = coverPageAdapter
         dotsIndicator.setViewPager2(viewPager)
+        adjustDotsIndicatorScale()
 
         coverPageAdapter.mediaItems.forEach { item ->
             Glide.with(requireContext()).load(item.iconURL).preload()
@@ -608,6 +611,14 @@ class PlayerFragment : Fragment() {
         val currentIndex = mediaServiceController.getCurrentStreamIndex()
         viewPager.setCurrentItem(currentIndex, false)
         updateOverlayUI(currentIndex)
+    }
+
+    private fun adjustDotsIndicatorScale() {
+        val count = viewPager.adapter?.itemCount ?: 0
+        if (count <= 0) return
+        val scale = min(1f, 7f / count.toFloat())
+        dotsIndicator.scaleX = scale
+        dotsIndicator.scaleY = scale
     }
 
     override fun onDestroyView() {

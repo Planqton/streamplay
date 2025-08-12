@@ -13,10 +13,11 @@
     <!-- WormDotsIndicator -->
     <com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
         android:id="@+id/dots_indicator"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="16dp" />
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="16dp"
+        android:gravity="center" />
 
     <!-- Fixiertes UI Overlay -->
     <include layout="@layout/fragment_player_ui_overlay" />
