@@ -538,13 +538,16 @@ class PlayerFragment : Fragment() {
             previousContent?.visibility = View.VISIBLE
             volumeSlider = null
         }
-        handler.postDelayed(dismissRunnable, 5000)
+        handler.postDelayed(dismissRunnable, Keys.VOLUME_SLIDER_INITIAL_HIDE_DELAY_MS)
 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (!fromUser) return
                 handler.removeCallbacks(dismissRunnable)
-                handler.postDelayed(dismissRunnable, 5000)
+                handler.postDelayed(
+                    dismissRunnable,
+                    Keys.VOLUME_SLIDER_POST_ADJUST_HIDE_DELAY_MS
+                )
                 audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0)
                 if (progress == 0) {
                     audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
@@ -563,7 +566,10 @@ class PlayerFragment : Fragment() {
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 handler.removeCallbacks(dismissRunnable)
-                dismissRunnable.run()
+                handler.postDelayed(
+                    dismissRunnable,
+                    Keys.VOLUME_SLIDER_POST_ADJUST_HIDE_DELAY_MS
+                )
             }
         })
     }
