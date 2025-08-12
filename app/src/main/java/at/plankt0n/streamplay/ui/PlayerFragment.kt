@@ -400,9 +400,12 @@ class PlayerFragment : Fragment() {
             val spotifyAvailable = !spotifyUrl.isNullOrBlank()
             buttonSpotify.isEnabled = spotifyAvailable
             buttonSpotify.alpha = if (spotifyAvailable) 1.0f else 0.5f
-            buttonSpotify.setColorFilter(
-                if (spotifyAvailable) requireContext().getColor(R.color.black)
-                else requireContext().getColor(R.color.colorAccent)
+            ImageViewCompat.setImageTintList(
+                buttonSpotify,
+                ColorStateList.valueOf(
+                    if (spotifyAvailable) currentForeground
+                    else requireContext().getColor(R.color.colorAccent)
+                )
             )
 
             if (trackInfo == null) {
@@ -535,7 +538,13 @@ class PlayerFragment : Fragment() {
         ImageViewCompat.setImageTintList(buttonMute, ColorStateList.valueOf(currentForeground))
         ImageViewCompat.setImageTintList(buttonShare, ColorStateList.valueOf(currentForeground))
         ImageViewCompat.setImageTintList(buttonMenu, ColorStateList.valueOf(currentForeground))
-        ImageViewCompat.setImageTintList(buttonSpotify, ColorStateList.valueOf(currentForeground))
+        ImageViewCompat.setImageTintList(
+            buttonSpotify,
+            ColorStateList.valueOf(
+                if (buttonSpotify.isEnabled) currentForeground
+                else requireContext().getColor(R.color.colorAccent)
+            )
+        )
         ImageViewCompat.setImageTintList(buttonManualLog, ColorStateList.valueOf(currentForeground))
     }
 
