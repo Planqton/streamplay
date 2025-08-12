@@ -29,7 +29,7 @@ class OneLineOverlay @JvmOverloads constructor(
         super.onDraw(canvas)
         val save = canvas.saveLayer(0f, 0f, width.toFloat(), height.toFloat(), null)
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
-        val lineHeight = height / 24f
+        val lineHeight = height / 12f
         val top = height / 2f - lineHeight / 2f
         canvas.drawRect(0f, top, width.toFloat(), top + lineHeight, clearPaint)
         canvas.restoreToCount(save)
