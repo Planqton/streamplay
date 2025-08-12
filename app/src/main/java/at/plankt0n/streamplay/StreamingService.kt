@@ -88,16 +88,19 @@ class StreamingService : MediaSessionService() {
 
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
-    private var holdAudioFocus = false
+    private var audioFocusMode = AudioFocusMode.NORMAL
+    private var pausedByFocusLoss = false
     private lateinit var prefs: SharedPreferences
     private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
         if (key == Keys.PREF_AUDIO_FOCUS_MODE) {
-            holdAudioFocus = shared.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.NORMAL.name) == AudioFocusMode.HOLD.name
+            audioFocusMode = AudioFocusMode.valueOf(
+                shared.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.NORMAL.name)!!
+            )
         }
     }
 
     private val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
-        if (holdAudioFocus) {
+        if (audioFocusMode == AudioFocusMode.HOLD) {
             if (focusChange <= 0) {
                 requestAudioFocus()
             }
@@ -107,8 +110,17 @@ class StreamingService : MediaSessionService() {
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> player.volume = 0.2f
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
-            AudioManager.AUDIOFOCUS_LOSS -> player.pause()
-            AudioManager.AUDIOFOCUS_GAIN -> player.volume = 1f
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                player.pause()
+                pausedByFocusLoss = audioFocusMode == AudioFocusMode.RESUME
+            }
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                player.volume = 1f
+                if (pausedByFocusLoss) {
+                    player.play()
+                    pausedByFocusLoss = false
+                }
+            }
         }
     }
 
@@ -178,7 +190,9 @@ class StreamingService : MediaSessionService() {
 
         prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         prefs.registerOnSharedPreferenceChangeListener(prefListener)
-        holdAudioFocus = prefs.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.NORMAL.name) == AudioFocusMode.HOLD.name
+        audioFocusMode = AudioFocusMode.valueOf(
+            prefs.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.NORMAL.name)!!
+        )
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(lifecycleObserver)

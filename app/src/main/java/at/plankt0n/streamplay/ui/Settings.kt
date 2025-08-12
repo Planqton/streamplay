@@ -86,11 +86,13 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         title = getString(R.string.settings_audiofocus)
         entries = arrayOf(
             getString(R.string.settings_audiofocus_normal),
-            getString(R.string.settings_audiofocus_hold)
+            getString(R.string.settings_audiofocus_hold),
+            getString(R.string.settings_audiofocus_resume)
         )
         entryValues = arrayOf(
             AudioFocusMode.NORMAL.name,
-            AudioFocusMode.HOLD.name
+            AudioFocusMode.HOLD.name,
+            AudioFocusMode.RESUME.name
         )
         setDefaultValue(AudioFocusMode.NORMAL.name)
         category = SettingsCategory.PLAYER

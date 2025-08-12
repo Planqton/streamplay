@@ -157,4 +157,5 @@
     <string name="settings_audiofocus">Audiofocus</string>
     <string name="settings_audiofocus_normal">Normal</string>
     <string name="settings_audiofocus_hold">Hold Audiofocus</string>
+    <string name="settings_audiofocus_resume">Resume Playback</string>
 </resources>
