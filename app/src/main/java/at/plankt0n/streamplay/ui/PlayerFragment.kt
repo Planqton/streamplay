@@ -24,6 +24,7 @@ import android.widget.ViewFlipper
 import android.widget.SeekBar
 import android.widget.FrameLayout
 import android.graphics.Color
+import android.content.res.ColorStateList
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -45,6 +46,7 @@ import at.plankt0n.streamplay.viewmodel.UITrackInfo
 import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.Keys
 import androidx.core.graphics.ColorUtils
+import androidx.core.widget.ImageViewCompat
 import androidx.media3.common.Player
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
@@ -129,6 +131,7 @@ class PlayerFragment : Fragment() {
 
     var isMuted = false
     private var showingMetaCover = true
+    private var currentForeground: Int = Color.WHITE
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -503,23 +506,23 @@ class PlayerFragment : Fragment() {
 
     private fun updateOverlayColors(color: Int) {
         val luminance = ColorUtils.calculateLuminance(color)
-        val foreground = if (luminance > 0.5) Color.BLACK else Color.WHITE
+        currentForeground = if (luminance > 0.5) Color.BLACK else Color.WHITE
 
-        stationNameTextView.setTextColor(foreground)
+        stationNameTextView.setTextColor(currentForeground)
 
-        view?.findViewById<TextView>(R.id.meta_overlay_Title)?.setTextColor(foreground)
-        view?.findViewById<TextView>(R.id.meta_overlay_Artist)?.setTextColor(foreground)
-        view?.findViewById<TextView>(R.id.meta_overlay_Album)?.setTextColor(foreground)
-        view?.findViewById<TextView>(R.id.meta_overlay_Genre)?.setTextColor(foreground)
+        view?.findViewById<TextView>(R.id.meta_overlay_Title)?.setTextColor(currentForeground)
+        view?.findViewById<TextView>(R.id.meta_overlay_Artist)?.setTextColor(currentForeground)
+        view?.findViewById<TextView>(R.id.meta_overlay_Album)?.setTextColor(currentForeground)
+        view?.findViewById<TextView>(R.id.meta_overlay_Genre)?.setTextColor(currentForeground)
 
-        buttonBack.setColorFilter(foreground)
-        playPauseButton.setColorFilter(foreground)
-        buttonForward.setColorFilter(foreground)
-        buttonMute.setColorFilter(foreground)
-        buttonShare.setColorFilter(foreground)
-        buttonMenu.setColorFilter(foreground)
-        buttonSpotify.setColorFilter(foreground)
-        buttonManualLog.setColorFilter(foreground)
+        ImageViewCompat.setImageTintList(buttonBack, ColorStateList.valueOf(currentForeground))
+        ImageViewCompat.setImageTintList(playPauseButton, ColorStateList.valueOf(currentForeground))
+        ImageViewCompat.setImageTintList(buttonForward, ColorStateList.valueOf(currentForeground))
+        ImageViewCompat.setImageTintList(buttonMute, ColorStateList.valueOf(currentForeground))
+        ImageViewCompat.setImageTintList(buttonShare, ColorStateList.valueOf(currentForeground))
+        ImageViewCompat.setImageTintList(buttonMenu, ColorStateList.valueOf(currentForeground))
+        ImageViewCompat.setImageTintList(buttonSpotify, ColorStateList.valueOf(currentForeground))
+        ImageViewCompat.setImageTintList(buttonManualLog, ColorStateList.valueOf(currentForeground))
     }
 
     private fun updateOverlayUI(index: Int) {
@@ -541,6 +544,7 @@ class PlayerFragment : Fragment() {
     private fun updatePlayPauseIcon(isPlaying: Boolean) {
         val iconRes = if (isPlaying) R.drawable.ic_button_pause else R.drawable.ic_button_play
         playPauseButton.setImageResource(iconRes)
+        ImageViewCompat.setImageTintList(playPauseButton, ColorStateList.valueOf(currentForeground))
     }
 
     private fun showVolumePopup(@Suppress("UNUSED_PARAMETER") anchor: View) {
