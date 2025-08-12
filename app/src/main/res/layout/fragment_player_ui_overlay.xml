@@ -174,7 +174,7 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_button_unmuted"
                 android:contentDescription="@string/desc_button_mute_unmute"
-                app:tint="@null" />
+                app:tint="@color/primary_dark_material_dark" />
 
             <ImageButton
                 android:id="@+id/button_share"
@@ -186,7 +186,7 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_button_share"
                 android:contentDescription="@string/desc_button_share"
-                app:tint="@null" />
+                app:tint="@color/primary_dark_material_dark" />
 
             <FrameLayout
                 android:layout_width="24dp"
@@ -202,7 +202,7 @@
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_button_menu"
                     android:contentDescription="@string/desc_button_menu"
-                    app:tint="@null" />
+                    app:tint="@color/primary_dark_material_dark" />
 
                 <TextView
                     android:id="@+id/update_badge"
@@ -385,7 +385,7 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_button_spotify"
                 android:contentDescription="@string/desc_button_manual_log"
-                app:tint="@null" />
+                app:tint="@color/primary_dark_material_dark" />
             <ImageButton
                 android:id="@+id/button_manual_log"
                 android:layout_width="24dp"
@@ -396,7 +396,7 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_button_manuallog"
                 android:contentDescription="@string/desc_button_manual_log"
-                app:tint="@null" />
+                app:tint="@color/primary_dark_material_dark" />
         </LinearLayout>
     </FrameLayout>
 

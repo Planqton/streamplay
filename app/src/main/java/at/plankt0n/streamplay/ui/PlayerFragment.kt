@@ -353,17 +353,9 @@ class PlayerFragment : Fragment() {
             if (isMuted) {
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
                 buttonMute.setImageResource(R.drawable.ic_button_unmuted)
-                ImageViewCompat.setImageTintList(
-                    buttonMute,
-                    ColorStateList.valueOf(currentForeground)
-                )
             } else {
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
                 buttonMute.setImageResource(R.drawable.ic_button_muted)
-                ImageViewCompat.setImageTintList(
-                    buttonMute,
-                    ColorStateList.valueOf(currentForeground)
-                )
             }
             isMuted = !isMuted
         }
@@ -400,12 +392,9 @@ class PlayerFragment : Fragment() {
             val spotifyAvailable = !spotifyUrl.isNullOrBlank()
             buttonSpotify.isEnabled = spotifyAvailable
             buttonSpotify.alpha = if (spotifyAvailable) 1.0f else 0.5f
-            ImageViewCompat.setImageTintList(
-                buttonSpotify,
-                ColorStateList.valueOf(
-                    if (spotifyAvailable) currentForeground
-                    else requireContext().getColor(R.color.colorAccent)
-                )
+            buttonSpotify.setColorFilter(
+                if (spotifyAvailable) requireContext().getColor(R.color.black)
+                else requireContext().getColor(R.color.colorAccent)
             )
 
             if (trackInfo == null) {
@@ -535,17 +524,11 @@ class PlayerFragment : Fragment() {
         ImageViewCompat.setImageTintList(buttonBack, ColorStateList.valueOf(currentForeground))
         ImageViewCompat.setImageTintList(playPauseButton, ColorStateList.valueOf(currentForeground))
         ImageViewCompat.setImageTintList(buttonForward, ColorStateList.valueOf(currentForeground))
-        ImageViewCompat.setImageTintList(buttonMute, ColorStateList.valueOf(currentForeground))
-        ImageViewCompat.setImageTintList(buttonShare, ColorStateList.valueOf(currentForeground))
-        ImageViewCompat.setImageTintList(buttonMenu, ColorStateList.valueOf(currentForeground))
-        ImageViewCompat.setImageTintList(
-            buttonSpotify,
-            ColorStateList.valueOf(
-                if (buttonSpotify.isEnabled) currentForeground
-                else requireContext().getColor(R.color.colorAccent)
-            )
-        )
-        ImageViewCompat.setImageTintList(buttonManualLog, ColorStateList.valueOf(currentForeground))
+
+        buttonMute.setColorFilter(currentForeground)
+        buttonShare.setColorFilter(currentForeground)
+        buttonMenu.setColorFilter(currentForeground)
+        buttonManualLog.setColorFilter(currentForeground)
     }
 
     private fun updateOverlayUI(index: Int) {
@@ -615,18 +598,10 @@ class PlayerFragment : Fragment() {
                     audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
                     isMuted = true
                     buttonMute.setImageResource(R.drawable.ic_button_muted)
-                    ImageViewCompat.setImageTintList(
-                        buttonMute,
-                        ColorStateList.valueOf(currentForeground)
-                    )
                 } else {
                     audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
                     isMuted = false
                     buttonMute.setImageResource(R.drawable.ic_button_unmuted)
-                    ImageViewCompat.setImageTintList(
-                        buttonMute,
-                        ColorStateList.valueOf(currentForeground)
-                    )
                 }
             }
 
