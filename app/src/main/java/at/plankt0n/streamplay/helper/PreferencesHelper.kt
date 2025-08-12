@@ -51,7 +51,7 @@ object PreferencesHelper {
     }
 
     fun getAudioFocusMode(context: Context): AudioFocusMode {
-        val prefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         val value = prefs.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.RESUME.name)
         return AudioFocusMode.valueOf(value ?: AudioFocusMode.RESUME.name)
     }
