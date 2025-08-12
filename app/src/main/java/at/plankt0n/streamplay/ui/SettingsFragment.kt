@@ -64,4 +64,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
         super.onDestroy()
     }
 
+    override fun onResume() {
+        super.onResume()
+        updateSpotifyToggle()
+    }
+
 }

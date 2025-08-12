@@ -32,6 +32,19 @@ var Preference.category: SettingsCategory?
         extras.putString(EXTRA_CATEGORY, value?.name)
     }
 
+fun PreferenceFragmentCompat.updateSpotifyToggle(
+    api: String? = findPreference<EditTextPreference>(Keys.PREF_SPOTIFY_CLIENT_ID)?.text,
+    secret: String? = findPreference<EditTextPreference>(Keys.PREF_SPOTIFY_CLIENT_SECRET)?.text
+) {
+    val useSpotifyMetaPref =
+        findPreference<SwitchPreferenceCompat>(Keys.PREF_USE_SPOTIFY_META)
+    val hasKeys = !api.isNullOrBlank() && !secret.isNullOrBlank()
+    useSpotifyMetaPref?.isEnabled = hasKeys
+    if (!hasKeys) {
+        useSpotifyMetaPref?.isChecked = false
+    }
+}
+
 fun PreferenceFragmentCompat.initSettingsScreen() {
     val context = preferenceManager.context
     val screen = preferenceManager.createPreferenceScreen(context)
@@ -210,14 +223,6 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
-    fun updateSpotifyToggle(api: String? = spotifyApiKeyPref.text, secret: String? = spotifySecretKeyPref.text) {
-        val hasKeys = !api.isNullOrBlank() && !secret.isNullOrBlank()
-        useSpotifyMetaPref.isEnabled = hasKeys
-        if (!hasKeys) {
-            useSpotifyMetaPref.isChecked = false
-        }
-    }
-
     spotifyApiKeyPref.setOnPreferenceChangeListener { _, newValue ->
         val newText = newValue as String
         updateSpotifyToggle(newText, spotifySecretKeyPref.text)
@@ -229,8 +234,6 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         updateSpotifyToggle(spotifyApiKeyPref.text, newText)
         true
     }
-
-    updateSpotifyToggle()
 
     val personalUrlPref = EditTextPreference(context).apply {
         key = "personal_sync_url"
@@ -379,4 +382,6 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     }
 
     preferenceScreen = screen
+
+    updateSpotifyToggle()
 }
