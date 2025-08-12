@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
 
     private var mainPagerFragment: MainPagerFragment? = null
     private var shortcutController: MediaServiceController? = null
+    private var pendingShortcutStation: StationItem? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,13 +34,18 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.beginTransaction()
                 .add(R.id.fragment_container, mainPagerFragment!!, "mainPager")
                 .commit()
-            supportFragmentManager.executePendingTransactions()
         } else {
             mainPagerFragment =
                 supportFragmentManager.findFragmentById(R.id.fragment_container) as? MainPagerFragment
         }
 
+        supportFragmentManager.executePendingTransactions()
         handleShortcutIntent(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        maybePlayPendingShortcutStation()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -55,7 +61,16 @@ class MainActivity : AppCompatActivity() {
         val streamUrl = intent.getStringExtra(Keys.EXTRA_STATION_STREAM_URL) ?: return
         val iconUrl = intent.getStringExtra(Keys.EXTRA_STATION_ICON_URL) ?: ""
         val station = StationItem(uuid, name, streamUrl, iconUrl)
-        playStationFromShortcut(station)
+        pendingShortcutStation = station
+        maybePlayPendingShortcutStation()
+    }
+
+    private fun maybePlayPendingShortcutStation() {
+        val station = pendingShortcutStation ?: return
+        if (mainPagerFragment?.view != null) {
+            playStationFromShortcut(station)
+            pendingShortcutStation = null
+        }
     }
 
     private fun playStationFromShortcut(station: StationItem) {

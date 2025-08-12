@@ -36,7 +36,10 @@ import at.plankt0n.streamplay.helper.StationImportHelper
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import at.plankt0n.streamplay.Keys
+import com.bumptech.glide.Glide
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
 
 class StationsFragment : Fragment() {
@@ -251,15 +254,35 @@ class StationsFragment : Fragment() {
             putExtra(Keys.EXTRA_STATION_ICON_URL, station.iconURL)
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
-        val icon = IconCompat.createWithResource(context, R.drawable.ic_radio)
-        val shortcut = androidx.core.content.pm.ShortcutInfoCompat.Builder(context, shortcutId)
-            .setShortLabel(station.stationName)
-            .setIcon(icon)
-            .setIntent(intent)
-            .build()
 
-        ShortcutManagerCompat.requestPinShortcut(context, shortcut, null)
-        Toast.makeText(context, R.string.toast_shortcut_added, Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val bitmap = withContext(Dispatchers.IO) {
+                try {
+                    if (station.iconURL.isNotBlank()) {
+                        Glide.with(context).asBitmap().load(station.iconURL).submit().get()
+                    } else {
+                        null
+                    }
+                } catch (e: Exception) {
+                    null
+                }
+            }
+
+            val icon = if (bitmap != null) {
+                IconCompat.createWithBitmap(bitmap)
+            } else {
+                IconCompat.createWithResource(context, R.drawable.ic_radio)
+            }
+
+            val shortcut = androidx.core.content.pm.ShortcutInfoCompat.Builder(context, shortcutId)
+                .setShortLabel(station.stationName)
+                .setIcon(icon)
+                .setIntent(intent)
+                .build()
+
+            ShortcutManagerCompat.requestPinShortcut(context, shortcut, null)
+            Toast.makeText(context, R.string.toast_shortcut_added, Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun refreshPlaylist() {
