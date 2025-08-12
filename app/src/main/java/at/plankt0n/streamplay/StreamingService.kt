@@ -89,6 +89,8 @@ class StreamingService : MediaSessionService() {
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
     private var audioFocusMode = AudioFocusMode.STOP
+    private var originalVolume = 1f
+    private var isDucked = false
     private lateinit var prefs: SharedPreferences
     private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
         if (key == Keys.PREF_AUDIO_FOCUS_MODE) {
@@ -110,16 +112,35 @@ class StreamingService : MediaSessionService() {
 
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK,
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
-            AudioManager.AUDIOFOCUS_LOSS -> {
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                 if (audioFocusMode == AudioFocusMode.LOWER) {
+                    if (!isDucked) {
+                        originalVolume = player.volume
+                        isDucked = true
+                    }
                     player.volume = 0.2f
                 } else {
                     player.pause()
                 }
             }
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                if (audioFocusMode == AudioFocusMode.LOWER) {
+                    if (isDucked) {
+                        player.volume = originalVolume
+                        isDucked = false
+                    }
+                    player.pause()
+                } else {
+                    player.pause()
+                }
+            }
             AudioManager.AUDIOFOCUS_GAIN -> {
-                player.volume = 1f
+                if (isDucked) {
+                    player.volume = originalVolume
+                    isDucked = false
+                } else {
+                    player.volume = 1f
+                }
             }
         }
     }
