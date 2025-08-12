@@ -70,6 +70,11 @@ class MainActivity : AppCompatActivity() {
         if (mainPagerFragment?.view != null) {
             playStationFromShortcut(station)
             pendingShortcutStation = null
+        } else {
+            Handler(Looper.getMainLooper()).postDelayed(
+                { maybePlayPendingShortcutStation() },
+                50
+            )
         }
     }
 
