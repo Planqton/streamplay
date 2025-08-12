@@ -50,7 +50,11 @@ class MainActivity : AppCompatActivity() {
     private fun handleShortcutIntent(intent: Intent?) {
         if (intent?.action != Keys.ACTION_PLAY_STATION) return
 
-        val station = intent.getParcelableExtra<StationItem>(Keys.EXTRA_STATION) ?: return
+        val uuid = intent.getStringExtra(Keys.EXTRA_STATION_UUID) ?: return
+        val name = intent.getStringExtra(Keys.EXTRA_STATION_NAME) ?: return
+        val streamUrl = intent.getStringExtra(Keys.EXTRA_STATION_STREAM_URL) ?: return
+        val iconUrl = intent.getStringExtra(Keys.EXTRA_STATION_ICON_URL) ?: ""
+        val station = StationItem(uuid, name, streamUrl, iconUrl)
         playStationFromShortcut(station)
     }
 

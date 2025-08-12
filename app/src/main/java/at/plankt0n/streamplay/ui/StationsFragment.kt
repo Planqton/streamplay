@@ -245,7 +245,10 @@ class StationsFragment : Fragment() {
         val shortcutId = "station_${station.uuid}"
         val intent = Intent(context, MainActivity::class.java).apply {
             action = Keys.ACTION_PLAY_STATION
-            putExtra(Keys.EXTRA_STATION, station)
+            putExtra(Keys.EXTRA_STATION_UUID, station.uuid)
+            putExtra(Keys.EXTRA_STATION_NAME, station.stationName)
+            putExtra(Keys.EXTRA_STATION_STREAM_URL, station.streamURL)
+            putExtra(Keys.EXTRA_STATION_ICON_URL, station.iconURL)
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
         val icon = IconCompat.createWithResource(context, R.drawable.ic_radio)
