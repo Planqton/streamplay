@@ -88,7 +88,6 @@ class StreamingService : MediaSessionService() {
 
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
-    private var resumeOnFocusGain = false
     private var holdAudioFocus = false
     private lateinit var prefs: SharedPreferences
     private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
@@ -107,21 +106,9 @@ class StreamingService : MediaSessionService() {
 
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> player.volume = 0.2f
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                resumeOnFocusGain = player.isPlaying
-                player.pause()
-            }
-            AudioManager.AUDIOFOCUS_LOSS -> {
-                resumeOnFocusGain = false
-                player.pause()
-            }
-            AudioManager.AUDIOFOCUS_GAIN -> {
-                player.volume = 1f
-                if (resumeOnFocusGain) {
-                    resumeOnFocusGain = false
-                    player.play()
-                }
-            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
+            AudioManager.AUDIOFOCUS_LOSS -> player.pause()
+            AudioManager.AUDIOFOCUS_GAIN -> player.volume = 1f
         }
     }
 
