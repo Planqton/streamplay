@@ -23,6 +23,7 @@ import android.widget.TextView
 import android.widget.ViewFlipper
 import android.widget.SeekBar
 import android.widget.FrameLayout
+import android.graphics.Color
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -43,6 +44,7 @@ import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.viewmodel.UITrackInfo
 import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.Keys
+import androidx.core.graphics.ColorUtils
 import androidx.media3.common.Player
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
@@ -426,7 +428,10 @@ class PlayerFragment : Fragment() {
                 lastColor = holder.lastColor,
                 lastEffect = holder.lastEffect,
                 effect = backgroundEffect,
-                onNewColor = { holder.lastColor = it },
+                onNewColor = {
+                    holder.lastColor = it
+                    updateOverlayColors(it)
+                },
                 onNewEffect = { holder.lastEffect = it }
             )
 
@@ -447,7 +452,10 @@ class PlayerFragment : Fragment() {
                                 lastColor = holder.lastColor,
                                 lastEffect = holder.lastEffect,
                                 effect = backgroundEffect,
-                                onNewColor = { holder.lastColor = it },
+                                onNewColor = {
+                                    holder.lastColor = it
+                                    updateOverlayColors(it)
+                                },
                                 onNewEffect = { holder.lastEffect = it }
                             )
                             holder.coverImage.rotationY = -90f
@@ -491,6 +499,27 @@ class PlayerFragment : Fragment() {
             enableMarquee(titleTextView!!, artistTextView!!, genreTextView!!, albumTextView!!)
             updateManualLogButtonState(trackInfo)
         }
+    }
+
+    private fun updateOverlayColors(color: Int) {
+        val luminance = ColorUtils.calculateLuminance(color)
+        val foreground = if (luminance > 0.5) Color.BLACK else Color.WHITE
+
+        stationNameTextView.setTextColor(foreground)
+
+        view?.findViewById<TextView>(R.id.meta_overlay_Title)?.setTextColor(foreground)
+        view?.findViewById<TextView>(R.id.meta_overlay_Artist)?.setTextColor(foreground)
+        view?.findViewById<TextView>(R.id.meta_overlay_Album)?.setTextColor(foreground)
+        view?.findViewById<TextView>(R.id.meta_overlay_Genre)?.setTextColor(foreground)
+
+        buttonBack.setColorFilter(foreground)
+        playPauseButton.setColorFilter(foreground)
+        buttonForward.setColorFilter(foreground)
+        buttonMute.setColorFilter(foreground)
+        buttonShare.setColorFilter(foreground)
+        buttonMenu.setColorFilter(foreground)
+        buttonSpotify.setColorFilter(foreground)
+        buttonManualLog.setColorFilter(foreground)
     }
 
     private fun updateOverlayUI(index: Int) {
