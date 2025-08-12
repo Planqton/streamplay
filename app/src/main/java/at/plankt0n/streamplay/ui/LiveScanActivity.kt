@@ -27,6 +27,8 @@ class LiveScanActivity : AppCompatActivity() {
     private lateinit var cameraExecutor: ExecutorService
     private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     private var currentText: String = ""
+    private var pendingText: String? = null
+    private var stableCount = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,11 +106,20 @@ class LiveScanActivity : AppCompatActivity() {
                         }
                     }
                     val result = bestLine?.trim() ?: ""
-                    runOnUiThread {
-                        if (result.isNotEmpty() && result != currentText) {
-                            currentText = result
-                            resultView.text = result
+                    if (result.isNotEmpty()) {
+                        if (result == pendingText) {
+                            stableCount++
+                        } else {
+                            pendingText = result
+                            stableCount = 1
                         }
+                        if (stableCount >= 3 && result != currentText) {
+                            currentText = result
+                            runOnUiThread { resultView.text = result }
+                        }
+                    } else {
+                        pendingText = null
+                        stableCount = 0
                     }
                 }
                 .addOnCompleteListener { imageProxy.close() }
