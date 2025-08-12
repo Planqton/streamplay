@@ -81,6 +81,7 @@ class StreamingService : MediaSessionService() {
     private var pausedForFocus = false
     private var currentFocusMode: AudioFocusMode = AudioFocusMode.RESUME
     private val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        currentFocusMode = PreferencesHelper.getAudioFocusMode(this@StreamingService)
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS -> {
                 resumeAfterFocusLoss = false
@@ -89,13 +90,19 @@ class StreamingService : MediaSessionService() {
                 abandonAudioFocus()
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                pausedForFocus = true
-                if (currentFocusMode == AudioFocusMode.RESUME || currentFocusMode == AudioFocusMode.DUCK) {
-                    resumeAfterFocusLoss = player.isPlaying
-                    player.pause()
+                if (currentFocusMode == AudioFocusMode.DUCK) {
+                    isDucking = true
+                    player.volume = 0.2f
                 } else {
-                    resumeAfterFocusLoss = false
+                    pausedForFocus = true
+                    resumeAfterFocusLoss = player.isPlaying || player.playWhenReady
+                    if (currentFocusMode == AudioFocusMode.STOP) {
+                        resumeAfterFocusLoss = false
+                    }
                     player.pause()
+                    if (currentFocusMode == AudioFocusMode.STOP) {
+                        abandonAudioFocus()
+                    }
                 }
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
@@ -106,13 +113,14 @@ class StreamingService : MediaSessionService() {
                     }
                     AudioFocusMode.RESUME -> {
                         pausedForFocus = true
-                        resumeAfterFocusLoss = player.isPlaying
+                        resumeAfterFocusLoss = player.isPlaying || player.playWhenReady
                         player.pause()
                     }
                     AudioFocusMode.STOP -> {
                         pausedForFocus = true
                         resumeAfterFocusLoss = false
                         player.pause()
+                        abandonAudioFocus()
                     }
                 }
             }
