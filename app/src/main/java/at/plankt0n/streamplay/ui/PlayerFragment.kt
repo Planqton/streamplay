@@ -519,9 +519,11 @@ class PlayerFragment : Fragment() {
         val previousContent = overlayContainer.getChildAt(0)
         previousContent?.visibility = View.INVISIBLE
 
-        val seekBar = LayoutInflater.from(requireContext()).inflate(
+        val sliderLayout = LayoutInflater.from(requireContext()).inflate(
             R.layout.volume_slider_popup, overlayContainer, false
-        ) as SeekBar
+        )
+        val seekBar = sliderLayout.findViewById<SeekBar>(R.id.volume_seekbar)
+        val volumeLabel = sliderLayout.findViewById<TextView>(R.id.volume_percentage)
         volumeSlider = seekBar
 
         val audioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -529,12 +531,13 @@ class PlayerFragment : Fragment() {
         seekBar.max = maxVolume
         val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         seekBar.progress = currentVolume
+        volumeLabel.text = "${currentVolume * 100 / maxVolume}%"
 
-        overlayContainer.addView(seekBar)
+        overlayContainer.addView(sliderLayout)
 
         val handler = Handler(Looper.getMainLooper())
         val dismissRunnable = Runnable {
-            overlayContainer.removeView(seekBar)
+            overlayContainer.removeView(sliderLayout)
             previousContent?.visibility = View.VISIBLE
             volumeSlider = null
         }
@@ -549,6 +552,7 @@ class PlayerFragment : Fragment() {
                     Keys.VOLUME_SLIDER_POST_ADJUST_HIDE_DELAY_MS
                 )
                 audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0)
+                volumeLabel.text = "${progress * 100 / maxVolume}%"
                 if (progress == 0) {
                     audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
                     isMuted = true
