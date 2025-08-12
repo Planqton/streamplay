@@ -85,16 +85,16 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         key = Keys.PREF_AUDIO_FOCUS_MODE
         title = getString(R.string.settings_audiofocus)
         entries = arrayOf(
-            getString(R.string.settings_audiofocus_normal),
+            getString(R.string.settings_audiofocus_stop),
             getString(R.string.settings_audiofocus_hold),
-            getString(R.string.settings_audiofocus_resume)
+            getString(R.string.settings_audiofocus_lower)
         )
         entryValues = arrayOf(
-            AudioFocusMode.NORMAL.name,
+            AudioFocusMode.STOP.name,
             AudioFocusMode.HOLD.name,
-            AudioFocusMode.RESUME.name
+            AudioFocusMode.LOWER.name
         )
-        setDefaultValue(AudioFocusMode.NORMAL.name)
+        setDefaultValue(AudioFocusMode.STOP.name)
         category = SettingsCategory.PLAYER
         icon = context.getDrawable(R.drawable.ic_button_play)
     }
