@@ -92,9 +92,11 @@ class StreamingService : MediaSessionService() {
     private lateinit var prefs: SharedPreferences
     private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
         if (key == Keys.PREF_AUDIO_FOCUS_MODE) {
-            audioFocusMode = AudioFocusMode.valueOf(
-                shared.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.STOP.name)!!
-            )
+            val value = shared.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.STOP.name)
+            audioFocusMode = AudioFocusMode.fromName(value)
+            if (audioFocusMode.name != value) {
+                shared.edit().putString(Keys.PREF_AUDIO_FOCUS_MODE, audioFocusMode.name).apply()
+            }
         }
     }
 
@@ -188,9 +190,11 @@ class StreamingService : MediaSessionService() {
 
         prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         prefs.registerOnSharedPreferenceChangeListener(prefListener)
-        audioFocusMode = AudioFocusMode.valueOf(
-            prefs.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.STOP.name)!!
-        )
+        val storedMode = prefs.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.STOP.name)
+        audioFocusMode = AudioFocusMode.fromName(storedMode)
+        if (audioFocusMode.name != storedMode) {
+            prefs.edit().putString(Keys.PREF_AUDIO_FOCUS_MODE, audioFocusMode.name).apply()
+        }
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(lifecycleObserver)
