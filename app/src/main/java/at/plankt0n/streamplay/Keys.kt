@@ -13,6 +13,8 @@ object Keys {
     const val EXTRA_COUNTDOWN_DURATION = "countdown_duration"
     const val UPDATE_FORCE_TAP_COUNT = 5
 
+    const val PREF_AUDIO_FOCUS_MODE = "audio_focus_mode"
+
 
 
     //Spotify

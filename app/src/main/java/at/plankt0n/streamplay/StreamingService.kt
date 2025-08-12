@@ -10,6 +10,9 @@ import android.content.Intent
 import android.net.Uri
 import android.net.ConnectivityManager
 import android.net.Network
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.os.Binder
 import android.os.Build
 import android.os.Bundle
@@ -17,6 +20,7 @@ import android.os.Handler
 import android.os.Looper
 import android.text.Html
 import android.util.Log
+import android.content.SharedPreferences
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
@@ -82,6 +86,75 @@ class StreamingService : MediaSessionService() {
         }
     }
 
+    private lateinit var audioManager: AudioManager
+    private var audioFocusRequest: AudioFocusRequest? = null
+    private var resumeOnFocusGain = false
+    private var holdAudioFocus = false
+    private lateinit var prefs: SharedPreferences
+    private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
+        if (key == Keys.PREF_AUDIO_FOCUS_MODE) {
+            holdAudioFocus = shared.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.NORMAL.name) == AudioFocusMode.HOLD.name
+        }
+    }
+
+    private val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        if (holdAudioFocus) {
+            if (focusChange <= 0) {
+                requestAudioFocus()
+            }
+            return@OnAudioFocusChangeListener
+        }
+
+        when (focusChange) {
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> player.volume = 0.2f
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                resumeOnFocusGain = player.isPlaying
+                player.pause()
+            }
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                resumeOnFocusGain = false
+                player.pause()
+            }
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                player.volume = 1f
+                if (resumeOnFocusGain) {
+                    resumeOnFocusGain = false
+                    player.play()
+                }
+            }
+        }
+    }
+
+    private fun requestAudioFocus(): Boolean {
+        val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val attrs = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .build()
+            val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(attrs)
+                .setOnAudioFocusChangeListener(focusChangeListener)
+                .build()
+            audioFocusRequest = req
+            audioManager.requestAudioFocus(req)
+        } else {
+            audioManager.requestAudioFocus(
+                focusChangeListener,
+                AudioManager.STREAM_MUSIC,
+                AudioManager.AUDIOFOCUS_GAIN
+            )
+        }
+        return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+    }
+
+    private fun abandonAudioFocus() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+        } else {
+            audioManager.abandonAudioFocus(focusChangeListener)
+        }
+    }
+
     companion object {
         const val CHANNEL_ID = "stream_service_channel"
     }
@@ -115,6 +188,11 @@ class StreamingService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
+
+        prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.registerOnSharedPreferenceChangeListener(prefListener)
+        holdAudioFocus = prefs.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.NORMAL.name) == AudioFocusMode.HOLD.name
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(lifecycleObserver)
 
@@ -181,6 +259,14 @@ class StreamingService : MediaSessionService() {
 
                     override fun onMediaMetadataChanged(metadata: MediaMetadata) {
                     //noch keine verwendung
+                    }
+
+                    override fun onIsPlayingChanged(isPlaying: Boolean) {
+                        if (isPlaying) {
+                            requestAudioFocus()
+                        } else {
+                            abandonAudioFocus()
+                        }
                     }
 
                 })
@@ -343,6 +429,8 @@ class StreamingService : MediaSessionService() {
     override fun onDestroy() {
         ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
         connectivityManager.unregisterNetworkCallback(networkCallback)
+        prefs.unregisterOnSharedPreferenceChangeListener(prefListener)
+        abandonAudioFocus()
         mediaSession.release()
         player.release()
         super.onDestroy()
