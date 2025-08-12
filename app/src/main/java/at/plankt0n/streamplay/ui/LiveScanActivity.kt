@@ -98,7 +98,7 @@ class LiveScanActivity : AppCompatActivity() {
                     for (block in text.textBlocks) {
                         for (line in block.lines) {
                             val box = line.boundingBox
-                            if (box != null && allowedRect.contains(box)) {
+                            if (box != null && Rect.intersects(allowedRect, box)) {
                                 if (bestLine == null || line.text.length > bestLine!!.length) {
                                     bestLine = line.text
                                 }
