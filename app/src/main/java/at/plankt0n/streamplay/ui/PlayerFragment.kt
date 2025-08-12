@@ -622,8 +622,9 @@ class PlayerFragment : Fragment() {
     }
 
     private fun showBottomSheet() {
-        val bottomSheet = MediaItemOptionsBottomSheet()
-        bottomSheet.show(parentFragmentManager, bottomSheet.tag)
+        val tag = MediaItemOptionsBottomSheet.TAG
+        if (parentFragmentManager.findFragmentByTag(tag) != null) return
+        MediaItemOptionsBottomSheet().show(parentFragmentManager, tag)
     }
 
     fun enableMarquee(vararg views: TextView) {

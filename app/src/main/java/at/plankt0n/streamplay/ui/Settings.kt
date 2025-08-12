@@ -121,7 +121,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         key = "show_exoplayer_banner"
         title = getString(R.string.settings_exoplayer_infobanner)
         setDefaultValue(true)
-        category = SettingsCategory.UI
+        category = SettingsCategory.PLAYER
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }
 

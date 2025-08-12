@@ -15,6 +15,10 @@ import at.plankt0n.streamplay.ui.MetaLogFragment
 
 class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
 
+    companion object {
+        const val TAG = "MediaItemOptionsBottomSheet"
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
