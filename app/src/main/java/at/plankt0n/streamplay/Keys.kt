@@ -11,6 +11,8 @@ object Keys {
     const val ACTION_HIDE_COUNTDOWN = "at.plankt0n.streamplay.HIDE_COUNTDOWN"
     const val ACTION_REFRESH_METADATA = "at.plankt0n.streamplay.ACTION_REFRESH_METADATA"
     const val EXTRA_COUNTDOWN_DURATION = "countdown_duration"
+    const val ACTION_PLAY_STATION = "at.plankt0n.streamplay.PLAY_STATION"
+    const val EXTRA_STATION = "extra_station"
     const val UPDATE_FORCE_TAP_COUNT = 5
 
     const val PREF_AUDIO_FOCUS_MODE = "audio_focus_mode"

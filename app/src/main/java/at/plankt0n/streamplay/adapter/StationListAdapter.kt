@@ -14,7 +14,8 @@ class StationListAdapter(
     private val stationList: MutableList<StationItem>,
     private val startDrag: (RecyclerView.ViewHolder) -> Unit,
     private val onDataChanged: () -> Unit,
-    private val onPlayClick: (Int) -> Unit
+    private val onPlayClick: (Int) -> Unit,
+    private val onPinToHome: (StationItem) -> Unit
 ) : RecyclerView.Adapter<StationListAdapter.ViewHolder>() {
 
     private var editingPosition: Int = -1
@@ -65,6 +66,10 @@ class StationListAdapter(
 
         holder.playButton.visibility = if (isEditing) View.GONE else View.VISIBLE
         holder.playButton.setOnClickListener { onPlayClick(position) }
+        holder.playButton.setOnLongClickListener {
+            onPinToHome(station)
+            true
+        }
 
         Glide.with(holder.playButton.context)
             .load(station.iconURL)

@@ -99,6 +99,7 @@
 
     <!-- Stations Fragment play button -->
     <string name="desc_button_play_station">Play this station</string>
+    <string name="toast_shortcut_added">Shortcut added to home screen</string>
 
     <!-- Discover Fragment -->
     <string name="discover_title">Discover</string>

@@ -33,6 +33,9 @@ import at.plankt0n.streamplay.MainActivity
 import androidx.viewpager2.widget.ViewPager2
 import androidx.activity.OnBackPressedCallback
 import at.plankt0n.streamplay.helper.StationImportHelper
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
+import at.plankt0n.streamplay.Keys
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -135,8 +138,10 @@ class StationsFragment : Fragment() {
             itemTouchHelper.startDrag(holder)
         }, {
             refreshPlaylist()
-        }) { index ->
+        }, { index ->
             mediaServiceController.playAtIndex(index)
+        }) { station ->
+            pinStationToHome(station)
         }
         recyclerView.adapter = adapter
         itemTouchHelper.attachToRecyclerView(recyclerView)
@@ -228,6 +233,30 @@ class StationsFragment : Fragment() {
             .create()
 
         dialog.show()
+    }
+
+    private fun pinStationToHome(station: StationItem) {
+        val context = requireContext()
+        if (!ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
+            Toast.makeText(context, "Pinning shortcuts not supported", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val shortcutId = "station_${station.uuid}"
+        val intent = Intent(context, MainActivity::class.java).apply {
+            action = Keys.ACTION_PLAY_STATION
+            putExtra(Keys.EXTRA_STATION, station)
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val icon = IconCompat.createWithResource(context, R.drawable.ic_radio)
+        val shortcut = androidx.core.content.pm.ShortcutInfoCompat.Builder(context, shortcutId)
+            .setShortLabel(station.stationName)
+            .setIcon(icon)
+            .setIntent(intent)
+            .build()
+
+        ShortcutManagerCompat.requestPinShortcut(context, shortcut, null)
+        Toast.makeText(context, R.string.toast_shortcut_added, Toast.LENGTH_SHORT).show()
     }
 
     private fun refreshPlaylist() {
