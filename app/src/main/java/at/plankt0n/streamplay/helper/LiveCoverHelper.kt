@@ -98,9 +98,9 @@ object LiveCoverHelper {
                                             }
                                         }
                                         animator.start()
-                                        onNewColor(smoothColor)
-                                        onNewEffect(effect)
                                     }
+                                    onNewColor(smoothColor)
+                                    onNewEffect(effect)
                                 }
                             }
                         }
