@@ -6,6 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.TextView
+import android.widget.Spinner
+import android.widget.ArrayAdapter
 import android.text.Editable
 import android.text.TextWatcher
 import android.app.AlertDialog
@@ -29,10 +32,12 @@ class DiscoverFragment : Fragment() {
     private val stations = mutableListOf<StationItem>()
     private lateinit var adapter: DiscoverAdapter
     private lateinit var searchField: EditText
-    private lateinit var countryField: EditText
+    private lateinit var filterButton: ImageButton
     private lateinit var searchButton: ImageButton
-    private lateinit var countryListButton: ImageButton
+    private lateinit var filterSummary: TextView
     private lateinit var backButton: ImageButton
+    private var selectedCountry: String? = null
+    private var selectedTag: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,9 +50,9 @@ class DiscoverFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         searchField = view.findViewById(R.id.editSearchRadio)
-        countryField = view.findViewById(R.id.editCountry)
+        filterButton = view.findViewById(R.id.buttonFilter)
         searchButton = view.findViewById(R.id.buttonSearchRadio)
-        countryListButton = view.findViewById(R.id.buttonCountryList)
+        filterSummary = view.findViewById(R.id.textFilters)
         backButton = view.findViewById(R.id.arrow_back)
 
         backButton.setOnClickListener {
@@ -70,17 +75,11 @@ class DiscoverFragment : Fragment() {
 
         searchButton.setOnClickListener { performSearch(searchField.text.toString()) }
 
-        countryListButton.setOnClickListener {
+        filterButton.setOnClickListener {
             lifecycleScope.launch {
-                val countries = RadioBrowserHelper.getCountries()
-                val names = countries.map { it.name }.toTypedArray()
-                AlertDialog.Builder(requireContext())
-                    .setTitle(getString(R.string.country_list_title))
-                    .setItems(names) { _, which ->
-                        countryField.setText(names[which])
-                        performSearch(searchField.text.toString())
-                    }
-                    .show()
+                val countries = RadioBrowserHelper.getCountries().map { it.name }
+                val tags = RadioBrowserHelper.getTags().map { it.name }
+                showFilterDialog(countries, tags)
             }
         }
 
@@ -91,39 +90,66 @@ class DiscoverFragment : Fragment() {
 
             override fun afterTextChanged(s: Editable?) {
                 val query = s?.toString() ?: ""
-                val country = countryField.text.toString()
-                if (query.length >= 2 || country.isNotBlank()) {
+                if (query.length >= 2 || selectedCountry != null || selectedTag != null) {
                     performSearch(query)
-                } else if (query.isEmpty() && country.isBlank()) {
+                } else if (query.isEmpty() && selectedCountry == null && selectedTag == null) {
                     performLoadTop()
                 }
             }
         })
 
-        countryField.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
-            override fun afterTextChanged(s: Editable?) {
-                val query = searchField.text.toString()
-                val country = s?.toString() ?: ""
-                if (country.isNotBlank() || query.length >= 2) {
-                    performSearch(query)
-                } else if (query.isEmpty() && country.isBlank()) {
-                    performLoadTop()
-                }
-            }
-        })
-
+        updateFilterSummary()
         performLoadTop()
     }
 
+    private fun showFilterDialog(countries: List<String>, tags: List<String>) {
+        val view = layoutInflater.inflate(R.layout.dialog_filters, null)
+        val countrySpinner = view.findViewById<Spinner>(R.id.spinnerCountry)
+        val tagSpinner = view.findViewById<Spinner>(R.id.spinnerTag)
+
+        val countryOptions = listOf(getString(R.string.clear_filters)) + countries
+        val tagOptions = listOf(getString(R.string.clear_filters)) + tags
+
+        countrySpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, countryOptions)
+        tagSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, tagOptions)
+
+        countrySpinner.setSelection(selectedCountry?.let { countries.indexOf(it) + 1 } ?: 0)
+        tagSpinner.setSelection(selectedTag?.let { tags.indexOf(it) + 1 } ?: 0)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.filter_dialog_title))
+            .setView(view)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                selectedCountry = countrySpinner.selectedItemPosition.takeIf { it > 0 }?.let { countryOptions[it] }
+                selectedTag = tagSpinner.selectedItemPosition.takeIf { it > 0 }?.let { tagOptions[it] }
+                updateFilterSummary()
+                performSearch(searchField.text.toString())
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .setNeutralButton(R.string.clear_filters) { _, _ ->
+                selectedCountry = null
+                selectedTag = null
+                updateFilterSummary()
+                performSearch(searchField.text.toString())
+            }
+            .show()
+    }
+
+    private fun updateFilterSummary() {
+        val parts = mutableListOf<String>()
+        selectedCountry?.let { parts += getString(R.string.filter_country) + ": " + it }
+        selectedTag?.let { parts += getString(R.string.filter_genre) + ": " + it }
+        filterSummary.text = if (parts.isEmpty()) {
+            getString(R.string.filter_summary_none)
+        } else {
+            parts.joinToString(", ")
+        }
+    }
+
     private fun performSearch(query: String) {
-        val country = countryField.text.toString()
-        if (query.isBlank() && country.isBlank()) return
+        if (query.isBlank() && selectedCountry == null && selectedTag == null) return
         lifecycleScope.launch {
-            val results = RadioBrowserHelper.searchStations(query, country.ifBlank { null })
+            val results = RadioBrowserHelper.searchStations(query, selectedCountry, selectedTag)
             stations.clear()
             stations.addAll(results.map { it.toStationItem() })
             adapter.notifyDataSetChanged()
