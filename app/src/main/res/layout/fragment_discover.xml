@@ -20,12 +20,28 @@
             android:hint="@string/search_hint" />
 
         <ImageButton
+            android:id="@+id/buttonCountryList"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_radio"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <ImageButton
             android:id="@+id/buttonSearchRadio"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_sheet_discover"
             android:background="?attr/selectableItemBackgroundBorderless" />
     </LinearLayout>
+
+    <EditText
+        android:id="@+id/editCountry"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:hint="@string/country_hint" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewDiscover"

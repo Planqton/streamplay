@@ -8,6 +8,7 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.text.Editable
 import android.text.TextWatcher
+import android.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -28,7 +29,9 @@ class DiscoverFragment : Fragment() {
     private val stations = mutableListOf<StationItem>()
     private lateinit var adapter: DiscoverAdapter
     private lateinit var searchField: EditText
+    private lateinit var countryField: EditText
     private lateinit var searchButton: ImageButton
+    private lateinit var countryListButton: ImageButton
     private lateinit var backButton: ImageButton
 
     override fun onCreateView(
@@ -42,7 +45,9 @@ class DiscoverFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         searchField = view.findViewById(R.id.editSearchRadio)
+        countryField = view.findViewById(R.id.editCountry)
         searchButton = view.findViewById(R.id.buttonSearchRadio)
+        countryListButton = view.findViewById(R.id.buttonCountryList)
         backButton = view.findViewById(R.id.arrow_back)
 
         backButton.setOnClickListener {
@@ -50,7 +55,7 @@ class DiscoverFragment : Fragment() {
         }
 
         adapter = DiscoverAdapter(stations) { station ->
-            android.app.AlertDialog.Builder(requireContext())
+            AlertDialog.Builder(requireContext())
                 .setTitle(getString(R.string.confirm_add_title))
                 .setMessage(getString(R.string.confirm_add_message, station.stationName))
                 .setPositiveButton(android.R.string.ok) { _, _ ->
@@ -65,6 +70,20 @@ class DiscoverFragment : Fragment() {
 
         searchButton.setOnClickListener { performSearch(searchField.text.toString()) }
 
+        countryListButton.setOnClickListener {
+            lifecycleScope.launch {
+                val countries = RadioBrowserHelper.getCountries()
+                val names = countries.map { it.name }.toTypedArray()
+                AlertDialog.Builder(requireContext())
+                    .setTitle(getString(R.string.country_list_title))
+                    .setItems(names) { _, which ->
+                        countryField.setText(names[which])
+                        performSearch(searchField.text.toString())
+                    }
+                    .show()
+            }
+        }
+
         searchField.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
@@ -72,9 +91,26 @@ class DiscoverFragment : Fragment() {
 
             override fun afterTextChanged(s: Editable?) {
                 val query = s?.toString() ?: ""
-                if (query.length >= 2) {
+                val country = countryField.text.toString()
+                if (query.length >= 2 || country.isNotBlank()) {
                     performSearch(query)
-                } else if (query.isEmpty()) {
+                } else if (query.isEmpty() && country.isBlank()) {
+                    performLoadTop()
+                }
+            }
+        })
+
+        countryField.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                val query = searchField.text.toString()
+                val country = s?.toString() ?: ""
+                if (country.isNotBlank() || query.length >= 2) {
+                    performSearch(query)
+                } else if (query.isEmpty() && country.isBlank()) {
                     performLoadTop()
                 }
             }
@@ -84,9 +120,10 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun performSearch(query: String) {
-        if (query.isBlank()) return
+        val country = countryField.text.toString()
+        if (query.isBlank() && country.isBlank()) return
         lifecycleScope.launch {
-            val results = RadioBrowserHelper.searchStations(query)
+            val results = RadioBrowserHelper.searchStations(query, country.ifBlank { null })
             stations.clear()
             stations.addAll(results.map { it.toStationItem() })
             adapter.notifyDataSetChanged()
