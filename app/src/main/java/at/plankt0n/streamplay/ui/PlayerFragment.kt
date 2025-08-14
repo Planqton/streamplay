@@ -505,7 +505,12 @@ class PlayerFragment : Fragment() {
                             onNewEffect = { holder.lastEffect = it }
                         )
                     }
-                    when (coverAnimationStyle) {
+                    val clickAnimationStyle = if (coverAnimationStyle == CoverAnimationStyle.NONE) {
+                        CoverAnimationStyle.FLIP
+                    } else {
+                        coverAnimationStyle
+                    }
+                    when (clickAnimationStyle) {
                         CoverAnimationStyle.FLIP -> {
                             view.animate()
                                 .rotationY(90f)
