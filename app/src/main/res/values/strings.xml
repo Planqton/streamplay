@@ -150,6 +150,10 @@
     <string name="bg_effect_spotlight">Spotlight</string>
     <string name="bg_effect_blur">Blur</string>
     <string name="settings_cover_mode">Cover Source</string>
+    <string name="settings_cover_animation">Cover Animation Style</string>
+    <string name="cover_animation_none">None</string>
+    <string name="cover_animation_flip">Flip</string>
+    <string name="cover_animation_fade">Fade</string>
     <string name="cover_mode_station">Station Cover</string>
     <string name="cover_mode_meta">Metadata Cover</string>
     <string name="settings_use_spotify_meta">Use Spotify Meta</string>

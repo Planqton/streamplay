@@ -19,6 +19,7 @@ object Keys {
     const val UPDATE_FORCE_TAP_COUNT = 5
 
     const val PREF_AUDIO_FOCUS_MODE = "audio_focus_mode"
+    const val PREF_COVER_ANIMATION_STYLE = "cover_animation_style"
 
 
 

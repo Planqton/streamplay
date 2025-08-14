@@ -12,6 +12,7 @@ import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.AudioFocusMode
 import at.plankt0n.streamplay.data.CoverMode
+import at.plankt0n.streamplay.data.CoverAnimationStyle
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StationImportHelper
@@ -178,6 +179,24 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
             CoverMode.META.name
         )
         setDefaultValue(CoverMode.META.name)
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    val coverAnimationStylePref = ListPreference(context).apply {
+        key = Keys.PREF_COVER_ANIMATION_STYLE
+        title = getString(R.string.settings_cover_animation)
+        entries = arrayOf(
+            getString(R.string.cover_animation_none),
+            getString(R.string.cover_animation_flip),
+            getString(R.string.cover_animation_fade)
+        )
+        entryValues = arrayOf(
+            CoverAnimationStyle.NONE.name,
+            CoverAnimationStyle.FLIP.name,
+            CoverAnimationStyle.FADE.name
+        )
+        setDefaultValue(CoverAnimationStyle.FLIP.name)
         category = SettingsCategory.UI
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
@@ -361,6 +380,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         bannerSwitch,
         backgroundEffectPref,
         coverModePref,
+        coverAnimationStylePref,
         spotifyApiKeyPref,
         spotifySecretKeyPref,
         useSpotifyMetaPref,
