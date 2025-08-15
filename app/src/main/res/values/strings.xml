@@ -107,6 +107,8 @@
     <string name="filter_dialog_title">Filters</string>
     <string name="filter_country">Country</string>
     <string name="filter_genre">Genre</string>
+    <string name="filter_language">Language</string>
+    <string name="filter_codec">Codec</string>
     <string name="clear_filters">Clear Filters</string>
     <string name="filter_summary_none">No filters applied</string>
     <string name="confirm_add_title">Add Station</string>

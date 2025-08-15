@@ -14,14 +14,18 @@ object RadioBrowserHelper {
     private const val SEARCH_URL = "https://de1.api.radio-browser.info/json/stations/search?"
     private const val COUNTRIES_URL = "https://de1.api.radio-browser.info/json/countries"
     private const val TAGS_URL = "https://de1.api.radio-browser.info/json/tags"
+    private const val LANGUAGES_URL = "https://de1.api.radio-browser.info/json/languages"
+    private const val CODECS_URL = "https://de1.api.radio-browser.info/json/codecs"
     private const val TOP_URL = "https://de1.api.radio-browser.info/json/stations/topvote/"
 
-    suspend fun searchStations(query: String, country: String? = null, tag: String? = null): List<RadioBrowserResult> = withContext(Dispatchers.IO) {
+    suspend fun searchStations(query: String, country: String? = null, tag: String? = null, language: String? = null, codec: String? = null): List<RadioBrowserResult> = withContext(Dispatchers.IO) {
         try {
             val params = mutableListOf<String>()
             if (query.isNotBlank()) params += "name=" + URLEncoder.encode(query, "UTF-8")
             if (!country.isNullOrBlank()) params += "country=" + URLEncoder.encode(country, "UTF-8")
             if (!tag.isNullOrBlank()) params += "tag=" + URLEncoder.encode(tag, "UTF-8")
+            if (!language.isNullOrBlank()) params += "language=" + URLEncoder.encode(language, "UTF-8")
+            if (!codec.isNullOrBlank()) params += "codec=" + URLEncoder.encode(codec, "UTF-8")
             if (params.isEmpty()) return@withContext emptyList()
             val apiUrl = "$SEARCH_URL" + params.joinToString("&")
             val url = URL(apiUrl)
@@ -104,6 +108,52 @@ object RadioBrowserHelper {
                 val inputStream = connection.inputStream
                 val json = inputStream.bufferedReader().use { it.readText() }
                 val type = object : TypeToken<List<RadioBrowserTag>>() {}.type
+                Gson().fromJson(json, type)
+            } else {
+                Log.e("RadioBrowserHelper", "HTTP error: ${connection.responseCode}")
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e("RadioBrowserHelper", "Error: ${e.localizedMessage}")
+            emptyList()
+        }
+    }
+
+    suspend fun getLanguages(): List<RadioBrowserLanguage> = withContext(Dispatchers.IO) {
+        try {
+            val url = URL(LANGUAGES_URL)
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+
+            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                val inputStream = connection.inputStream
+                val json = inputStream.bufferedReader().use { it.readText() }
+                val type = object : TypeToken<List<RadioBrowserLanguage>>() {}.type
+                Gson().fromJson(json, type)
+            } else {
+                Log.e("RadioBrowserHelper", "HTTP error: ${connection.responseCode}")
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e("RadioBrowserHelper", "Error: ${e.localizedMessage}")
+            emptyList()
+        }
+    }
+
+    suspend fun getCodecs(): List<RadioBrowserCodec> = withContext(Dispatchers.IO) {
+        try {
+            val url = URL(CODECS_URL)
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+
+            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                val inputStream = connection.inputStream
+                val json = inputStream.bufferedReader().use { it.readText() }
+                val type = object : TypeToken<List<RadioBrowserCodec>>() {}.type
                 Gson().fromJson(json, type)
             } else {
                 Log.e("RadioBrowserHelper", "HTTP error: ${connection.responseCode}")

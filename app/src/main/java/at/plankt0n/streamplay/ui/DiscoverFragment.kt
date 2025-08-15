@@ -38,6 +38,8 @@ class DiscoverFragment : Fragment() {
     private lateinit var backButton: ImageButton
     private var selectedCountry: String? = null
     private var selectedTag: String? = null
+    private var selectedLanguage: String? = null
+    private var selectedCodec: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -79,7 +81,9 @@ class DiscoverFragment : Fragment() {
             lifecycleScope.launch {
                 val countries = RadioBrowserHelper.getCountries().map { it.name }
                 val tags = RadioBrowserHelper.getTags().map { it.name }
-                showFilterDialog(countries, tags)
+                val languages = RadioBrowserHelper.getLanguages().map { it.name }
+                val codecs = RadioBrowserHelper.getCodecs().map { it.name }
+                showFilterDialog(countries, tags, languages, codecs)
             }
         }
 
@@ -90,9 +94,9 @@ class DiscoverFragment : Fragment() {
 
             override fun afterTextChanged(s: Editable?) {
                 val query = s?.toString() ?: ""
-                if (query.length >= 2 || selectedCountry != null || selectedTag != null) {
+                if (query.length >= 2 || selectedCountry != null || selectedTag != null || selectedLanguage != null || selectedCodec != null) {
                     performSearch(query)
-                } else if (query.isEmpty() && selectedCountry == null && selectedTag == null) {
+                } else if (query.isEmpty() && selectedCountry == null && selectedTag == null && selectedLanguage == null && selectedCodec == null) {
                     performLoadTop()
                 }
             }
@@ -102,19 +106,27 @@ class DiscoverFragment : Fragment() {
         performLoadTop()
     }
 
-    private fun showFilterDialog(countries: List<String>, tags: List<String>) {
+    private fun showFilterDialog(countries: List<String>, tags: List<String>, languages: List<String>, codecs: List<String>) {
         val view = layoutInflater.inflate(R.layout.dialog_filters, null)
         val countrySpinner = view.findViewById<Spinner>(R.id.spinnerCountry)
         val tagSpinner = view.findViewById<Spinner>(R.id.spinnerTag)
+        val languageSpinner = view.findViewById<Spinner>(R.id.spinnerLanguage)
+        val codecSpinner = view.findViewById<Spinner>(R.id.spinnerCodec)
 
         val countryOptions = listOf(getString(R.string.clear_filters)) + countries
         val tagOptions = listOf(getString(R.string.clear_filters)) + tags
+        val languageOptions = listOf(getString(R.string.clear_filters)) + languages
+        val codecOptions = listOf(getString(R.string.clear_filters)) + codecs
 
         countrySpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, countryOptions)
         tagSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, tagOptions)
+        languageSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, languageOptions)
+        codecSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, codecOptions)
 
         countrySpinner.setSelection(selectedCountry?.let { countries.indexOf(it) + 1 } ?: 0)
         tagSpinner.setSelection(selectedTag?.let { tags.indexOf(it) + 1 } ?: 0)
+        languageSpinner.setSelection(selectedLanguage?.let { languages.indexOf(it) + 1 } ?: 0)
+        codecSpinner.setSelection(selectedCodec?.let { codecs.indexOf(it) + 1 } ?: 0)
 
         AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.filter_dialog_title))
@@ -122,6 +134,8 @@ class DiscoverFragment : Fragment() {
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 selectedCountry = countrySpinner.selectedItemPosition.takeIf { it > 0 }?.let { countryOptions[it] }
                 selectedTag = tagSpinner.selectedItemPosition.takeIf { it > 0 }?.let { tagOptions[it] }
+                selectedLanguage = languageSpinner.selectedItemPosition.takeIf { it > 0 }?.let { languageOptions[it] }
+                selectedCodec = codecSpinner.selectedItemPosition.takeIf { it > 0 }?.let { codecOptions[it] }
                 updateFilterSummary()
                 performSearch(searchField.text.toString())
             }
@@ -129,6 +143,8 @@ class DiscoverFragment : Fragment() {
             .setNeutralButton(R.string.clear_filters) { _, _ ->
                 selectedCountry = null
                 selectedTag = null
+                selectedLanguage = null
+                selectedCodec = null
                 updateFilterSummary()
                 performSearch(searchField.text.toString())
             }
@@ -139,6 +155,8 @@ class DiscoverFragment : Fragment() {
         val parts = mutableListOf<String>()
         selectedCountry?.let { parts += getString(R.string.filter_country) + ": " + it }
         selectedTag?.let { parts += getString(R.string.filter_genre) + ": " + it }
+        selectedLanguage?.let { parts += getString(R.string.filter_language) + ": " + it }
+        selectedCodec?.let { parts += getString(R.string.filter_codec) + ": " + it }
         filterSummary.text = if (parts.isEmpty()) {
             getString(R.string.filter_summary_none)
         } else {
@@ -147,9 +165,9 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun performSearch(query: String) {
-        if (query.isBlank() && selectedCountry == null && selectedTag == null) return
+        if (query.isBlank() && selectedCountry == null && selectedTag == null && selectedLanguage == null && selectedCodec == null) return
         lifecycleScope.launch {
-            val results = RadioBrowserHelper.searchStations(query, selectedCountry, selectedTag)
+            val results = RadioBrowserHelper.searchStations(query, selectedCountry, selectedTag, selectedLanguage, selectedCodec)
             stations.clear()
             stations.addAll(results.map { it.toStationItem() })
             adapter.notifyDataSetChanged()
