@@ -10,6 +10,7 @@ import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.GitHubUpdateChecker
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.PreferencesHelper
+import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.ui.MainPagerFragment
@@ -89,6 +90,8 @@ class MainActivity : AppCompatActivity() {
 
         PreferencesHelper.setLastPlayedStreamIndex(this, index)
 
+        StateHelper.isPlaylistChangePending = true
+
         val refreshIntent = Intent(this, StreamingService::class.java).apply {
             action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
         }
@@ -96,16 +99,18 @@ class MainActivity : AppCompatActivity() {
 
         shortcutController = MediaServiceController(this)
         shortcutController?.initializeAndConnect(
-            onConnected = { controller ->
-                Handler(Looper.getMainLooper()).postDelayed({
-                    val idx = shortcutController?.findIndexByMediaId(station.streamURL) ?: index
-                    shortcutController?.playAtIndex(idx)
-                }, 300)
+            onConnected = {
+                val idx = shortcutController?.findIndexByMediaId(station.streamURL) ?: index
+                shortcutController?.playAtIndex(idx)
             },
             onPlaybackChanged = {},
             onStreamIndexChanged = {},
             onMetadataChanged = {},
-            onTimelineChanged = {}
+            onTimelineChanged = {
+                val idx = shortcutController?.findIndexByMediaId(station.streamURL) ?: index
+                shortcutController?.playAtIndex(idx)
+                StateHelper.isPlaylistChangePending = false
+            },
         )
         showPlayerPage()
     }
