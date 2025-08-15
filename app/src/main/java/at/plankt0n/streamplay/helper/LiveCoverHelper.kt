@@ -3,18 +3,21 @@ package at.plankt0n.streamplay.helper
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.PictureDrawable
 import android.view.View
 import android.widget.ImageView
 import at.plankt0n.streamplay.R
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.request.target.BitmapImageViewTarget
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import androidx.palette.graphics.Palette
+import com.bumptech.glide.load.resource.gif.GifDrawable
 import jp.wasabeef.glide.transformations.BlurTransformation
 
 object LiveCoverHelper {
@@ -43,16 +46,29 @@ object LiveCoverHelper {
         onNewEffect: (BackgroundEffect) -> Unit
     ) {
         Glide.with(context)
-            .asBitmap()
             .load(imageUrl)
             .placeholder(R.drawable.ic_placeholder_logo)
             .error(R.drawable.ic_stationcover_placeholder)
-            .into(object : BitmapImageViewTarget(imageView) {
-                override fun setResource(resource: Bitmap?) {
-                    super.setResource(resource)
-                    resource?.let { bitmap ->
+            .into(object : CustomTarget<Drawable>() {
+                override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
+                    imageView.setImageDrawable(resource)
+
+                    val bitmap: Bitmap? = when (resource) {
+                        is BitmapDrawable -> resource.bitmap
+                        is GifDrawable -> {
+                            resource.start()
+                            resource.firstFrame
+                        }
+                        is PictureDrawable -> {
+                            imageView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                            drawableToBitmap(resource)
+                        }
+                        else -> null
+                    }
+
+                    bitmap?.let { bmp ->
                         if (effect == BackgroundEffect.BLUR) {
-                            Palette.from(bitmap).generate { palette ->
+                            Palette.from(bmp).generate { palette ->
                                 val dominantColor = palette?.getDominantColor(defaultColor) ?: defaultColor
 
                                 val hsv = FloatArray(3)
@@ -70,21 +86,17 @@ object LiveCoverHelper {
                                             .transform(BlurTransformation(25, 3))
                                     )
                                     .into(object : CustomTarget<Bitmap>() {
-                                        override fun onResourceReady(
-                                            resource: Bitmap,
-                                            transition: Transition<in Bitmap>?,
-                                        ) {
-                                            backgroundTarget.background =
-                                                BitmapDrawable(context.resources, resource)
+                                        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                                            backgroundTarget.background = BitmapDrawable(context.resources, resource)
                                             onNewColor(smoothColor)
                                             onNewEffect(effect)
                                         }
 
-                                        override fun onLoadCleared(placeholder: android.graphics.drawable.Drawable?) {}
+                                        override fun onLoadCleared(placeholder: Drawable?) {}
                                     })
                             }
                         } else {
-                            Palette.from(bitmap).generate { palette ->
+                            Palette.from(bmp).generate { palette ->
                                 palette?.let {
                                     val dominantColor = it.getDominantColor(defaultColor)
 
@@ -94,7 +106,6 @@ object LiveCoverHelper {
                                     hsv[2] = (hsv[2] + 0.1f).coerceAtMost(1.0f)
                                     val smoothColor = Color.HSVToColor(hsv)
 
-                                    // Nur animieren, wenn sich Farbe oder Effekt ändert
                                     if (lastColor != smoothColor || lastEffect != effect) {
                                         val animator = ValueAnimator.ofArgb(
                                             lastColor ?: defaultColor,
@@ -116,7 +127,20 @@ object LiveCoverHelper {
                         }
                     }
                 }
+
+                override fun onLoadCleared(placeholder: Drawable?) {
+                    imageView.setImageDrawable(placeholder)
+                }
             })
+    }
+
+    private fun drawableToBitmap(drawable: PictureDrawable): Bitmap {
+        val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: 512
+        val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: 512
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawPicture(drawable.picture)
+        return bitmap
     }
 
     fun createGradient(color: Int, effect: BackgroundEffect): GradientDrawable {

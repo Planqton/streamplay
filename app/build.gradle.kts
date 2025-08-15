@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("kotlin-parcelize")
+    kotlin("kapt")
 }
 
 android {
@@ -76,6 +77,8 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("jp.wasabeef:glide-transformations:4.3.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.caverock:androidsvg:1.4")
+    kapt("com.github.bumptech.glide:compiler:4.16.0")
 
 
 

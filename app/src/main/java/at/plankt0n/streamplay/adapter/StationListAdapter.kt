@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.PreferencesHelper
+import at.plankt0n.streamplay.svg.SvgSoftwareLayerSetter
 
 class StationListAdapter(
     private val stationList: MutableList<StationItem>,
@@ -76,6 +77,7 @@ class StationListAdapter(
             .placeholder(R.drawable.ic_stationcover_placeholder)
             .error(R.drawable.ic_stationcover_placeholder)
             .fallback(R.drawable.ic_stationcover_placeholder)
+            .listener(SvgSoftwareLayerSetter())
             .into(holder.playButton)
 
         val context = holder.itemView.context

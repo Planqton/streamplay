@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.StationItem
 import com.bumptech.glide.Glide
+import at.plankt0n.streamplay.svg.SvgSoftwareLayerSetter
 
 class SearchResultAdapter(
     private val searchResults: List<StationItem>,
@@ -38,6 +39,7 @@ class SearchResultAdapter(
         Glide.with(holder.imageLogo.context)
             .load(result.iconURL)
             .placeholder(R.drawable.ic_stationcover_placeholder)
+            .listener(SvgSoftwareLayerSetter())
             .into(holder.imageLogo)
 
         holder.itemView.setOnClickListener {

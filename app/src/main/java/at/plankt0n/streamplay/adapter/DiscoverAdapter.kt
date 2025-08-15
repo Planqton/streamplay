@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.StationItem
 import com.bumptech.glide.Glide
+import at.plankt0n.streamplay.svg.SvgSoftwareLayerSetter
 
 class DiscoverAdapter(
     private val items: List<StationItem>,
@@ -35,6 +36,7 @@ class DiscoverAdapter(
             .load(item.iconURL)
             .placeholder(R.drawable.ic_placeholder_logo)
             .error(R.drawable.ic_stationcover_placeholder)
+            .listener(SvgSoftwareLayerSetter())
             .into(holder.image)
         holder.itemView.setOnClickListener { onClick(item) }
     }

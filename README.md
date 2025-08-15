@@ -8,6 +8,7 @@ StreamPlay is a lightweight webstream player for Android. It features a cover-ba
 - Cover UI with Spotify-sourced artwork
 - Audio session integration for media controls
 - Metadata logging via Metalog
+- Animated GIF and SVG station icons supported in both shortcut bar and cover view
 
 ## Planned Features
 

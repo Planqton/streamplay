@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.ShortcutItem
 import com.bumptech.glide.Glide
+import at.plankt0n.streamplay.svg.SvgSoftwareLayerSetter
 
 class ShortcutAdapter(
     private val onClick: (ShortcutItem) -> Unit
@@ -44,6 +45,7 @@ class ShortcutAdapter(
             .placeholder(R.drawable.ic_placeholder_logo)
             .error(R.drawable.ic_radio)
             .fallback(R.drawable.ic_radio)
+            .listener(SvgSoftwareLayerSetter())
             .into(holder.iconImageView)
 
         holder.itemView.setOnClickListener { onClick(item) }

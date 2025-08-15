@@ -52,6 +52,7 @@ import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
 import android.widget.Toast
 import kotlin.math.min
+import at.plankt0n.streamplay.svg.SvgSoftwareLayerSetter
 
 class PlayerFragment : Fragment() {
 
@@ -421,6 +422,7 @@ class PlayerFragment : Fragment() {
                     .load(R.drawable.placeholder_spotify_dark)
                     .placeholder(R.drawable.placeholder_spotify_dark)
                     .error(R.drawable.placeholder_spotify_dark)
+                    .listener(SvgSoftwareLayerSetter())
                     .into(stationIconView!!)
 
                 return@observe
@@ -560,12 +562,14 @@ class PlayerFragment : Fragment() {
                     .load(trackInfo.bestCoverUrl)
                     .placeholder(R.drawable.ic_placeholder_logo)
                     .error(R.drawable.ic_stationcover_placeholder)
+                    .listener(SvgSoftwareLayerSetter())
                     .into(stationIconView!!)
             } else {
                 Glide.with(requireContext())
                     .load(defaultIconUrl)
                     .placeholder(R.drawable.ic_placeholder_logo)
                     .error(R.drawable.ic_stationcover_placeholder)
+                    .listener(SvgSoftwareLayerSetter())
                     .into(stationIconView!!)
             }
 
@@ -608,6 +612,7 @@ class PlayerFragment : Fragment() {
             .load(iconUrl)
             .placeholder(R.drawable.placeholder_spotify_dark)
             .error(R.drawable.placeholder_spotify_dark)
+            .listener(SvgSoftwareLayerSetter())
             .into(stationIconImageView)
     }
 
