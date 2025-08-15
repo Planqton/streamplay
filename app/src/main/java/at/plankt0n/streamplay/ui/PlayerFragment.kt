@@ -555,15 +555,22 @@ class PlayerFragment : Fragment() {
                 albumTextView?.text = getString(R.string.unknown_album)
             }
 
-            if (coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
+            val iconUrlToLoad = if (coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
+                trackInfo.bestCoverUrl
+            } else {
+                defaultIconUrl
+            }
+            if (iconUrlToLoad.lowercase().endsWith(".svg")) {
                 Glide.with(requireContext())
-                    .load(trackInfo.bestCoverUrl)
+                    .`as`(android.graphics.drawable.PictureDrawable::class.java)
+                    .listener(at.plankt0n.streamplay.glide.SvgSoftwareLayerSetter())
+                    .load(iconUrlToLoad)
                     .placeholder(R.drawable.ic_placeholder_logo)
                     .error(R.drawable.ic_stationcover_placeholder)
                     .into(stationIconView!!)
             } else {
                 Glide.with(requireContext())
-                    .load(defaultIconUrl)
+                    .load(iconUrlToLoad)
                     .placeholder(R.drawable.ic_placeholder_logo)
                     .error(R.drawable.ic_stationcover_placeholder)
                     .into(stationIconView!!)
@@ -604,11 +611,21 @@ class PlayerFragment : Fragment() {
         val iconUrl = extras.getString("EXTRA_ICON_URL") ?: ""
 
         stationNameTextView.text = stationName
-        Glide.with(stationIconImageView)
-            .load(iconUrl)
-            .placeholder(R.drawable.placeholder_spotify_dark)
-            .error(R.drawable.placeholder_spotify_dark)
-            .into(stationIconImageView)
+        if (iconUrl.lowercase().endsWith(".svg")) {
+            Glide.with(stationIconImageView)
+                .`as`(android.graphics.drawable.PictureDrawable::class.java)
+                .listener(at.plankt0n.streamplay.glide.SvgSoftwareLayerSetter())
+                .load(iconUrl)
+                .placeholder(R.drawable.placeholder_spotify_dark)
+                .error(R.drawable.placeholder_spotify_dark)
+                .into(stationIconImageView)
+        } else {
+            Glide.with(stationIconImageView)
+                .load(iconUrl)
+                .placeholder(R.drawable.placeholder_spotify_dark)
+                .error(R.drawable.placeholder_spotify_dark)
+                .into(stationIconImageView)
+        }
     }
 
     private fun updatePlayPauseIcon(isPlaying: Boolean) {
