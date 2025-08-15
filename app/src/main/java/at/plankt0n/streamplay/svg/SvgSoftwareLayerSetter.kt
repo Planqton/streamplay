@@ -13,26 +13,26 @@ class SvgSoftwareLayerSetter : RequestListener<Drawable> {
     override fun onLoadFailed(
         e: GlideException?,
         model: Any?,
-        target: Target<Drawable>,
+        target: Target<Drawable>?,
         isFirstResource: Boolean
     ): Boolean {
-        val view = (target as ImageViewTarget<*>).view
-        view.setLayerType(ImageView.LAYER_TYPE_NONE, null)
+        val view = (target as? ImageViewTarget<*>)?.view
+        view?.setLayerType(ImageView.LAYER_TYPE_NONE, null)
         return false
     }
 
     override fun onResourceReady(
         resource: Drawable,
         model: Any?,
-        target: Target<Drawable>,
-        dataSource: DataSource,
+        target: Target<Drawable>?,
+        dataSource: DataSource?,
         isFirstResource: Boolean
     ): Boolean {
-        val view = (target as ImageViewTarget<*>).view
+        val view = (target as? ImageViewTarget<*>)?.view
         if (resource is PictureDrawable) {
-            view.setLayerType(ImageView.LAYER_TYPE_SOFTWARE, null)
+            view?.setLayerType(ImageView.LAYER_TYPE_SOFTWARE, null)
         } else {
-            view.setLayerType(ImageView.LAYER_TYPE_NONE, null)
+            view?.setLayerType(ImageView.LAYER_TYPE_NONE, null)
         }
         return false
     }
