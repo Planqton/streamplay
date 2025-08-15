@@ -17,14 +17,14 @@ class SvgSoftwareLayerSetter : RequestListener<PictureDrawable> {
     override fun onLoadFailed(
         e: GlideException?,
         model: Any?,
-        target: Target<PictureDrawable>,
+        target: Target<PictureDrawable>?,
         isFirstResource: Boolean
     ): Boolean = false
 
     override fun onResourceReady(
         resource: PictureDrawable,
         model: Any?,
-        target: Target<PictureDrawable>,
+        target: Target<PictureDrawable>?,
         dataSource: DataSource,
         isFirstResource: Boolean
     ): Boolean {
