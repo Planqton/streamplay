@@ -254,10 +254,16 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         true
     }
 
+    val defaultPersonalUrl = Keys.DEFAULT_PERSONAL_SYNC_URL
+    val startPrefs = PreferenceManager.getDefaultSharedPreferences(context)
+    if (!startPrefs.contains(Keys.PREF_PERSONAL_SYNC_URL)) {
+        startPrefs.edit().putString(Keys.PREF_PERSONAL_SYNC_URL, defaultPersonalUrl).apply()
+    }
+
     val personalUrlPref = EditTextPreference(context).apply {
-        key = "personal_sync_url"
+        key = Keys.PREF_PERSONAL_SYNC_URL
         title = getString(R.string.settings_personal_sync_url)
-        setDefaultValue("")
+        setDefaultValue(defaultPersonalUrl)
         summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
             val value = pref.text
             if (value.isNullOrBlank()) {
@@ -266,6 +272,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 value
             }
         }
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    val syncOnStartSwitch = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_SYNC_ON_START
+        title = getString(R.string.settings_sync_on_start)
+        setDefaultValue(false)
         category = SettingsCategory.PERSONAL_SYNC
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
@@ -385,6 +399,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         spotifySecretKeyPref,
         useSpotifyMetaPref,
         personalUrlPref,
+        syncOnStartSwitch,
         personalSyncPref,
         personalExportPref,
         versionPref,

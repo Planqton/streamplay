@@ -132,6 +132,7 @@
     <string name="update_latest">Aktuellste Version installiert</string>
     <string name="settings_personal_sync_url">Personal JSON URL</string>
     <string name="settings_personal_sync_url_empty">EMPTY</string>
+    <string name="settings_sync_on_start">Sync JSON at Start</string>
     <string name="settings_sync_personal_json">Sync Personal JSON</string>
     <string name="settings_export_personal_json">Export Personal JSON</string>
     <string name="settings_add_test_stations">Add Test Stations</string>
