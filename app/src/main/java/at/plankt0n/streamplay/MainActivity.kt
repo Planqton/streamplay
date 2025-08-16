@@ -6,19 +6,15 @@ import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
-import android.widget.Toast
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.GitHubUpdateChecker
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.PreferencesHelper
-import at.plankt0n.streamplay.helper.StationImportHelper
 import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.ui.MainPagerFragment
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,39 +25,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        var importResult: StationImportHelper.ImportResult? = null
-        var importError: String? = null
-
-        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        if (prefs.getBoolean(Keys.PREF_SYNC_ON_START, false)) {
-            val url = prefs.getString(Keys.PREF_PERSONAL_SYNC_URL, Keys.DEFAULT_PERSONAL_SYNC_URL)
-                ?: Keys.DEFAULT_PERSONAL_SYNC_URL
-            if (url.isBlank()) {
-                importError = "URL erforderlich"
-            } else {
-                try {
-                    runBlocking {
-                        importResult =
-                            StationImportHelper.importStationsFromUrl(this@MainActivity, url, true)
-                    }
-                } catch (e: Exception) {
-                    importError = e.message
-                }
-            }
-        }
-
         setContentView(R.layout.activity_main)
-
-        importResult?.let {
-            Toast.makeText(
-                this,
-                "Sync abgeschlossen: ${it.added} neu, ${it.updated} aktualisiert.",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-        importError?.let {
-            Toast.makeText(this, "Fehler beim Sync: $it", Toast.LENGTH_LONG).show()
-        }
 
         lifecycleScope.launch {
             GitHubUpdateChecker(this@MainActivity).silentCheckForUpdate()

@@ -22,7 +22,6 @@ object Keys {
     const val PREF_COVER_ANIMATION_STYLE = "cover_animation_style"
 
     const val PREF_PERSONAL_SYNC_URL = "personal_sync_url"
-    const val PREF_SYNC_ON_START = "sync_on_start"
     const val DEFAULT_PERSONAL_SYNC_URL = "https://github.com/Planqton/streamplay/blob/main/teststations.json"
 
 
