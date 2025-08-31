@@ -276,6 +276,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
+    val autoSyncPref = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_AUTOSYNC_JSON_STARTUP
+        title = getString(R.string.settings_autosync_json_startup)
+        setDefaultValue(false)
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
     val personalSyncPref = Preference(context).apply {
         key = "personal_sync_now"
         title = getString(R.string.settings_sync_personal_json)
@@ -391,6 +399,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         spotifySecretKeyPref,
         useSpotifyMetaPref,
         personalUrlPref,
+        autoSyncPref,
         personalSyncPref,
         personalExportPref,
         versionPref,
