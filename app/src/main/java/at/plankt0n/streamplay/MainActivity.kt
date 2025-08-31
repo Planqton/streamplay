@@ -4,16 +4,20 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import androidx.preference.PreferenceManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.GitHubUpdateChecker
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.PreferencesHelper
+import at.plankt0n.streamplay.helper.StationImportHelper
 import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.ui.MainPagerFragment
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -24,6 +28,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        if (prefs.getBoolean(Keys.PREF_PERSONAL_SYNC_STARTUP, false)) {
+            val url = prefs.getString(Keys.PREF_PERSONAL_SYNC_URL, Keys.DEFAULT_PERSONAL_SYNC_URL) ?: ""
+            Log.i("StreamPlay", "Syncing personal JSON at startup")
+            runBlocking {
+                try {
+                    StationImportHelper.importStationsFromUrl(this@MainActivity, url, true)
+                } catch (e: Exception) {
+                    Log.e("StreamPlay", "Startup sync failed: ${e.message}")
+                }
+            }
+        }
 
         setContentView(R.layout.activity_main)
 
