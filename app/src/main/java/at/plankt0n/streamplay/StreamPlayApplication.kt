@@ -21,7 +21,6 @@ class StreamPlayApplication : Application() {
                         this@StreamPlayApplication,
                         url,
                         true,
-                        refreshPlaylist = false,
                     )
                     Log.i(
                         "StreamPlay",
