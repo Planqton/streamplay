@@ -30,7 +30,8 @@ object StationImportHelper {
     fun importStationsFromJson(
         context: Context,
         json: String,
-        replaceAll: Boolean
+        replaceAll: Boolean,
+        refreshPlaylist: Boolean = true,
     ): ImportResult {
         val type = object : TypeToken<List<ImportStation>>() {}.type
         val importedList: List<ImportStation> = Gson().fromJson(json, type)
@@ -69,10 +70,16 @@ object StationImportHelper {
 
         PreferencesHelper.saveStations(context, stationList)
         StateHelper.isPlaylistChangePending = true
-        val intent = Intent(context, StreamingService::class.java).apply {
-            action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
+        if (refreshPlaylist) {
+            val intent = Intent(context, StreamingService::class.java).apply {
+                action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
+            }
+            try {
+                context.startService(intent)
+            } catch (e: Exception) {
+                android.util.Log.e("StreamPlay", "Failed to refresh playlist: ${e.message}")
+            }
         }
-        context.startService(intent)
 
         return ImportResult(added, updated, stationList)
     }
@@ -80,7 +87,8 @@ object StationImportHelper {
     suspend fun importStationsFromUrl(
         context: Context,
         url: String,
-        replaceAll: Boolean
+        replaceAll: Boolean,
+        refreshPlaylist: Boolean = true,
     ): ImportResult {
         val normalizedUrl = if (url.contains("github.com") && url.contains("/blob/")) {
             url.replace("github.com/", "raw.githubusercontent.com/")
@@ -92,7 +100,7 @@ object StationImportHelper {
         val json = withContext(Dispatchers.IO) {
             URL(normalizedUrl).openStream().bufferedReader().use { it.readText() }
         }
-        return importStationsFromJson(context, json, replaceAll)
+        return importStationsFromJson(context, json, replaceAll, refreshPlaylist)
     }
 }
 
