@@ -15,7 +15,7 @@ class StreamPlayApplication : Application() {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         if (prefs.getBoolean(Keys.PREF_PERSONAL_SYNC_STARTUP, false)) {
             val url = prefs.getString(Keys.PREF_PERSONAL_SYNC_URL, Keys.DEFAULT_PERSONAL_SYNC_URL) ?: ""
-            Log.i("StreamPlay", "Syncing personal JSON at startup")
+            Log.i("JSONAUTOSYNC", "Syncing personal JSON at startup")
             var refreshNeeded = false
             runBlocking {
                 try {
@@ -26,12 +26,12 @@ class StreamPlayApplication : Application() {
                         refreshPlaylist = false,
                     )
                     Log.i(
-                        "StreamPlay",
+                        "JSONAUTOSYNC",
                         "Startup sync succeeded: ${result.added} added, ${result.updated} updated"
                     )
                     refreshNeeded = true
                 } catch (e: Exception) {
-                    Log.e("StreamPlay", "Startup sync failed: ${e.message}")
+                    Log.e("JSONAUTOSYNC", "Startup sync failed: ${e.message}")
                 }
             }
             if (refreshNeeded) {
@@ -41,7 +41,7 @@ class StreamPlayApplication : Application() {
                 try {
                     startService(intent)
                 } catch (e: Exception) {
-                    Log.e("StreamPlay", "Failed to refresh playlist: ${e.message}")
+                    Log.e("JSONAUTOSYNC", "Failed to refresh playlist: ${e.message}")
                 }
             }
         }

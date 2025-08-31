@@ -77,7 +77,7 @@ object StationImportHelper {
             try {
                 context.startService(intent)
             } catch (e: Exception) {
-                android.util.Log.e("StreamPlay", "Failed to refresh playlist: ${e.message}")
+                android.util.Log.e("JSONAUTOSYNC", "Failed to refresh playlist: ${e.message}")
             }
         }
 
