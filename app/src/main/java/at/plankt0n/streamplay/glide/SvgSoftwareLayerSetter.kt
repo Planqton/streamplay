@@ -29,7 +29,7 @@ class SvgSoftwareLayerSetter : RequestListener<PictureDrawable> {
         resource: PictureDrawable,
         model: Any?,
         target: Target<PictureDrawable>,
-        dataSource: DataSource?,
+        dataSource: DataSource,
         isFirstResource: Boolean
     ): Boolean {
         if (target is ImageViewTarget<*>) {
