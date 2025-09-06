@@ -48,6 +48,7 @@ import at.plankt0n.streamplay.Keys
 import androidx.core.graphics.ColorUtils
 import androidx.media3.common.Player
 import com.bumptech.glide.Glide
+import at.plankt0n.streamplay.helper.loadUrl
 import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
 import android.widget.Toast
@@ -273,9 +274,16 @@ class PlayerFragment : Fragment() {
                 adjustDotsIndicatorScale()
 
                 coverPageAdapter.mediaItems.forEach { item ->
-                    Glide.with(requireContext())
-                        .load(item.iconURL)
-                        .preload()
+                    if (item.iconURL.lowercase().endsWith(".svg")) {
+                        Glide.with(requireContext())
+                            .`as`(android.graphics.drawable.PictureDrawable::class.java)
+                            .load(item.iconURL)
+                            .preload()
+                    } else {
+                        Glide.with(requireContext())
+                            .load(item.iconURL)
+                            .preload()
+                    }
                 }
 
                 val currentIndex = controller.currentMediaItemIndex
@@ -417,11 +425,7 @@ class PlayerFragment : Fragment() {
                 metaFlipper.stopFlipping()
                 metaFlipper.displayedChild = 0
 
-                Glide.with(requireContext())
-                    .load(R.drawable.placeholder_spotify_dark)
-                    .placeholder(R.drawable.placeholder_spotify_dark)
-                    .error(R.drawable.placeholder_spotify_dark)
-                    .into(stationIconView!!)
+                stationIconView?.setImageResource(R.drawable.placeholder_spotify_dark)
 
                 return@observe
             }
@@ -556,17 +560,17 @@ class PlayerFragment : Fragment() {
             }
 
             if (coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
-                Glide.with(requireContext())
-                    .load(trackInfo.bestCoverUrl)
-                    .placeholder(R.drawable.ic_placeholder_logo)
-                    .error(R.drawable.ic_stationcover_placeholder)
-                    .into(stationIconView!!)
+                stationIconView?.loadUrl(
+                    trackInfo.bestCoverUrl,
+                    placeholder = R.drawable.ic_placeholder_logo,
+                    error = R.drawable.ic_stationcover_placeholder
+                )
             } else {
-                Glide.with(requireContext())
-                    .load(defaultIconUrl)
-                    .placeholder(R.drawable.ic_placeholder_logo)
-                    .error(R.drawable.ic_stationcover_placeholder)
-                    .into(stationIconView!!)
+                stationIconView?.loadUrl(
+                    defaultIconUrl,
+                    placeholder = R.drawable.ic_placeholder_logo,
+                    error = R.drawable.ic_stationcover_placeholder
+                )
             }
 
             enableMarquee(titleTextView!!, artistTextView!!, genreTextView!!, albumTextView!!)
@@ -604,11 +608,11 @@ class PlayerFragment : Fragment() {
         val iconUrl = extras.getString("EXTRA_ICON_URL") ?: ""
 
         stationNameTextView.text = stationName
-        Glide.with(stationIconImageView)
-            .load(iconUrl)
-            .placeholder(R.drawable.placeholder_spotify_dark)
-            .error(R.drawable.placeholder_spotify_dark)
-            .into(stationIconImageView)
+        stationIconImageView.loadUrl(
+            iconUrl,
+            placeholder = R.drawable.placeholder_spotify_dark,
+            error = R.drawable.placeholder_spotify_dark
+        )
     }
 
     private fun updatePlayPauseIcon(isPlaying: Boolean) {
@@ -707,7 +711,14 @@ class PlayerFragment : Fragment() {
         adjustDotsIndicatorScale()
 
         coverPageAdapter.mediaItems.forEach { item ->
-            Glide.with(requireContext()).load(item.iconURL).preload()
+            if (item.iconURL.lowercase().endsWith(".svg")) {
+                Glide.with(requireContext())
+                    .`as`(android.graphics.drawable.PictureDrawable::class.java)
+                    .load(item.iconURL)
+                    .preload()
+            } else {
+                Glide.with(requireContext()).load(item.iconURL).preload()
+            }
         }
 
         val currentIndex = mediaServiceController.getCurrentStreamIndex()

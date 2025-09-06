@@ -4,7 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import com.bumptech.glide.Glide
+import at.plankt0n.streamplay.helper.loadUrl
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.StationItem
@@ -71,12 +71,11 @@ class StationListAdapter(
             true
         }
 
-        Glide.with(holder.playButton.context)
-            .load(station.iconURL)
-            .placeholder(R.drawable.ic_stationcover_placeholder)
-            .error(R.drawable.ic_stationcover_placeholder)
-            .fallback(R.drawable.ic_stationcover_placeholder)
-            .into(holder.playButton)
+        holder.playButton.loadUrl(
+            station.iconURL,
+            placeholder = R.drawable.ic_stationcover_placeholder,
+            error = R.drawable.ic_stationcover_placeholder
+        )
 
         val context = holder.itemView.context
         if (position == currentPlayingIndex) {

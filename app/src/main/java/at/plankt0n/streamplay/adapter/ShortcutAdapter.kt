@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.ShortcutItem
-import com.bumptech.glide.Glide
+import at.plankt0n.streamplay.helper.loadUrl
 
 class ShortcutAdapter(
     private val onClick: (ShortcutItem) -> Unit
@@ -39,12 +39,11 @@ class ShortcutAdapter(
         val item = items[position]
         holder.labelTextView.text = item.label
         val source = item.iconUrl.takeIf { it.isNotBlank() }
-        Glide.with(holder.itemView)
-            .load(source)
-            .placeholder(R.drawable.ic_placeholder_logo)
-            .error(R.drawable.ic_radio)
-            .fallback(R.drawable.ic_radio)
-            .into(holder.iconImageView)
+        holder.iconImageView.loadUrl(
+            source ?: "",
+            placeholder = R.drawable.ic_placeholder_logo,
+            error = R.drawable.ic_radio
+        )
 
         holder.itemView.setOnClickListener { onClick(item) }
     }

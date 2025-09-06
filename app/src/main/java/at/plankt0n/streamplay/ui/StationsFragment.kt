@@ -37,6 +37,7 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import at.plankt0n.streamplay.Keys
 import com.bumptech.glide.Glide
+import at.plankt0n.streamplay.helper.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -259,7 +260,16 @@ class StationsFragment : Fragment() {
             val bitmap = withContext(Dispatchers.IO) {
                 try {
                     if (station.iconURL.isNotBlank()) {
-                        Glide.with(context).asBitmap().load(station.iconURL).submit().get()
+                        if (station.iconURL.lowercase().endsWith(".svg")) {
+                            val drawable = Glide.with(context)
+                                .`as`(android.graphics.drawable.PictureDrawable::class.java)
+                                .load(station.iconURL)
+                                .submit()
+                                .get()
+                            drawable.toBitmap()
+                        } else {
+                            Glide.with(context).asBitmap().load(station.iconURL).submit().get()
+                        }
                     } else {
                         null
                     }

@@ -9,7 +9,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.StationItem
-import com.bumptech.glide.Glide
+import at.plankt0n.streamplay.helper.loadUrl
 
 class SearchResultAdapter(
     private val searchResults: List<StationItem>,
@@ -35,10 +35,10 @@ class SearchResultAdapter(
         holder.textStationName.text = result.stationName
         holder.textStreamUrl.text = result.streamURL
 
-        Glide.with(holder.imageLogo.context)
-            .load(result.iconURL)
-            .placeholder(R.drawable.ic_stationcover_placeholder)
-            .into(holder.imageLogo)
+        holder.imageLogo.loadUrl(
+            result.iconURL,
+            placeholder = R.drawable.ic_stationcover_placeholder
+        )
 
         holder.itemView.setOnClickListener {
             onClick(result)
