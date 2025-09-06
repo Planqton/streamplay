@@ -22,6 +22,7 @@ class CoverPageAdapter(
         val coverImage: ShapeableImageView = itemView.findViewById(R.id.cover_image)
         var lastColor: Int? = null
         var lastEffect: LiveCoverHelper.BackgroundEffect? = null
+        var lastImageUrl: String? = null
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CoverViewHolder {
@@ -45,6 +46,7 @@ class CoverPageAdapter(
             onNewColor = { holder.lastColor = it },
             onNewEffect = { holder.lastEffect = it }
         )
+        holder.lastImageUrl = item.iconURL
     }
 
     override fun getItemCount(): Int = mediaItems.size
