@@ -6,6 +6,7 @@ import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.*
 import at.plankt0n.streamplay.R
@@ -18,6 +19,8 @@ import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StationImportHelper
 import com.google.gson.Gson
+import com.google.gson.JsonParser
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -60,6 +63,72 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                         context.contentResolver.openOutputStream(it)?.use { output ->
                             output.write(json.toByteArray())
                         }
+                    }
+                }
+            }
+        }
+
+    val exportSettingsLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+            uri?.let {
+                lifecycleScope.launch {
+                    val prefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+                    val json = Gson().toJson(prefs.all)
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openOutputStream(it)?.use { output ->
+                            output.write(json.toByteArray())
+                        }
+                    }
+                    Toast.makeText(context, R.string.settings_export_success, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+    val importSettingsLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let {
+                lifecycleScope.launch {
+                    try {
+                        val json = withContext(Dispatchers.IO) {
+                            context.contentResolver.openInputStream(it)?.bufferedReader()?.use { r -> r.readText() }
+                        }
+                        json?.let { data ->
+                            val obj = JsonParser.parseString(data).asJsonObject
+                            val prefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+                            val editor = prefs.edit().clear()
+                            for ((key, value) in obj.entrySet()) {
+                                when {
+                                    value.isJsonPrimitive -> {
+                                        val prim = value.asJsonPrimitive
+                                        when {
+                                            prim.isBoolean -> editor.putBoolean(key, prim.asBoolean)
+                                            prim.isNumber -> {
+                                                val num = prim.asNumber
+                                                if (num.toString().contains('.')) {
+                                                    editor.putFloat(key, num.toFloat())
+                                                } else {
+                                                    editor.putLong(key, num.toLong())
+                                                }
+                                            }
+                                            prim.isString -> editor.putString(key, prim.asString)
+                                        }
+                                    }
+                                    value.isJsonArray -> {
+                                        val type = object : TypeToken<Set<String>>() {}.type
+                                        val set: Set<String> = Gson().fromJson(value, type)
+                                        editor.putStringSet(key, set)
+                                    }
+                                }
+                            }
+                            editor.apply()
+                            Toast.makeText(context, R.string.settings_import_success, Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.settings_import_failed, e.message),
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             }
@@ -409,6 +478,30 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
     }
 
+    val settingsTransferPref = Preference(context).apply {
+        key = "import_export_settings"
+        title = getString(R.string.settings_import_export)
+        category = SettingsCategory.ABOUT
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        setOnPreferenceClickListener {
+            AlertDialog.Builder(context)
+                .setTitle(getString(R.string.settings_import_export))
+                .setItems(
+                    arrayOf(
+                        getString(R.string.settings_export_settings),
+                        getString(R.string.settings_import_settings)
+                    )
+                ) { _, which ->
+                    when (which) {
+                        0 -> exportSettingsLauncher.launch("settings.json")
+                        1 -> importSettingsLauncher.launch(arrayOf("application/json"))
+                    }
+                }
+                .show()
+            true
+        }
+    }
+
     val preferences = listOf(
         audioFocusPref,
         autoplaySwitch,
@@ -428,7 +521,8 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         personalExportPref,
         versionPref,
         updatePref,
-        addTestPref
+        addTestPref,
+        settingsTransferPref
     )
 
     SettingsCategory.values().forEach { cat ->
