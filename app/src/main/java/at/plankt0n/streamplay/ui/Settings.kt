@@ -131,6 +131,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_timer)
     }
 
+    val rotateSwitch = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_ALLOW_ROTATION
+        title = getString(R.string.settings_rotation)
+        setDefaultValue(true)
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
     val bannerSwitch = SwitchPreferenceCompat(context).apply {
         key = "show_exoplayer_banner"
         title = getString(R.string.settings_exoplayer_infobanner)
@@ -391,6 +399,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         autoplaySwitch,
         minimizeSwitch,
         delayPreference,
+        rotateSwitch,
         bannerSwitch,
         backgroundEffectPref,
         coverModePref,

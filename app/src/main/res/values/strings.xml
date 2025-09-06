@@ -120,6 +120,7 @@
     <string name="settings_delay">Minimize Delay</string>
     <string name="settings_delay_seconds">%1$d s</string>
     <string name="settings_minimize">Minimize after Autoplay</string>
+    <string name="settings_rotation">Allow Screen Rotation</string>
     <string name="settings_category_playback">Playback</string>
     <string name="settings_category_ui">UI Settings</string>
     <string name="settings_category_metainfo">Metainfo Settings</string>
