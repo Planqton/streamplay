@@ -1,5 +1,6 @@
 package at.plankt0n.streamplay
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -7,7 +8,6 @@ import android.os.Looper
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.GitHubUpdateChecker
 import at.plankt0n.streamplay.helper.MediaServiceController
@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun autoSyncIfEnabled() {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         if (prefs.getBoolean(Keys.PREF_AUTOSYNC_JSON_STARTUP, false)) {
             val url = prefs.getString(Keys.PREF_PERSONAL_SYNC_URL, "") ?: ""
             if (url.isNotBlank()) {
@@ -68,6 +68,8 @@ class MainActivity : AppCompatActivity() {
             } else {
                 Log.d("JSON AUTO SYNC>", "No personal URL configured")
             }
+        } else {
+            Log.d("JSON AUTO SYNC>", "Auto sync disabled")
         }
     }
 
