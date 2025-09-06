@@ -2,6 +2,8 @@ package at.plankt0n.streamplay
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -15,19 +17,25 @@ import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.Keys
+import at.plankt0n.streamplay.ScreenOrientationMode
 import at.plankt0n.streamplay.ui.MainPagerFragment
 import at.plankt0n.streamplay.helper.StationImportHelper
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
 
     private var mainPagerFragment: MainPagerFragment? = null
     private var shortcutController: MediaServiceController? = null
     private var pendingShortcutStation: StationItem? = null
+    private lateinit var prefs: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.registerOnSharedPreferenceChangeListener(this)
+        applyOrientationPreference()
 
         setContentView(R.layout.activity_main)
 
@@ -49,6 +57,11 @@ class MainActivity : AppCompatActivity() {
 
         supportFragmentManager.executePendingTransactions()
         handleShortcutIntent(intent)
+    }
+
+    override fun onDestroy() {
+        prefs.unregisterOnSharedPreferenceChangeListener(this)
+        super.onDestroy()
     }
 
     private fun autoSyncIfEnabled() {
@@ -76,6 +89,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         maybePlayPendingShortcutStation()
+        applyOrientationPreference()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -150,5 +164,22 @@ class MainActivity : AppCompatActivity() {
 
     fun showStationsPage() {
         mainPagerFragment?.showStations()
+    }
+
+    private fun applyOrientationPreference() {
+        val mode = ScreenOrientationMode.fromName(
+            prefs.getString(Keys.PREF_SCREEN_ORIENTATION, ScreenOrientationMode.AUTO.name)
+        )
+        requestedOrientation = when (mode) {
+            ScreenOrientationMode.LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            ScreenOrientationMode.PORTRAIT -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            ScreenOrientationMode.AUTO -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+        if (key == Keys.PREF_SCREEN_ORIENTATION) {
+            applyOrientationPreference()
+        }
     }
 }
