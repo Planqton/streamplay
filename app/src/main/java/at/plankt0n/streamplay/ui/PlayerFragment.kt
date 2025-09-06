@@ -88,6 +88,7 @@ class PlayerFragment : Fragment() {
     private var backgroundEffect = LiveCoverHelper.BackgroundEffect.FADE
     private var coverMode = CoverMode.META
     private var coverAnimationStyle = CoverAnimationStyle.FLIP
+    private var lastImageUrl: String? = null
     private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
         if (key == "show_exoplayer_banner") {
             showInfoBanner = shared.getBoolean(key, true)
@@ -440,48 +441,53 @@ class PlayerFragment : Fragment() {
                 CoverMode.STATION -> defaultIconUrl
             }
 
-            val loadCover = {
-                LiveCoverHelper.loadCoverWithBackground(
-                    context = requireContext(),
-                    imageUrl = imageUrlToLoad,
-                    imageView = holder.coverImage,
-                    backgroundTarget = holder.itemView,
-                    defaultColor = requireContext().getColor(R.color.default_background),
-                    lastColor = holder.lastColor,
-                    lastEffect = holder.lastEffect,
-                    effect = backgroundEffect,
-                    onNewColor = {
-                        holder.lastColor = it
-                        updateOverlayColors(it)
-                    },
-                    onNewEffect = { holder.lastEffect = it }
-                )
-            }
+            if (imageUrlToLoad != lastImageUrl) {
+                val loadCover = {
+                    LiveCoverHelper.loadCoverWithBackground(
+                        context = requireContext(),
+                        imageUrl = imageUrlToLoad,
+                        imageView = holder.coverImage,
+                        backgroundTarget = holder.itemView,
+                        defaultColor = requireContext().getColor(R.color.default_background),
+                        lastColor = holder.lastColor,
+                        lastEffect = holder.lastEffect,
+                        effect = backgroundEffect,
+                        onNewColor = {
+                            holder.lastColor = it
+                            updateOverlayColors(it)
+                        },
+                        onNewEffect = { holder.lastEffect = it }
+                    )
+                }
 
-            when (coverAnimationStyle) {
-                CoverAnimationStyle.FLIP -> {
-                    holder.coverImage.animate()
-                        .rotationY(90f)
-                        .setDuration(150)
-                        .withEndAction {
-                            loadCover()
-                            holder.coverImage.rotationY = -90f
-                            holder.coverImage.animate().rotationY(0f).setDuration(150).start()
-                        }
-                        .start()
+                when (coverAnimationStyle) {
+                    CoverAnimationStyle.FLIP -> {
+                        holder.coverImage.animate()
+                            .rotationY(90f)
+                            .setDuration(150)
+                            .withEndAction {
+                                loadCover()
+                                holder.coverImage.rotationY = -90f
+                                holder.coverImage.animate().rotationY(0f).setDuration(150).start()
+                            }
+                            .start()
+                    }
+                    CoverAnimationStyle.FADE -> {
+                        holder.coverImage.animate()
+                            .alpha(0f)
+                            .setDuration(150)
+                            .withEndAction {
+                                loadCover()
+                                holder.coverImage.alpha = 0f
+                                holder.coverImage.animate().alpha(1f).setDuration(150).start()
+                            }
+                            .start()
+                    }
+                    CoverAnimationStyle.NONE -> loadCover()
                 }
-                CoverAnimationStyle.FADE -> {
-                    holder.coverImage.animate()
-                        .alpha(0f)
-                        .setDuration(150)
-                        .withEndAction {
-                            loadCover()
-                            holder.coverImage.alpha = 0f
-                            holder.coverImage.animate().alpha(1f).setDuration(150).start()
-                        }
-                        .start()
-                }
-                CoverAnimationStyle.NONE -> loadCover()
+
+                holder.lastImageUrl = imageUrlToLoad
+                lastImageUrl = imageUrlToLoad
             }
 
             if (coverMode == CoverMode.META && metaCoverUrl != null) {
