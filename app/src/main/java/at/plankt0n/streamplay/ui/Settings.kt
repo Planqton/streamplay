@@ -112,6 +112,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         setDefaultValue(AudioFocusMode.STOP.name)
         category = SettingsCategory.PLAYER
         icon = context.getDrawable(R.drawable.ic_button_play)
+        summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
     }
 
     val minimizeSwitch = SwitchPreferenceCompat(context).apply {
@@ -148,6 +149,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         setDefaultValue(ScreenOrientationMode.AUTO.name)
         category = SettingsCategory.UI
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
     }
 
     val bannerSwitch = SwitchPreferenceCompat(context).apply {
@@ -200,6 +202,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         setDefaultValue(CoverMode.META.name)
         category = SettingsCategory.UI
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
     }
 
     val coverAnimationStylePref = ListPreference(context).apply {
@@ -218,6 +221,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         setDefaultValue(CoverAnimationStyle.FLIP.name)
         category = SettingsCategory.UI
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
     }
 
     val spotifyApiKeyPref = EditTextPreference(context).apply {

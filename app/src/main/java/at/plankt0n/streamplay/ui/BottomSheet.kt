@@ -1,5 +1,7 @@
 package at.plankt0n.streamplay.ui
 
+import android.content.DialogInterface
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -18,6 +20,8 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
     companion object {
         const val TAG = "MediaItemOptionsBottomSheet"
     }
+
+    private var previousOrientation: Int? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,6 +62,8 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
 
     override fun onStart() {
         super.onStart()
+        previousOrientation = activity?.requestedOrientation
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
 
         val dialog = dialog as? com.google.android.material.bottomsheet.BottomSheetDialog
         val bottomSheet = dialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
@@ -66,6 +72,11 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
             behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HALF_EXPANDED
             it.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
         }
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        previousOrientation?.let { activity?.requestedOrientation = it }
+        super.onDismiss(dialog)
     }
 
     private fun openStationsFragment() {
