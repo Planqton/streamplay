@@ -27,11 +27,17 @@ object UITrackRepository {
     private val _trackInfo = MutableLiveData<UITrackInfo?>()
     val trackInfo: LiveData<UITrackInfo?> get() = _trackInfo
 
+    private var lastTrackInfo: UITrackInfo? = null
+
     fun updateTrackInfo(info: UITrackInfo) {
-        _trackInfo.postValue(info)
+        if (lastTrackInfo != info) {
+            lastTrackInfo = info
+            _trackInfo.postValue(info)
+        }
     }
 
     fun clearTrackInfo() {
+        lastTrackInfo = null
         _trackInfo.postValue(null)
         Log.d("UITrackinfo", "Trackinfo cleared")
     }
