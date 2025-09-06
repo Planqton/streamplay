@@ -1,6 +1,7 @@
 package at.plankt0n.streamplay.ui
 
 import android.content.Context
+import android.content.Intent
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -9,9 +10,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.*
-import at.plankt0n.streamplay.R
-import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.AudioFocusMode
+import at.plankt0n.streamplay.Keys
+import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.ScreenOrientationMode
 import at.plankt0n.streamplay.data.CoverAnimationStyle
 import at.plankt0n.streamplay.data.CoverMode
@@ -122,6 +123,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                             }
                             editor.apply()
                             Toast.makeText(context, R.string.settings_import_success, Toast.LENGTH_SHORT).show()
+                            val restartIntent = context.packageManager
+                                .getLaunchIntentForPackage(context.packageName)?.apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                }
+                            restartIntent?.let {
+                                context.startActivity(it)
+                                Runtime.getRuntime().exit(0)
+                            }
                         }
                     } catch (e: Exception) {
                         Toast.makeText(
