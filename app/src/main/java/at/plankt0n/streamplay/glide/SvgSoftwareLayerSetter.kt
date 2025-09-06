@@ -15,7 +15,7 @@ class SvgSoftwareLayerSetter : RequestListener<PictureDrawable> {
     override fun onLoadFailed(
         e: GlideException?,
         model: Any?,
-        target: Target<PictureDrawable>?,
+        target: Target<PictureDrawable>,
         isFirstResource: Boolean
     ): Boolean {
         if (target is ImageViewTarget<*>) {
@@ -26,10 +26,10 @@ class SvgSoftwareLayerSetter : RequestListener<PictureDrawable> {
     }
 
     override fun onResourceReady(
-        resource: PictureDrawable?,
+        resource: PictureDrawable,
         model: Any?,
-        target: Target<PictureDrawable>?,
-        dataSource: DataSource?,
+        target: Target<PictureDrawable>,
+        dataSource: DataSource,
         isFirstResource: Boolean
     ): Boolean {
         if (target is ImageViewTarget<*>) {
