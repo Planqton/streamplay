@@ -264,6 +264,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         setDefaultValue(LiveCoverHelper.BackgroundEffect.FADE.name)
         category = SettingsCategory.UI
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
     }
 
     val coverModePref = ListPreference(context).apply {
