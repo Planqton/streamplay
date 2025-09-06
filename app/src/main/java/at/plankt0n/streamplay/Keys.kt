@@ -20,7 +20,7 @@ object Keys {
 
     const val PREF_AUDIO_FOCUS_MODE = "audio_focus_mode"
     const val PREF_COVER_ANIMATION_STYLE = "cover_animation_style"
-    const val PREF_ALLOW_ROTATION = "allow_rotation"
+    const val PREF_SCREEN_ORIENTATION = "screen_orientation"
 
     const val PREF_PERSONAL_SYNC_URL = "personal_sync_url"
     const val DEFAULT_PERSONAL_SYNC_URL = "https://github.com/Planqton/streamplay/blob/main/teststations.json"

@@ -11,8 +11,9 @@ import androidx.preference.*
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.AudioFocusMode
-import at.plankt0n.streamplay.data.CoverMode
+import at.plankt0n.streamplay.ScreenOrientationMode
 import at.plankt0n.streamplay.data.CoverAnimationStyle
+import at.plankt0n.streamplay.data.CoverMode
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StationImportHelper
@@ -131,10 +132,20 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_timer)
     }
 
-    val rotateSwitch = SwitchPreferenceCompat(context).apply {
-        key = Keys.PREF_ALLOW_ROTATION
+    val orientationPref = ListPreference(context).apply {
+        key = Keys.PREF_SCREEN_ORIENTATION
         title = getString(R.string.settings_rotation)
-        setDefaultValue(true)
+        entries = arrayOf(
+            getString(R.string.orientation_auto),
+            getString(R.string.orientation_landscape),
+            getString(R.string.orientation_portrait)
+        )
+        entryValues = arrayOf(
+            ScreenOrientationMode.AUTO.name,
+            ScreenOrientationMode.LANDSCAPE.name,
+            ScreenOrientationMode.PORTRAIT.name
+        )
+        setDefaultValue(ScreenOrientationMode.AUTO.name)
         category = SettingsCategory.UI
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
@@ -399,7 +410,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         autoplaySwitch,
         minimizeSwitch,
         delayPreference,
-        rotateSwitch,
+        orientationPref,
         bannerSwitch,
         backgroundEffectPref,
         coverModePref,

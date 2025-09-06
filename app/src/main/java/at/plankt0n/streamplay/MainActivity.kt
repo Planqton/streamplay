@@ -17,6 +17,7 @@ import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.Keys
+import at.plankt0n.streamplay.ScreenOrientationMode
 import at.plankt0n.streamplay.ui.MainPagerFragment
 import at.plankt0n.streamplay.helper.StationImportHelper
 import kotlinx.coroutines.launch
@@ -34,7 +35,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
         prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         prefs.registerOnSharedPreferenceChangeListener(this)
-        applyRotationPreference()
+        applyOrientationPreference()
 
         setContentView(R.layout.activity_main)
 
@@ -88,7 +89,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     override fun onResume() {
         super.onResume()
         maybePlayPendingShortcutStation()
-        applyRotationPreference()
+        applyOrientationPreference()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -165,17 +166,20 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         mainPagerFragment?.showStations()
     }
 
-    private fun applyRotationPreference() {
-        requestedOrientation = if (prefs.getBoolean(Keys.PREF_ALLOW_ROTATION, true)) {
-            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-        } else {
-            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+    private fun applyOrientationPreference() {
+        val mode = ScreenOrientationMode.fromName(
+            prefs.getString(Keys.PREF_SCREEN_ORIENTATION, ScreenOrientationMode.AUTO.name)
+        )
+        requestedOrientation = when (mode) {
+            ScreenOrientationMode.LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            ScreenOrientationMode.PORTRAIT -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            ScreenOrientationMode.AUTO -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        if (key == Keys.PREF_ALLOW_ROTATION) {
-            applyRotationPreference()
+        if (key == Keys.PREF_SCREEN_ORIENTATION) {
+            applyOrientationPreference()
         }
     }
 }
