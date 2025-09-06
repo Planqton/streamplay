@@ -1,5 +1,6 @@
 package at.plankt0n.streamplay
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -19,6 +20,7 @@ import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.ScreenOrientationMode
 import at.plankt0n.streamplay.ui.MainPagerFragment
+import at.plankt0n.streamplay.ui.DiscoverFragment
 import at.plankt0n.streamplay.helper.StationImportHelper
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -57,6 +59,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
         supportFragmentManager.executePendingTransactions()
         handleShortcutIntent(intent)
+        maybeShowOnboarding()
     }
 
     override fun onDestroy() {
@@ -164,6 +167,41 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     fun showStationsPage() {
         mainPagerFragment?.showStations()
+    }
+
+    private fun openDiscoverPage() {
+        supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .replace(R.id.fragment_container, DiscoverFragment())
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun maybeShowOnboarding() {
+        if (!prefs.getBoolean(Keys.PREF_ONBOARDING_DONE, false)) {
+            AlertDialog.Builder(this)
+                .setTitle("Setup Assistance")
+                .setMessage("Would you like help with setup? You can improve metadata using the Spotify API (images and info).")
+                .setPositiveButton(android.R.string.yes) { _, _ ->
+                    AlertDialog.Builder(this)
+                        .setTitle("Add Stations")
+                        .setMessage("Would you like to add stations now?")
+                        .setPositiveButton(android.R.string.yes) { _, _ ->
+                            openDiscoverPage()
+                            prefs.edit().putBoolean(Keys.PREF_ONBOARDING_DONE, true).apply()
+                        }
+                        .setNegativeButton(android.R.string.no) { _, _ ->
+                            prefs.edit().putBoolean(Keys.PREF_ONBOARDING_DONE, true).apply()
+                        }
+                        .setCancelable(false)
+                        .show()
+                }
+                .setNegativeButton(android.R.string.no) { _, _ ->
+                    prefs.edit().putBoolean(Keys.PREF_ONBOARDING_DONE, true).apply()
+                }
+                .setCancelable(false)
+                .show()
+        }
     }
 
     private fun applyOrientationPreference() {
