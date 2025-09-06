@@ -5,13 +5,13 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.widget.ImageView
 import at.plankt0n.streamplay.R
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.request.target.BitmapImageViewTarget
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import androidx.palette.graphics.Palette
@@ -43,17 +43,52 @@ object LiveCoverHelper {
         onNewEffect: (BackgroundEffect) -> Unit
     ) {
         Glide.with(context)
-            .asBitmap()
             .load(imageUrl)
             .placeholder(R.drawable.ic_placeholder_logo)
             .error(R.drawable.ic_stationcover_placeholder)
-            .into(object : BitmapImageViewTarget(imageView) {
-                override fun setResource(resource: Bitmap?) {
-                    super.setResource(resource)
-                    resource?.let { bitmap ->
-                        if (effect == BackgroundEffect.BLUR) {
-                            Palette.from(bitmap).generate { palette ->
-                                val dominantColor = palette?.getDominantColor(defaultColor) ?: defaultColor
+            .into(imageView)
+
+        Glide.with(context)
+            .asBitmap()
+            .load(imageUrl)
+            .into(object : CustomTarget<Bitmap>() {
+                override fun onResourceReady(bitmap: Bitmap, transition: Transition<in Bitmap>?) {
+                    if (effect == BackgroundEffect.BLUR) {
+                        Palette.from(bitmap).generate { palette ->
+                            val dominantColor = palette?.getDominantColor(defaultColor) ?: defaultColor
+
+                            val hsv = FloatArray(3)
+                            Color.colorToHSV(dominantColor, hsv)
+                            hsv[1] = (hsv[1] * 0.7f).coerceAtMost(1.0f)
+                            hsv[2] = (hsv[2] + 0.1f).coerceAtMost(1.0f)
+                            val smoothColor = Color.HSVToColor(hsv)
+
+                            Glide.with(context)
+                                .asBitmap()
+                                .load(imageUrl)
+                                .apply(
+                                    RequestOptions()
+                                        .centerCrop()
+                                        .transform(BlurTransformation(25, 3))
+                                )
+                                .into(object : CustomTarget<Bitmap>() {
+                                    override fun onResourceReady(
+                                        resource: Bitmap,
+                                        transition: Transition<in Bitmap>?,
+                                    ) {
+                                        backgroundTarget.background =
+                                            BitmapDrawable(context.resources, resource)
+                                        onNewColor(smoothColor)
+                                        onNewEffect(effect)
+                                    }
+
+                                    override fun onLoadCleared(placeholder: Drawable?) {}
+                                })
+                        }
+                    } else {
+                        Palette.from(bitmap).generate { palette ->
+                            palette?.let {
+                                val dominantColor = it.getDominantColor(defaultColor)
 
                                 val hsv = FloatArray(3)
                                 Color.colorToHSV(dominantColor, hsv)
@@ -61,61 +96,29 @@ object LiveCoverHelper {
                                 hsv[2] = (hsv[2] + 0.1f).coerceAtMost(1.0f)
                                 val smoothColor = Color.HSVToColor(hsv)
 
-                                Glide.with(context)
-                                    .asBitmap()
-                                    .load(imageUrl)
-                                    .apply(
-                                        RequestOptions()
-                                            .centerCrop()
-                                            .transform(BlurTransformation(25, 3))
-                                    )
-                                    .into(object : CustomTarget<Bitmap>() {
-                                        override fun onResourceReady(
-                                            resource: Bitmap,
-                                            transition: Transition<in Bitmap>?,
-                                        ) {
-                                            backgroundTarget.background =
-                                                BitmapDrawable(context.resources, resource)
-                                            onNewColor(smoothColor)
-                                            onNewEffect(effect)
+                                // Nur animieren, wenn sich Farbe oder Effekt ändert
+                                if (lastColor != smoothColor || lastEffect != effect) {
+                                    val animator = ValueAnimator.ofArgb(
+                                        lastColor ?: defaultColor,
+                                        smoothColor
+                                    ).apply {
+                                        duration = 400
+                                        addUpdateListener { anim ->
+                                            val color = anim.animatedValue as Int
+                                            val gradient = createGradient(color, effect)
+                                            backgroundTarget.background = gradient
                                         }
-
-                                        override fun onLoadCleared(placeholder: android.graphics.drawable.Drawable?) {}
-                                    })
-                            }
-                        } else {
-                            Palette.from(bitmap).generate { palette ->
-                                palette?.let {
-                                    val dominantColor = it.getDominantColor(defaultColor)
-
-                                    val hsv = FloatArray(3)
-                                    Color.colorToHSV(dominantColor, hsv)
-                                    hsv[1] = (hsv[1] * 0.7f).coerceAtMost(1.0f)
-                                    hsv[2] = (hsv[2] + 0.1f).coerceAtMost(1.0f)
-                                    val smoothColor = Color.HSVToColor(hsv)
-
-                                    // Nur animieren, wenn sich Farbe oder Effekt ändert
-                                    if (lastColor != smoothColor || lastEffect != effect) {
-                                        val animator = ValueAnimator.ofArgb(
-                                            lastColor ?: defaultColor,
-                                            smoothColor
-                                        ).apply {
-                                            duration = 400
-                                            addUpdateListener { anim ->
-                                                val color = anim.animatedValue as Int
-                                                val gradient = createGradient(color, effect)
-                                                backgroundTarget.background = gradient
-                                            }
-                                        }
-                                        animator.start()
                                     }
-                                    onNewColor(smoothColor)
-                                    onNewEffect(effect)
+                                    animator.start()
                                 }
+                                onNewColor(smoothColor)
+                                onNewEffect(effect)
                             }
                         }
                     }
                 }
+
+                override fun onLoadCleared(placeholder: Drawable?) {}
             })
     }
 
