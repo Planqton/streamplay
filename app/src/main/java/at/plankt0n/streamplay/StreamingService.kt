@@ -334,8 +334,8 @@ class StreamingService : MediaSessionService() {
                 .build()
 
             MediaItem.Builder()
-
                 .setUri(it.streamURL)
+                .setMediaId(it.streamURL)
                 .setMediaMetadata(metadata)
                 .build()
         }
@@ -375,6 +375,7 @@ class StreamingService : MediaSessionService() {
 
             MediaItem.Builder()
                 .setUri(it.streamURL)
+                .setMediaId(it.streamURL)
                 .setMediaMetadata(metadata)
                 .build()
         }

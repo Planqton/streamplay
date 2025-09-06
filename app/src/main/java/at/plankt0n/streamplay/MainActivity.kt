@@ -146,14 +146,14 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         shortcutController = MediaServiceController(this)
         shortcutController?.initializeAndConnect(
             onConnected = {
-                val idx = shortcutController?.findIndexByMediaId(station.streamURL) ?: index
+                val idx = shortcutController?.findIndexByMediaId(station.streamURL)?.takeIf { it >= 0 } ?: index
                 shortcutController?.playAtIndex(idx)
             },
             onPlaybackChanged = {},
             onStreamIndexChanged = {},
             onMetadataChanged = {},
             onTimelineChanged = {
-                val idx = shortcutController?.findIndexByMediaId(station.streamURL) ?: index
+                val idx = shortcutController?.findIndexByMediaId(station.streamURL)?.takeIf { it >= 0 } ?: index
                 shortcutController?.playAtIndex(idx)
                 StateHelper.isPlaylistChangePending = false
             },
