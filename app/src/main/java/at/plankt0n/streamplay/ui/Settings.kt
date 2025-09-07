@@ -480,7 +480,10 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                             context,
                             url,
                             true,
-                            mapOf("X-Master-Key" to key)
+                            mapOf(
+                                "X-Master-Key" to key,
+                                "X-Bin-Meta" to "false"
+                            )
                         )
                         Toast.makeText(
                             context,

@@ -81,7 +81,10 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                                 this@MainActivity,
                                 url,
                                 true,
-                                mapOf("X-Master-Key" to key)
+                                mapOf(
+                                    "X-Master-Key" to key,
+                                    "X-Bin-Meta" to "false"
+                                )
                             )
                             Log.d("JSON AUTO SYNC>", "JSONBin auto sync completed")
                         } catch (e: Exception) {
