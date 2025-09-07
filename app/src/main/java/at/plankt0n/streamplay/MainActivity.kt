@@ -69,23 +69,51 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     private fun autoSyncIfEnabled() {
         val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
-        if (prefs.getBoolean(Keys.PREF_AUTOSYNC_JSON_STARTUP, false)) {
-            val url = prefs.getString(Keys.PREF_PERSONAL_SYNC_URL, "") ?: ""
-            if (url.isNotBlank()) {
-                Log.d("JSON AUTO SYNC>", "Starting auto sync")
-                runBlocking {
-                    try {
-                        StationImportHelper.importStationsFromUrl(this@MainActivity, url, true)
-                        Log.d("JSON AUTO SYNC>", "Auto sync completed")
-                    } catch (e: Exception) {
-                        Log.e("JSON AUTO SYNC>", "Auto sync failed: ${e.message}")
+        when {
+            prefs.getBoolean(Keys.PREF_AUTOSYNC_JSONBIN_STARTUP, false) -> {
+                val url = prefs.getString(Keys.PREF_JSON_BIN_URL, "") ?: ""
+                val key = prefs.getString(Keys.PREF_JSON_BIN_KEY, "") ?: ""
+                if (url.isNotBlank() && key.isNotBlank()) {
+                    Log.d("JSON AUTO SYNC>", "Starting JSONBin auto sync")
+                    runBlocking {
+                        try {
+                            StationImportHelper.importStationsFromUrl(
+                                this@MainActivity,
+                                url,
+                                true,
+                                mapOf(
+                                    "X-Master-Key" to key,
+                                    "X-Bin-Meta" to "false"
+                                )
+                            )
+                            Log.d("JSON AUTO SYNC>", "JSONBin auto sync completed")
+                        } catch (e: Exception) {
+                            Log.e("JSON AUTO SYNC>", "JSONBin auto sync failed: ${e.message}")
+                        }
                     }
+                } else {
+                    Log.d("JSON AUTO SYNC>", "No JSONBin configuration")
                 }
-            } else {
-                Log.d("JSON AUTO SYNC>", "No personal URL configured")
             }
-        } else {
-            Log.d("JSON AUTO SYNC>", "Auto sync disabled")
+            prefs.getBoolean(Keys.PREF_AUTOSYNC_JSON_STARTUP, false) -> {
+                val url = prefs.getString(Keys.PREF_PERSONAL_SYNC_URL, "") ?: ""
+                if (url.isNotBlank()) {
+                    Log.d("JSON AUTO SYNC>", "Starting auto sync")
+                    runBlocking {
+                        try {
+                            StationImportHelper.importStationsFromUrl(this@MainActivity, url, true)
+                            Log.d("JSON AUTO SYNC>", "Auto sync completed")
+                        } catch (e: Exception) {
+                            Log.e("JSON AUTO SYNC>", "Auto sync failed: ${e.message}")
+                        }
+                    }
+                } else {
+                    Log.d("JSON AUTO SYNC>", "No personal URL configured")
+                }
+            }
+            else -> {
+                Log.d("JSON AUTO SYNC>", "Auto sync disabled")
+            }
         }
     }
 

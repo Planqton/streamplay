@@ -5,6 +5,7 @@ import android.content.Intent
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.data.StationItem
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,7 +34,14 @@ object StationImportHelper {
         replaceAll: Boolean
     ): ImportResult {
         val type = object : TypeToken<List<ImportStation>>() {}.type
-        val importedList: List<ImportStation> = Gson().fromJson(json, type)
+        val jsonElement = JsonParser.parseString(json)
+        val arrayElement = when {
+            jsonElement.isJsonArray -> jsonElement
+            jsonElement.isJsonObject -> jsonElement.asJsonObject.get("record")
+                ?: throw IllegalArgumentException("No 'record' field in JSON")
+            else -> throw IllegalArgumentException("Invalid JSON")
+        }
+        val importedList: List<ImportStation> = Gson().fromJson(arrayElement, type)
 
         val stationList = if (replaceAll) mutableListOf() else PreferencesHelper.getStations(context)
         var updated = 0
@@ -80,7 +88,8 @@ object StationImportHelper {
     suspend fun importStationsFromUrl(
         context: Context,
         url: String,
-        replaceAll: Boolean
+        replaceAll: Boolean,
+        headers: Map<String, String>? = null
     ): ImportResult {
         val normalizedUrl = if (url.contains("github.com") && url.contains("/blob/")) {
             url.replace("github.com/", "raw.githubusercontent.com/")
@@ -90,7 +99,9 @@ object StationImportHelper {
         }
 
         val json = withContext(Dispatchers.IO) {
-            URL(normalizedUrl).openStream().bufferedReader().use { it.readText() }
+            val connection = URL(normalizedUrl).openConnection()
+            headers?.forEach { (key, value) -> connection.setRequestProperty(key, value) }
+            connection.getInputStream().bufferedReader().use { it.readText() }
         }
         return importStationsFromJson(context, json, replaceAll)
     }
