@@ -26,6 +26,10 @@ object Keys {
     const val PREF_PERSONAL_SYNC_URL = "personal_sync_url"
     const val DEFAULT_PERSONAL_SYNC_URL = "https://github.com/Planqton/streamplay/blob/main/teststations.json"
     const val PREF_AUTOSYNC_JSON_STARTUP = "autosync_json_startup"
+    const val PREF_COUCHDB_ENDPOINT = "couchdb_endpoint"
+    const val PREF_COUCHDB_USERNAME = "couchdb_username"
+    const val PREF_COUCHDB_PASSWORD = "couchdb_password"
+    const val PREF_AUTOSYNC_COUCHDB_STARTUP = "autosync_couchdb_startup"
     const val PREF_ONBOARDING_DONE = "onboarding_done"
 
 

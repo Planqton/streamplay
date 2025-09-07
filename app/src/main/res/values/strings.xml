@@ -139,6 +139,10 @@
     <string name="settings_sync_personal_json">Sync Personal JSON</string>
     <string name="settings_export_personal_json">Export Personal JSON</string>
     <string name="settings_autosync_json_startup">Autosync JSON at Startup</string>
+    <string name="settings_couchdb_endpoint">CouchDB Endpoint</string>
+    <string name="settings_couchdb_username">CouchDB Username</string>
+    <string name="settings_couchdb_password">CouchDB Password</string>
+    <string name="settings_autosync_couchdb_startup">Autosync CouchDB at Startup</string>
     <string name="settings_add_test_stations">Add Test Stations</string>
     <string name="settings_import_export">Import/Export Settings</string>
     <string name="settings_export_settings">Export Settings</string>

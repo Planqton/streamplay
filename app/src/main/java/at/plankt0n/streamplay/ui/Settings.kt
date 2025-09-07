@@ -436,6 +436,74 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
     }
 
+    val couchEndpointPref = EditTextPreference(context).apply {
+        key = Keys.PREF_COUCHDB_ENDPOINT
+        title = getString(R.string.settings_couchdb_endpoint)
+        summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
+            val value = pref.text
+            if (value.isNullOrBlank()) {
+                pref.context.getString(R.string.settings_personal_sync_url_empty)
+            } else {
+                value
+            }
+        }
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    val couchUserPref = EditTextPreference(context).apply {
+        key = Keys.PREF_COUCHDB_USERNAME
+        title = getString(R.string.settings_couchdb_username)
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    val couchPasswordPref = EditTextPreference(context).apply {
+        key = Keys.PREF_COUCHDB_PASSWORD
+        title = getString(R.string.settings_couchdb_password)
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    val couchAutoSyncPref = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_AUTOSYNC_COUCHDB_STARTUP
+        title = getString(R.string.settings_autosync_couchdb_startup)
+        setDefaultValue(false)
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    fun updateSyncPreferenceStates() {
+        val couchEnabled = couchAutoSyncPref.isChecked
+        val jsonEnabled = autoSyncPref.isChecked
+        couchEndpointPref.isEnabled = couchEnabled && couchAutoSyncPref.isEnabled
+        couchUserPref.isEnabled = couchEnabled && couchAutoSyncPref.isEnabled
+        couchPasswordPref.isEnabled = couchEnabled && couchAutoSyncPref.isEnabled
+        personalUrlPref.isEnabled = !couchEnabled
+        personalSyncPref.isEnabled = !couchEnabled
+        personalExportPref.isEnabled = !couchEnabled
+        autoSyncPref.isEnabled = !couchEnabled
+        couchAutoSyncPref.isEnabled = !jsonEnabled
+    }
+
+    couchAutoSyncPref.setOnPreferenceChangeListener { _, newValue ->
+        val enabled = newValue as Boolean
+        if (enabled) {
+            autoSyncPref.isChecked = false
+        }
+        updateSyncPreferenceStates()
+        true
+    }
+
+    autoSyncPref.setOnPreferenceChangeListener { _, newValue ->
+        val enabled = newValue as Boolean
+        if (enabled) {
+            couchAutoSyncPref.isChecked = false
+        }
+        updateSyncPreferenceStates()
+        true
+    }
+
     val versionPref = Preference(context).apply {
         key = "app_version"
         title = getString(R.string.settings_app_version)
@@ -538,6 +606,10 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         autoSyncPref,
         personalSyncPref,
         personalExportPref,
+        couchEndpointPref,
+        couchUserPref,
+        couchPasswordPref,
+        couchAutoSyncPref,
         versionPref,
         updatePref,
         addTestPref,
@@ -556,4 +628,5 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     preferenceScreen = screen
 
     updateSpotifyToggle()
+    updateSyncPreferenceStates()
 }

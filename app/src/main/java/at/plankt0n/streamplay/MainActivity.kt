@@ -21,6 +21,7 @@ import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.ScreenOrientationMode
 import at.plankt0n.streamplay.ui.MainPagerFragment
 import at.plankt0n.streamplay.ui.DiscoverFragment
+import at.plankt0n.streamplay.helper.CouchDbHelper
 import at.plankt0n.streamplay.helper.StationImportHelper
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -69,23 +70,44 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     private fun autoSyncIfEnabled() {
         val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
-        if (prefs.getBoolean(Keys.PREF_AUTOSYNC_JSON_STARTUP, false)) {
-            val url = prefs.getString(Keys.PREF_PERSONAL_SYNC_URL, "") ?: ""
-            if (url.isNotBlank()) {
-                Log.d("JSON AUTO SYNC>", "Starting auto sync")
-                runBlocking {
-                    try {
-                        StationImportHelper.importStationsFromUrl(this@MainActivity, url, true)
-                        Log.d("JSON AUTO SYNC>", "Auto sync completed")
-                    } catch (e: Exception) {
-                        Log.e("JSON AUTO SYNC>", "Auto sync failed: ${e.message}")
+        when {
+            prefs.getBoolean(Keys.PREF_AUTOSYNC_COUCHDB_STARTUP, false) -> {
+                val endpoint = prefs.getString(Keys.PREF_COUCHDB_ENDPOINT, "") ?: ""
+                if (endpoint.isNotBlank()) {
+                    val user = prefs.getString(Keys.PREF_COUCHDB_USERNAME, "") ?: ""
+                    val pass = prefs.getString(Keys.PREF_COUCHDB_PASSWORD, "") ?: ""
+                    Log.d("COUCHDB AUTO SYNC>", "Starting auto sync")
+                    runBlocking {
+                        try {
+                            CouchDbHelper.syncStations(this@MainActivity, endpoint, user, pass)
+                            Log.d("COUCHDB AUTO SYNC>", "Auto sync completed")
+                        } catch (e: Exception) {
+                            Log.e("COUCHDB AUTO SYNC>", "Auto sync failed: ${e.message}")
+                        }
                     }
+                } else {
+                    Log.d("COUCHDB AUTO SYNC>", "No endpoint configured")
                 }
-            } else {
-                Log.d("JSON AUTO SYNC>", "No personal URL configured")
             }
-        } else {
-            Log.d("JSON AUTO SYNC>", "Auto sync disabled")
+            prefs.getBoolean(Keys.PREF_AUTOSYNC_JSON_STARTUP, false) -> {
+                val url = prefs.getString(Keys.PREF_PERSONAL_SYNC_URL, "") ?: ""
+                if (url.isNotBlank()) {
+                    Log.d("JSON AUTO SYNC>", "Starting auto sync")
+                    runBlocking {
+                        try {
+                            StationImportHelper.importStationsFromUrl(this@MainActivity, url, true)
+                            Log.d("JSON AUTO SYNC>", "Auto sync completed")
+                        } catch (e: Exception) {
+                            Log.e("JSON AUTO SYNC>", "Auto sync failed: ${e.message}")
+                        }
+                    }
+                } else {
+                    Log.d("JSON AUTO SYNC>", "No personal URL configured")
+                }
+            }
+            else -> {
+                Log.d("JSON AUTO SYNC>", "Auto sync disabled")
+            }
         }
     }
 
