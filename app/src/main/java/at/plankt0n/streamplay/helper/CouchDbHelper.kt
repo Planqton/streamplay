@@ -23,12 +23,10 @@ object CouchDbHelper {
     private val client = OkHttpClient()
 
     private fun buildUrls(endpoint: String): Pair<HttpUrl, HttpUrl> {
-        var fullEndpoint = endpoint.trimEnd('/')
-        var url = fullEndpoint.toHttpUrlOrNull() ?: throw IllegalArgumentException("Invalid URL")
+        val url = endpoint.trimEnd('/').toHttpUrlOrNull()
+            ?: throw IllegalArgumentException("Invalid URL")
         if (url.pathSegments.size < 2) {
-            fullEndpoint =
-                fullEndpoint.trimEnd('/') + "/${Keys.DEFAULT_COUCHDB_DATABASE}/${Keys.DEFAULT_COUCHDB_DOCUMENT}"
-            url = fullEndpoint.toHttpUrlOrNull() ?: throw IllegalArgumentException("Invalid URL")
+            throw IllegalArgumentException("Endpoint must include database and document")
         }
         val dbUrl = url.newBuilder().removePathSegment(url.pathSegments.size - 1).build()
         return url to dbUrl
