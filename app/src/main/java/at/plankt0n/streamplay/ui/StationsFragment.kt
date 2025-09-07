@@ -1,7 +1,9 @@
 package at.plankt0n.streamplay.ui
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -42,7 +44,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
 
-class StationsFragment : Fragment() {
+class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeListener {
 
     private lateinit var stationList: MutableList<StationItem>
     private lateinit var recyclerView: RecyclerView
@@ -51,6 +53,7 @@ class StationsFragment : Fragment() {
     private lateinit var topbarBackButton: ImageButton
     private lateinit var topbarTitle: TextView
     private var backPressedCallback: OnBackPressedCallback? = null
+    private lateinit var stationPrefs: SharedPreferences
 
     companion object {
         private const val REQUEST_CODE_IMPORT_JSON = 1001
@@ -66,6 +69,7 @@ class StationsFragment : Fragment() {
         topbarTitle = view.findViewById(R.id.topbar_title)
 
         stationList = PreferencesHelper.getStations(requireContext()).toMutableList()
+        stationPrefs = requireContext().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
 
         recyclerView = view.findViewById(R.id.recyclerViewStations)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -327,6 +331,7 @@ class StationsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        stationPrefs.registerOnSharedPreferenceChangeListener(this)
         stationList.clear()
         stationList.addAll(PreferencesHelper.getStations(requireContext()))
         adapter.notifyDataSetChanged()
@@ -345,6 +350,7 @@ class StationsFragment : Fragment() {
     }
 
     override fun onPause() {
+        stationPrefs.unregisterOnSharedPreferenceChangeListener(this)
         backPressedCallback?.remove()
         backPressedCallback = null
 
@@ -357,5 +363,13 @@ class StationsFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         mediaServiceController.disconnect()
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+        if (key == "stations") {
+            stationList.clear()
+            stationList.addAll(PreferencesHelper.getStations(requireContext()))
+            adapter.notifyDataSetChanged()
+        }
     }
 }
