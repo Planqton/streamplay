@@ -10,6 +10,8 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
+import android.widget.EditText
+import android.text.InputType
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import at.plankt0n.streamplay.data.StationItem
@@ -219,30 +221,104 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     }
 
     private fun maybeShowOnboarding() {
-        if (!prefs.getBoolean(Keys.PREF_ONBOARDING_DONE, false)) {
+        if (prefs.getBoolean(Keys.PREF_ONBOARDING_DONE, false)) return
+
+        AlertDialog.Builder(this)
+            .setTitle("Onboarding")
+            .setMessage("Do you want help with setup?")
+            .setPositiveButton(android.R.string.yes) { _, _ ->
+                askCouchDbDocument()
+            }
+            .setNegativeButton(android.R.string.no) { _, _ ->
+                finishOnboarding()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun askCouchDbDocument() {
+        AlertDialog.Builder(this)
+            .setTitle("CouchDB")
+            .setMessage("Is there an existing document on CouchDB?")
+            .setPositiveButton(android.R.string.yes) { _, _ ->
+                askCouchDbConfig()
+            }
+            .setNegativeButton(android.R.string.no) { _, _ ->
+                AlertDialog.Builder(this)
+                    .setTitle("CouchDB")
+                    .setMessage("Set up a CouchDB (Docker or otherwise). Define an endpoint and configure it here.")
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        askCouchDbConfig()
+                    }
+                    .setCancelable(false)
+                    .show()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun askCouchDbConfig() {
+        askForInput("CouchDB endpoint") { endpoint ->
+            askForInput("CouchDB user") { user ->
+                askForInput("CouchDB password", true) { pass ->
+                    prefs.edit()
+                        .putString(Keys.PREF_COUCHDB_ENDPOINT, endpoint)
+                        .putString(Keys.PREF_COUCHDB_USERNAME, user)
+                        .putString(Keys.PREF_COUCHDB_PASSWORD, pass)
+                        .apply()
+                    askSpotifyIfNeeded()
+                }
+            }
+        }
+    }
+
+    private fun askSpotifyIfNeeded() {
+        val api = prefs.getString(Keys.PREF_SPOTIFY_CLIENT_ID, "") ?: ""
+        val secret = prefs.getString(Keys.PREF_SPOTIFY_CLIENT_SECRET, "") ?: ""
+        if (api.isNotBlank() && secret.isNotBlank()) {
+            finishOnboarding()
+        } else {
             AlertDialog.Builder(this)
-                .setTitle("Setup Assistance")
-                .setMessage("Would you like help with setup? You can improve metadata using the Spotify API (images and info).")
+                .setTitle("Spotify")
+                .setMessage("Configure Spotify?")
                 .setPositiveButton(android.R.string.yes) { _, _ ->
-                    AlertDialog.Builder(this)
-                        .setTitle("Add Stations")
-                        .setMessage("Would you like to add stations now?")
-                        .setPositiveButton(android.R.string.yes) { _, _ ->
-                            openDiscoverPage()
-                            prefs.edit().putBoolean(Keys.PREF_ONBOARDING_DONE, true).apply()
+                    askForInput("Spotify API key") { apiKey ->
+                        askForInput("Spotify secret key", true) { secretKey ->
+                            prefs.edit()
+                                .putString(Keys.PREF_SPOTIFY_CLIENT_ID, apiKey)
+                                .putString(Keys.PREF_SPOTIFY_CLIENT_SECRET, secretKey)
+                                .apply()
+                            finishOnboarding()
                         }
-                        .setNegativeButton(android.R.string.no) { _, _ ->
-                            prefs.edit().putBoolean(Keys.PREF_ONBOARDING_DONE, true).apply()
-                        }
-                        .setCancelable(false)
-                        .show()
+                    }
                 }
                 .setNegativeButton(android.R.string.no) { _, _ ->
-                    prefs.edit().putBoolean(Keys.PREF_ONBOARDING_DONE, true).apply()
+                    finishOnboarding()
                 }
                 .setCancelable(false)
                 .show()
         }
+    }
+
+    private fun askForInput(title: String, isPassword: Boolean = false, callback: (String) -> Unit) {
+        val input = EditText(this)
+        if (isPassword) {
+            input.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        } else {
+            input.inputType = InputType.TYPE_CLASS_TEXT
+        }
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setView(input)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                callback(input.text.toString())
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun finishOnboarding() {
+        prefs.edit().putBoolean(Keys.PREF_ONBOARDING_DONE, true).apply()
     }
 
     private fun applyOrientationPreference() {
