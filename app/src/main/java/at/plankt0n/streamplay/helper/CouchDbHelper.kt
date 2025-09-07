@@ -32,12 +32,14 @@ object CouchDbHelper {
     private suspend fun ensureDatabase(dbUrl: HttpUrl, auth: String?, createIfMissing: Boolean) {
         val headBuilder = Request.Builder().url(dbUrl)
         auth?.let { headBuilder.header("Authorization", it) }
+        headBuilder.header("Accept", "application/json")
         val headRequest = headBuilder.head().build()
         val headResponse = withContext(Dispatchers.IO) { client.newCall(headRequest).execute() }
         if (headResponse.code == 404) {
             if (createIfMissing) {
                 val createBuilder = Request.Builder().url(dbUrl)
                 auth?.let { createBuilder.header("Authorization", it) }
+                createBuilder.header("Accept", "application/json")
                 val createRequest = createBuilder
                     .put(ByteArray(0).toRequestBody(null))
                     .build()
@@ -69,6 +71,7 @@ object CouchDbHelper {
 
         val builder = Request.Builder().url(url)
         auth?.let { builder.header("Authorization", it) }
+        builder.header("Accept", "application/json")
         val getRequest = builder.build()
         val response = withContext(Dispatchers.IO) { client.newCall(getRequest).execute() }
         when (response.code) {
@@ -83,6 +86,7 @@ object CouchDbHelper {
                 val json = Gson().toJson(mapOf("stations" to list))
                 val putBuilder = Request.Builder().url(url)
                 auth?.let { putBuilder.header("Authorization", it) }
+                putBuilder.header("Accept", "application/json")
                 val putRequest = putBuilder
                     .put(json.toRequestBody("application/json".toMediaType()))
                     .build()
@@ -108,10 +112,23 @@ object CouchDbHelper {
         val (url, dbUrl) = buildUrls(endpoint)
         ensureDatabase(dbUrl, auth, true)
 
+        val getBuilder = Request.Builder().url(url)
+        auth?.let { getBuilder.header("Authorization", it) }
+        getBuilder.header("Accept", "application/json")
+        val getResponse = withContext(Dispatchers.IO) { client.newCall(getBuilder.build()).execute() }
+        val rev = when (getResponse.code) {
+            200 -> JSONObject(getResponse.body?.string() ?: "{}").optString("_rev")
+            404 -> null
+            else -> throw Exception("HTTP ${getResponse.code}")
+        }
+
         val list = PreferencesHelper.getStations(context)
-        val json = Gson().toJson(mapOf("stations" to list))
+        val data = mutableMapOf<String, Any>("stations" to list)
+        rev?.takeIf { it.isNotBlank() }?.let { data["_rev"] = it }
+        val json = Gson().toJson(data)
         val putBuilder = Request.Builder().url(url)
         auth?.let { putBuilder.header("Authorization", it) }
+        putBuilder.header("Accept", "application/json")
         val putRequest = putBuilder
             .put(json.toRequestBody("application/json".toMediaType()))
             .build()
@@ -137,6 +154,7 @@ object CouchDbHelper {
 
         val builder = Request.Builder().url(url)
         auth?.let { builder.header("Authorization", it) }
+        builder.header("Accept", "application/json")
         val getRequest = builder.build()
         val response = withContext(Dispatchers.IO) { client.newCall(getRequest).execute() }
         when (response.code) {
