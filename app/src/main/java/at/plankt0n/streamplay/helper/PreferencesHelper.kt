@@ -40,15 +40,15 @@ object PreferencesHelper {
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         val url = prefs.getString(Keys.PREF_JSON_BIN_URL, null)
         val key = prefs.getString(Keys.PREF_JSON_BIN_KEY, null)
-        val enabled = prefs.getBoolean(Keys.PREF_AUTOSYNC_JSONBIN_STARTUP, false)
 
-        if (enabled && !url.isNullOrBlank() && !key.isNullOrBlank()) {
+        if (!url.isNullOrBlank() && !key.isNullOrBlank()) {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     (URL(url).openConnection() as HttpURLConnection).apply {
                         requestMethod = "PUT"
                         setRequestProperty("Content-Type", "application/json")
                         setRequestProperty("X-Master-Key", key)
+                        setRequestProperty("X-Bin-Meta", "false")
                         doOutput = true
                         outputStream.use { it.write(json.toByteArray()) }
                         inputStream.close()
