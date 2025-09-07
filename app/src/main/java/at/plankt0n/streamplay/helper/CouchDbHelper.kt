@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Credentials
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -25,7 +26,29 @@ object CouchDbHelper {
         } else {
             null
         }
-        val builder = Request.Builder().url(endpoint)
+        val url = endpoint.trimEnd('/').toHttpUrlOrNull() ?: throw IllegalArgumentException("Invalid URL")
+        if (url.pathSegments.size < 2) throw IllegalArgumentException("Endpoint must include database and document")
+
+        val dbUrl = url.newBuilder().removePathSegment(url.pathSegments.size - 1).build()
+
+        // ensure database exists
+        val dbHeadBuilder = Request.Builder().url(dbUrl)
+        auth?.let { dbHeadBuilder.header("Authorization", it) }
+        val dbHeadRequest = dbHeadBuilder.head().build()
+        val dbHeadResponse = withContext(Dispatchers.IO) { client.newCall(dbHeadRequest).execute() }
+        if (dbHeadResponse.code == 404) {
+            val createDbBuilder = Request.Builder().url(dbUrl)
+            auth?.let { createDbBuilder.header("Authorization", it) }
+            val createDbRequest = createDbBuilder
+                .put(ByteArray(0).toRequestBody(null))
+                .build()
+            withContext(Dispatchers.IO) { client.newCall(createDbRequest).execute() }
+        } else if (dbHeadResponse.code !in 200..299) {
+            throw Exception("HTTP ${'$'}{dbHeadResponse.code}")
+        }
+
+        // fetch or create stations document
+        val builder = Request.Builder().url(url)
         auth?.let { builder.header("Authorization", it) }
         val getRequest = builder.build()
         val response = withContext(Dispatchers.IO) { client.newCall(getRequest).execute() }
@@ -39,7 +62,7 @@ object CouchDbHelper {
             404 -> {
                 val list = PreferencesHelper.getStations(context)
                 val json = Gson().toJson(mapOf("stations" to list))
-                val putBuilder = Request.Builder().url(endpoint)
+                val putBuilder = Request.Builder().url(url)
                 auth?.let { putBuilder.header("Authorization", it) }
                 val putRequest = putBuilder
                     .put(json.toRequestBody("application/json".toMediaType()))
