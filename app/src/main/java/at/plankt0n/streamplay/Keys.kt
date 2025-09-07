@@ -32,7 +32,7 @@ object Keys {
     const val PREF_AUTOSYNC_COUCHDB_STARTUP = "autosync_couchdb_startup"
     const val PREF_COUCHDB_SHOW_LOGS = "couchdb_show_logs"
     const val DEFAULT_COUCHDB_DATABASE = "streamplay"
-    const val DEFAULT_COUCHDB_DOCUMENT = "stations"
+    const val DEFAULT_COUCHDB_DOCUMENT = "data"
     const val PREF_ONBOARDING_DONE = "onboarding_done"
 
 
