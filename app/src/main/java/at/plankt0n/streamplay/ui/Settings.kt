@@ -241,7 +241,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     val resumeLiveSwitch = SwitchPreferenceCompat(context).apply {
         key = Keys.PREF_RESUME_LIVE_AFTER_PAUSE
         title = getString(R.string.settings_resume_live_after_pause)
-        setDefaultValue(false)
+        setDefaultValue(true)
         category = SettingsCategory.PLAYER
         icon = context.getDrawable(R.drawable.ic_button_play)
     }

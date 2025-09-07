@@ -175,7 +175,7 @@ class MediaServiceController(private val context: Context) {
             controller.pause()
         } else {
             val prefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
-            if (prefs.getBoolean(Keys.PREF_RESUME_LIVE_AFTER_PAUSE, false)) {
+            if (prefs.getBoolean(Keys.PREF_RESUME_LIVE_AFTER_PAUSE, true)) {
                 controller.seekToDefaultPosition(controller.currentMediaItemIndex)
             }
             controller.play()
