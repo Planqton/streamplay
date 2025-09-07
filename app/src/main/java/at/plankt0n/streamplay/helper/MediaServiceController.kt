@@ -15,6 +15,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import at.plankt0n.streamplay.StreamingService
+import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.data.StationItem
 import java.lang.Thread.State
 
@@ -173,6 +174,10 @@ class MediaServiceController(private val context: Context) {
         if (controller.isPlaying) {
             controller.pause()
         } else {
+            val prefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+            if (prefs.getBoolean(Keys.PREF_RESUME_LIVE_AFTER_PAUSE, true)) {
+                controller.seekToDefaultPosition(controller.currentMediaItemIndex)
+            }
             controller.play()
         }
     }

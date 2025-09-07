@@ -238,6 +238,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }
 
+    val resumeLiveSwitch = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_RESUME_LIVE_AFTER_PAUSE
+        title = getString(R.string.settings_resume_live_after_pause)
+        setDefaultValue(true)
+        category = SettingsCategory.PLAYER
+        icon = context.getDrawable(R.drawable.ic_button_play)
+    }
+
     val backgroundEffectPref = ListPreference(context).apply {
         key = "background_effect"
         title = getString(R.string.settings_background_effect)
@@ -519,6 +527,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         delayPreference,
         orientationPref,
         bannerSwitch,
+        resumeLiveSwitch,
         backgroundEffectPref,
         coverModePref,
         coverAnimationStylePref,
