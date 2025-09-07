@@ -425,6 +425,114 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
     }
 
+    val jsonBinUrlPref = EditTextPreference(context).apply {
+        key = Keys.PREF_JSON_BIN_URL
+        title = getString(R.string.settings_jsonbin_url)
+        summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
+            val value = pref.text
+            if (value.isNullOrBlank()) {
+                pref.context.getString(R.string.settings_personal_sync_url_empty)
+            } else {
+                value
+            }
+        }
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    val jsonBinKeyPref = EditTextPreference(context).apply {
+        key = Keys.PREF_JSON_BIN_KEY
+        title = getString(R.string.settings_jsonbin_key)
+        summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
+            val value = pref.text
+            if (value.isNullOrBlank()) {
+                pref.context.getString(R.string.settings_personal_sync_url_empty)
+            } else {
+                "••••••"
+            }
+        }
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    val jsonBinAutoSyncPref = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_AUTOSYNC_JSONBIN_STARTUP
+        title = getString(R.string.settings_autosync_jsonbin_startup)
+        setDefaultValue(false)
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
+    val jsonBinSyncPref = Preference(context).apply {
+        key = "jsonbin_sync_now"
+        title = getString(R.string.settings_sync_jsonbin)
+        category = SettingsCategory.PERSONAL_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        setOnPreferenceClickListener {
+            val url = jsonBinUrlPref.text ?: ""
+            val key = jsonBinKeyPref.text ?: ""
+            if (url.isBlank() || key.isBlank()) {
+                Toast.makeText(context, "URL und Key erforderlich", Toast.LENGTH_SHORT).show()
+            } else {
+                this@initSettingsScreen.lifecycleScope.launch {
+                    try {
+                        val result = StationImportHelper.importStationsFromUrl(
+                            context,
+                            url,
+                            true,
+                            mapOf("X-Master-Key" to key)
+                        )
+                        Toast.makeText(
+                            context,
+                            "Sync abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            context,
+                            "Fehler beim Sync: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+            true
+        }
+    }
+
+    fun updateSyncPreferenceStates(
+        personalActive: Boolean = autoSyncPref.isChecked,
+        jsonBinActive: Boolean = jsonBinAutoSyncPref.isChecked
+    ) {
+        personalUrlPref.isEnabled = !jsonBinActive
+        personalSyncPref.isEnabled = !jsonBinActive
+        autoSyncPref.isEnabled = !jsonBinActive
+        jsonBinUrlPref.isEnabled = !personalActive
+        jsonBinKeyPref.isEnabled = !personalActive
+        jsonBinSyncPref.isEnabled = !personalActive
+        jsonBinAutoSyncPref.isEnabled = !personalActive
+    }
+
+    autoSyncPref.setOnPreferenceChangeListener { _, newValue ->
+        val checked = newValue as Boolean
+        if (checked) {
+            jsonBinAutoSyncPref.isChecked = false
+        }
+        updateSyncPreferenceStates(checked, jsonBinAutoSyncPref.isChecked)
+        true
+    }
+
+    jsonBinAutoSyncPref.setOnPreferenceChangeListener { _, newValue ->
+        val checked = newValue as Boolean
+        if (checked) {
+            autoSyncPref.isChecked = false
+        }
+        updateSyncPreferenceStates(autoSyncPref.isChecked, checked)
+        true
+    }
+
+    updateSyncPreferenceStates()
+
     val personalExportPref = Preference(context).apply {
         key = "personal_export_json"
         title = getString(R.string.settings_export_personal_json)
@@ -537,6 +645,10 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         personalUrlPref,
         autoSyncPref,
         personalSyncPref,
+        jsonBinUrlPref,
+        jsonBinKeyPref,
+        jsonBinAutoSyncPref,
+        jsonBinSyncPref,
         personalExportPref,
         versionPref,
         updatePref,

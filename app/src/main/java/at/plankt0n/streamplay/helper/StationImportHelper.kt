@@ -80,7 +80,8 @@ object StationImportHelper {
     suspend fun importStationsFromUrl(
         context: Context,
         url: String,
-        replaceAll: Boolean
+        replaceAll: Boolean,
+        headers: Map<String, String>? = null
     ): ImportResult {
         val normalizedUrl = if (url.contains("github.com") && url.contains("/blob/")) {
             url.replace("github.com/", "raw.githubusercontent.com/")
@@ -90,7 +91,9 @@ object StationImportHelper {
         }
 
         val json = withContext(Dispatchers.IO) {
-            URL(normalizedUrl).openStream().bufferedReader().use { it.readText() }
+            val connection = URL(normalizedUrl).openConnection()
+            headers?.forEach { (key, value) -> connection.setRequestProperty(key, value) }
+            connection.getInputStream().bufferedReader().use { it.readText() }
         }
         return importStationsFromJson(context, json, replaceAll)
     }
