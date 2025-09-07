@@ -74,6 +74,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         when {
             prefs.getBoolean(Keys.PREF_AUTOSYNC_COUCHDB_STARTUP, false) -> {
                 val endpoint = prefs.getString(Keys.PREF_COUCHDB_ENDPOINT, "") ?: ""
+                val showLogs = prefs.getBoolean(Keys.PREF_COUCHDB_SHOW_LOGS, true)
                 if (endpoint.isNotBlank()) {
                     val user = prefs.getString(Keys.PREF_COUCHDB_USERNAME, "") ?: ""
                     val pass = prefs.getString(Keys.PREF_COUCHDB_PASSWORD, "") ?: ""
@@ -81,23 +82,29 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                     runBlocking {
                         try {
                             CouchDbHelper.syncStations(this@MainActivity, endpoint, user, pass)
-                            Toast.makeText(
-                                this@MainActivity,
-                                R.string.couchdb_sync_success,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            if (showLogs) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    R.string.couchdb_sync_success,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                             Log.d("COUCHDB AUTO SYNC>", "Auto sync completed")
                         } catch (e: Exception) {
-                            Toast.makeText(
-                                this@MainActivity,
-                                getString(R.string.couchdb_sync_failed, e.message ?: ""),
-                                Toast.LENGTH_LONG
-                            ).show()
+                            if (showLogs) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    getString(R.string.couchdb_sync_failed, e.message ?: ""),
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                             Log.e("COUCHDB AUTO SYNC>", "Auto sync failed: ${e.message}")
                         }
                     }
                 } else {
-                    Toast.makeText(this, R.string.couchdb_endpoint_required, Toast.LENGTH_LONG).show()
+                    if (showLogs) {
+                        Toast.makeText(this, R.string.couchdb_endpoint_required, Toast.LENGTH_LONG).show()
+                    }
                     Log.d("COUCHDB AUTO SYNC>", "No endpoint configured")
                 }
             }
