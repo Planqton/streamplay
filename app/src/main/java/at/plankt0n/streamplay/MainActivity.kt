@@ -335,6 +335,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == Keys.PREF_SCREEN_ORIENTATION) {
             applyOrientationPreference()
+            return
         }
         if (!CouchDbHelper.isApplyingPrefs) {
             PreferencesHelper.maybePushCouchDb(this)

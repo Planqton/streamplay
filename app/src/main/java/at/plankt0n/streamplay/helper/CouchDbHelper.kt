@@ -93,7 +93,10 @@ object CouchDbHelper {
             }
             404 -> {
                 val list = PreferencesHelper.getStations(context)
-                val prefsMap = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE).all
+                val prefsMap = context
+                    .getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+                    .all
+                    .filterKeys { it != Keys.PREF_SCREEN_ORIENTATION }
                 val json = Gson().toJson(mapOf("stations" to list, "prefs" to prefsMap))
                 val putBuilder = Request.Builder().url(url)
                 auth?.let { putBuilder.header("Authorization", it) }
@@ -134,7 +137,10 @@ object CouchDbHelper {
         }
 
         val list = PreferencesHelper.getStations(context)
-        val prefsMap = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE).all
+        val prefsMap = context
+            .getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+            .all
+            .filterKeys { it != Keys.PREF_SCREEN_ORIENTATION }
         val data = mutableMapOf<String, Any>("stations" to list, "prefs" to prefsMap)
         rev?.takeIf { it.isNotBlank() }?.let { data["_rev"] = it }
         val json = Gson().toJson(data)
@@ -213,7 +219,10 @@ object CouchDbHelper {
         val headResponse = withContext(Dispatchers.IO) { client.newCall(headRequest).execute() }
         if (headResponse.code == 404) {
             val list = PreferencesHelper.getStations(context)
-            val prefsMap = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE).all
+            val prefsMap = context
+                .getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+                .all
+                .filterKeys { it != Keys.PREF_SCREEN_ORIENTATION }
             val json = Gson().toJson(mapOf("stations" to list, "prefs" to prefsMap))
             val putBuilder = Request.Builder().url(url)
             auth?.let { putBuilder.header("Authorization", it) }
@@ -235,6 +244,7 @@ object CouchDbHelper {
         val prefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         val editor = prefs.edit().clear()
         for ((key, value) in obj.entrySet()) {
+            if (key == Keys.PREF_SCREEN_ORIENTATION) continue
             when {
                 value.isJsonPrimitive -> {
                     val prim = value.asJsonPrimitive
