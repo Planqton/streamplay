@@ -25,6 +25,9 @@ object Keys {
 
     const val PREF_PERSONAL_SYNC_URL = "personal_sync_url"
     const val DEFAULT_PERSONAL_SYNC_URL = "https://github.com/Planqton/streamplay/blob/main/teststations.json"
+    const val PREF_USE_JSONBIN = "use_jsonbin"
+    const val PREF_JSONBIN_URL = "jsonbin_url"
+    const val PREF_JSONBIN_MASTER_KEY = "jsonbin_master_key"
     const val PREF_AUTOSYNC_JSON_STARTUP = "autosync_json_startup"
     const val PREF_ONBOARDING_DONE = "onboarding_done"
 

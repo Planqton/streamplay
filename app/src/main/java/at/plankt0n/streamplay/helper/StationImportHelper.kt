@@ -5,11 +5,16 @@ import android.content.Intent
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.data.StationItem
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.URL
 import java.util.UUID
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 
 object StationImportHelper {
     data class ImportStation(
@@ -67,7 +72,7 @@ object StationImportHelper {
             }
         }
 
-        PreferencesHelper.saveStations(context, stationList)
+        PreferencesHelper.saveStations(context, stationList, syncRemote = false)
         StateHelper.isPlaylistChangePending = true
         val intent = Intent(context, StreamingService::class.java).apply {
             action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
@@ -93,6 +98,45 @@ object StationImportHelper {
             URL(normalizedUrl).openStream().bufferedReader().use { it.readText() }
         }
         return importStationsFromJson(context, json, replaceAll)
+    }
+
+    suspend fun importStationsFromJsonBin(
+        context: Context,
+        url: String,
+        masterKey: String,
+        replaceAll: Boolean
+    ): ImportResult {
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("X-Master-Key", masterKey)
+            .build()
+        val json = withContext(Dispatchers.IO) {
+            client.newCall(request).execute().use { resp ->
+                if (!resp.isSuccessful) throw Exception("HTTP ${resp.code}")
+                val body = resp.body?.string() ?: "{}"
+                val obj = JsonParser.parseString(body).asJsonObject
+                obj["record"].toString()
+            }
+        }
+        return importStationsFromJson(context, json, replaceAll)
+    }
+
+    suspend fun exportStationsToJsonBin(
+        url: String,
+        masterKey: String,
+        stationList: List<StationItem>
+    ) {
+        val client = OkHttpClient()
+        val body = Gson().toJson(stationList).toRequestBody("application/json".toMediaType())
+        val request = Request.Builder()
+            .url(url)
+            .put(body)
+            .addHeader("X-Master-Key", masterKey)
+            .build()
+        withContext(Dispatchers.IO) {
+            client.newCall(request).execute().close()
+        }
     }
 }
 
