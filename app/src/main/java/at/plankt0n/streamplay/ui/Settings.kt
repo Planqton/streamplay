@@ -457,6 +457,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     val couchUserPref = EditTextPreference(context).apply {
         key = Keys.PREF_COUCHDB_USERNAME
         title = getString(R.string.settings_couchdb_username)
+        summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
+            val value = pref.text
+            if (value.isNullOrBlank()) {
+                pref.context.getString(R.string.settings_personal_sync_url_empty)
+            } else {
+                value
+            }
+        }
         category = SettingsCategory.COUCHDB
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
@@ -464,6 +472,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     val couchPasswordPref = EditTextPreference(context).apply {
         key = Keys.PREF_COUCHDB_PASSWORD
         title = getString(R.string.settings_couchdb_password)
+        summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
+            val value = pref.text
+            if (value.isNullOrBlank()) {
+                pref.context.getString(R.string.settings_personal_sync_url_empty)
+            } else {
+                buildString { repeat(value.length) { append('•') } }
+            }
+        }
         category = SettingsCategory.COUCHDB
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
@@ -492,24 +508,30 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         setOnPreferenceClickListener {
             val endpoint = couchEndpointPref.text ?: ""
             if (endpoint.isNotBlank()) {
-                val user = couchUserPref.text ?: ""
-                val pass = couchPasswordPref.text ?: ""
-                this@initSettingsScreen.lifecycleScope.launch {
-                    try {
-                        CouchDbHelper.pushPrefs(context, endpoint, user, pass)
-                        if (couchShowLogsPref.isChecked) {
-                            Toast.makeText(context, R.string.couchdb_push_success, Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: Exception) {
-                        if (couchShowLogsPref.isChecked) {
-                            Toast.makeText(
-                                context,
-                                getString(R.string.couchdb_push_failed, e.message ?: ""),
-                                Toast.LENGTH_LONG
-                            ).show()
+                AlertDialog.Builder(context)
+                    .setMessage(R.string.couchdb_confirm_push)
+                    .setPositiveButton(R.string.couchdb_yes) { _, _ ->
+                        val user = couchUserPref.text ?: ""
+                        val pass = couchPasswordPref.text ?: ""
+                        this@initSettingsScreen.lifecycleScope.launch {
+                            try {
+                                CouchDbHelper.pushPrefs(context, endpoint, user, pass)
+                                if (couchShowLogsPref.isChecked) {
+                                    Toast.makeText(context, R.string.couchdb_push_success, Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                if (couchShowLogsPref.isChecked) {
+                                    Toast.makeText(
+                                        context,
+                                        getString(R.string.couchdb_push_failed, e.message ?: ""),
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
                         }
                     }
-                }
+                    .setNegativeButton(R.string.couchdb_abort, null)
+                    .show()
             } else {
                 if (couchShowLogsPref.isChecked) {
                     Toast.makeText(context, R.string.couchdb_endpoint_required, Toast.LENGTH_LONG).show()
@@ -527,24 +549,30 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         setOnPreferenceClickListener {
             val endpoint = couchEndpointPref.text ?: ""
             if (endpoint.isNotBlank()) {
-                val user = couchUserPref.text ?: ""
-                val pass = couchPasswordPref.text ?: ""
-                this@initSettingsScreen.lifecycleScope.launch {
-                    try {
-                        CouchDbHelper.readPrefs(context, endpoint, user, pass)
-                        if (couchShowLogsPref.isChecked) {
-                            Toast.makeText(context, R.string.couchdb_read_success, Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: Exception) {
-                        if (couchShowLogsPref.isChecked) {
-                            Toast.makeText(
-                                context,
-                                getString(R.string.couchdb_read_failed, e.message ?: ""),
-                                Toast.LENGTH_LONG
-                            ).show()
+                AlertDialog.Builder(context)
+                    .setMessage(R.string.couchdb_confirm_read)
+                    .setPositiveButton(R.string.couchdb_yes) { _, _ ->
+                        val user = couchUserPref.text ?: ""
+                        val pass = couchPasswordPref.text ?: ""
+                        this@initSettingsScreen.lifecycleScope.launch {
+                            try {
+                                CouchDbHelper.readPrefs(context, endpoint, user, pass)
+                                if (couchShowLogsPref.isChecked) {
+                                    Toast.makeText(context, R.string.couchdb_read_success, Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                if (couchShowLogsPref.isChecked) {
+                                    Toast.makeText(
+                                        context,
+                                        getString(R.string.couchdb_read_failed, e.message ?: ""),
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
                         }
                     }
-                }
+                    .setNegativeButton(R.string.couchdb_abort, null)
+                    .show()
             } else {
                 if (couchShowLogsPref.isChecked) {
                     Toast.makeText(context, R.string.couchdb_endpoint_required, Toast.LENGTH_LONG).show()

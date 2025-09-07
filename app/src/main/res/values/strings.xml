@@ -129,7 +129,7 @@
     <string name="settings_category_metainfo">Metainfo Settings</string>
     <string name="settings_category_spotify_meta">Spotify Meta</string>
     <string name="settings_category_personal_sync">Personal Sync</string>
-    <string name="settings_category_couchdb">CouchDB</string>
+    <string name="settings_category_couchdb">CouchDB (Sync Settings &amp; Stations)</string>
     <string name="settings_category_about">About</string>
     <string name="settings_category_player">Player settings</string>
     <string name="settings_app_version">App Version</string>
@@ -198,4 +198,8 @@
     <string name="couchdb_read_failed">CouchDB read failed: %1$s</string>
     <string name="couchdb_endpoint_required">CouchDB endpoint required</string>
     <string name="couchdb_ready">CouchDB document ready</string>
+    <string name="couchdb_confirm_push">Push to CouchDB?</string>
+    <string name="couchdb_confirm_read">Read from CouchDB?</string>
+    <string name="couchdb_yes">Yes</string>
+    <string name="couchdb_abort">Abort</string>
 </resources>
