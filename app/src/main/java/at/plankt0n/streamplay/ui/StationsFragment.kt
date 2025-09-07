@@ -327,6 +327,9 @@ class StationsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        stationList.clear()
+        stationList.addAll(PreferencesHelper.getStations(requireContext()))
+        adapter.notifyDataSetChanged()
         parentFragment?.view
             ?.findViewById<ViewPager2>(R.id.main_view_pager)
             ?.isUserInputEnabled = false
