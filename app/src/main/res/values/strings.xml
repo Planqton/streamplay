@@ -197,4 +197,5 @@
     <string name="couchdb_read_success">CouchDB read completed</string>
     <string name="couchdb_read_failed">CouchDB read failed: %1$s</string>
     <string name="couchdb_endpoint_required">CouchDB endpoint required</string>
+    <string name="couchdb_ready">CouchDB document ready</string>
 </resources>

@@ -172,4 +172,41 @@ object CouchDbHelper {
             }
         }
     }
+
+    suspend fun ensureStationsDocument(
+        context: Context,
+        endpoint: String,
+        username: String,
+        password: String
+    ) {
+        val auth = if (username.isNotBlank() || password.isNotBlank()) {
+            Credentials.basic(username, password)
+        } else {
+            null
+        }
+        val (url, dbUrl) = buildUrls(endpoint)
+        ensureDatabase(dbUrl, auth, true)
+
+        val headBuilder = Request.Builder().url(url)
+        auth?.let { headBuilder.header("Authorization", it) }
+        headBuilder.header("Accept", "application/json")
+        val headRequest = headBuilder.head().build()
+        val headResponse = withContext(Dispatchers.IO) { client.newCall(headRequest).execute() }
+        if (headResponse.code == 404) {
+            val list = PreferencesHelper.getStations(context)
+            val json = Gson().toJson(mapOf("stations" to list))
+            val putBuilder = Request.Builder().url(url)
+            auth?.let { putBuilder.header("Authorization", it) }
+            putBuilder.header("Accept", "application/json")
+            val putRequest = putBuilder
+                .put(json.toRequestBody("application/json".toMediaType()))
+                .build()
+            val putResponse = withContext(Dispatchers.IO) { client.newCall(putRequest).execute() }
+            if (putResponse.code !in 200..299) {
+                throw Exception("HTTP ${putResponse.code}")
+            }
+        } else if (headResponse.code !in 200..299) {
+            throw Exception("HTTP ${headResponse.code}")
+        }
+    }
 }

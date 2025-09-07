@@ -573,9 +573,9 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 val pass = couchPasswordPref.text ?: ""
                 lifecycleScope.launch {
                     try {
-                        CouchDbHelper.syncStations(context, endpoint, user, pass)
+                        CouchDbHelper.ensureStationsDocument(context, endpoint, user, pass)
                         if (couchShowLogsPref.isChecked) {
-                            Toast.makeText(context, R.string.couchdb_sync_success, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, R.string.couchdb_ready, Toast.LENGTH_SHORT).show()
                         }
                     } catch (e: Exception) {
                         if (couchShowLogsPref.isChecked) {
