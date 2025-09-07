@@ -1,6 +1,7 @@
 package at.plankt0n.streamplay.helper
 
 import android.content.Context
+import at.plankt0n.streamplay.Keys
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -26,8 +27,12 @@ object CouchDbHelper {
         } else {
             null
         }
-        val url = endpoint.trimEnd('/').toHttpUrlOrNull() ?: throw IllegalArgumentException("Invalid URL")
-        if (url.pathSegments.size < 2) throw IllegalArgumentException("Endpoint must include database and document")
+        var fullEndpoint = endpoint.trimEnd('/')
+        var url = fullEndpoint.toHttpUrlOrNull() ?: throw IllegalArgumentException("Invalid URL")
+        if (url.pathSegments.size < 2) {
+            fullEndpoint = fullEndpoint.trimEnd('/') + "/${Keys.DEFAULT_COUCHDB_DATABASE}/${Keys.DEFAULT_COUCHDB_DOCUMENT}"
+            url = fullEndpoint.toHttpUrlOrNull() ?: throw IllegalArgumentException("Invalid URL")
+        }
 
         val dbUrl = url.newBuilder().removePathSegment(url.pathSegments.size - 1).build()
 
