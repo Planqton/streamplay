@@ -554,14 +554,13 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
     }
 
+    /** Ensure autosync modes remain mutually exclusive without disabling any inputs. */
     fun updateSyncPreferenceStates() {
-        val couchEnabled = couchAutoSyncPref.isChecked
-        val jsonEnabled = autoSyncPref.isChecked
-        personalUrlPref.isEnabled = !couchEnabled
-        personalSyncPref.isEnabled = !couchEnabled
-        personalExportPref.isEnabled = !couchEnabled
-        autoSyncPref.isEnabled = !couchEnabled
-        couchAutoSyncPref.isEnabled = !jsonEnabled
+        if (couchAutoSyncPref.isChecked) {
+            autoSyncPref.isChecked = false
+        } else if (autoSyncPref.isChecked) {
+            couchAutoSyncPref.isChecked = false
+        }
     }
 
     couchAutoSyncPref.setOnPreferenceChangeListener { _, newValue ->
