@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Possible categories a preference can belong to. */
-enum class SettingsCategory { PLAYER, PLAYBACK, UI, METAINFO, SPOTIFY_META, PERSONAL_SYNC, ABOUT }
+enum class SettingsCategory { PLAYER, PLAYBACK, UI, METAINFO, SPOTIFY_META, PERSONAL_SYNC, COUCHDB, ABOUT }
 
 private const val EXTRA_CATEGORY = "category"
 
@@ -153,6 +153,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 SettingsCategory.METAINFO -> getString(R.string.settings_category_metainfo)
                 SettingsCategory.SPOTIFY_META -> getString(R.string.settings_category_spotify_meta)
                 SettingsCategory.PERSONAL_SYNC -> getString(R.string.settings_category_personal_sync)
+                SettingsCategory.COUCHDB -> getString(R.string.settings_category_couchdb)
                 SettingsCategory.ABOUT -> getString(R.string.settings_category_about)
             }
             icon = when (cat) {
@@ -162,6 +163,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 SettingsCategory.METAINFO -> context.getDrawable(R.drawable.ic_sheet_discover)
                 SettingsCategory.SPOTIFY_META -> context.getDrawable(R.drawable.ic_sheet_settings)
                 SettingsCategory.PERSONAL_SYNC -> context.getDrawable(R.drawable.ic_sheet_settings)
+                SettingsCategory.COUCHDB -> context.getDrawable(R.drawable.ic_sheet_settings)
                 SettingsCategory.ABOUT -> context.getDrawable(R.mipmap.ic_launcher)
             }
         }
@@ -448,21 +450,21 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 value
             }
         }
-        category = SettingsCategory.PERSONAL_SYNC
+        category = SettingsCategory.COUCHDB
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
     val couchUserPref = EditTextPreference(context).apply {
         key = Keys.PREF_COUCHDB_USERNAME
         title = getString(R.string.settings_couchdb_username)
-        category = SettingsCategory.PERSONAL_SYNC
+        category = SettingsCategory.COUCHDB
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
     val couchPasswordPref = EditTextPreference(context).apply {
         key = Keys.PREF_COUCHDB_PASSWORD
         title = getString(R.string.settings_couchdb_password)
-        category = SettingsCategory.PERSONAL_SYNC
+        category = SettingsCategory.COUCHDB
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
@@ -470,7 +472,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         key = Keys.PREF_COUCHDB_SHOW_LOGS
         title = getString(R.string.settings_couchdb_show_logs)
         setDefaultValue(true)
-        category = SettingsCategory.PERSONAL_SYNC
+        category = SettingsCategory.COUCHDB
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
@@ -478,14 +480,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         key = Keys.PREF_AUTOSYNC_COUCHDB_STARTUP
         title = getString(R.string.settings_autosync_couchdb_startup)
         setDefaultValue(false)
-        category = SettingsCategory.PERSONAL_SYNC
+        category = SettingsCategory.COUCHDB
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
     val couchPushPref = Preference(context).apply {
         key = "couchdb_push"
         title = getString(R.string.settings_couchdb_push)
-        category = SettingsCategory.PERSONAL_SYNC
+        category = SettingsCategory.COUCHDB
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
         setOnPreferenceClickListener {
             val endpoint = couchEndpointPref.text ?: ""
@@ -520,7 +522,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     val couchReadPref = Preference(context).apply {
         key = "couchdb_read"
         title = getString(R.string.settings_couchdb_read)
-        category = SettingsCategory.PERSONAL_SYNC
+        category = SettingsCategory.COUCHDB
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
         setOnPreferenceClickListener {
             val endpoint = couchEndpointPref.text ?: ""

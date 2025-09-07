@@ -129,6 +129,7 @@
     <string name="settings_category_metainfo">Metainfo Settings</string>
     <string name="settings_category_spotify_meta">Spotify Meta</string>
     <string name="settings_category_personal_sync">Personal Sync</string>
+    <string name="settings_category_couchdb">CouchDB</string>
     <string name="settings_category_about">About</string>
     <string name="settings_category_player">Player settings</string>
     <string name="settings_app_version">App Version</string>
