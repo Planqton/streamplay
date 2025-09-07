@@ -19,6 +19,7 @@ import at.plankt0n.streamplay.data.CoverMode
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StationImportHelper
+import at.plankt0n.streamplay.helper.CouchDbHelper
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
@@ -476,9 +477,6 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     fun updateSyncPreferenceStates() {
         val couchEnabled = couchAutoSyncPref.isChecked
         val jsonEnabled = autoSyncPref.isChecked
-        couchEndpointPref.isEnabled = couchEnabled && couchAutoSyncPref.isEnabled
-        couchUserPref.isEnabled = couchEnabled && couchAutoSyncPref.isEnabled
-        couchPasswordPref.isEnabled = couchEnabled && couchAutoSyncPref.isEnabled
         personalUrlPref.isEnabled = !couchEnabled
         personalSyncPref.isEnabled = !couchEnabled
         personalExportPref.isEnabled = !couchEnabled
@@ -490,6 +488,18 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         val enabled = newValue as Boolean
         if (enabled) {
             autoSyncPref.isChecked = false
+            val endpoint = couchEndpointPref.text ?: ""
+            if (endpoint.isNotBlank()) {
+                val user = couchUserPref.text ?: ""
+                val pass = couchPasswordPref.text ?: ""
+                lifecycleScope.launch {
+                    try {
+                        CouchDbHelper.syncStations(context, endpoint, user, pass)
+                    } catch (e: Exception) {
+                        // ignore
+                    }
+                }
+            }
         }
         updateSyncPreferenceStates()
         true
