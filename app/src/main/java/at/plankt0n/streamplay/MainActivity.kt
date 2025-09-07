@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import at.plankt0n.streamplay.data.StationItem
@@ -80,12 +81,23 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                     runBlocking {
                         try {
                             CouchDbHelper.syncStations(this@MainActivity, endpoint, user, pass)
+                            Toast.makeText(
+                                this@MainActivity,
+                                R.string.couchdb_sync_success,
+                                Toast.LENGTH_SHORT
+                            ).show()
                             Log.d("COUCHDB AUTO SYNC>", "Auto sync completed")
                         } catch (e: Exception) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                getString(R.string.couchdb_sync_failed, e.message ?: ""),
+                                Toast.LENGTH_LONG
+                            ).show()
                             Log.e("COUCHDB AUTO SYNC>", "Auto sync failed: ${e.message}")
                         }
                     }
                 } else {
+                    Toast.makeText(this, R.string.couchdb_endpoint_required, Toast.LENGTH_LONG).show()
                     Log.d("COUCHDB AUTO SYNC>", "No endpoint configured")
                 }
             }

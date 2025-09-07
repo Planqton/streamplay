@@ -495,10 +495,19 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 lifecycleScope.launch {
                     try {
                         CouchDbHelper.syncStations(context, endpoint, user, pass)
+                        Toast.makeText(context, R.string.couchdb_sync_success, Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
-                        // ignore
+                        Toast.makeText(
+                            context,
+                            getString(R.string.couchdb_sync_failed, e.message ?: ""),
+                            Toast.LENGTH_LONG
+                        ).show()
+                        couchAutoSyncPref.isChecked = false
                     }
                 }
+            } else {
+                Toast.makeText(context, R.string.couchdb_endpoint_required, Toast.LENGTH_LONG).show()
+                return@setOnPreferenceChangeListener false
             }
         }
         updateSyncPreferenceStates()

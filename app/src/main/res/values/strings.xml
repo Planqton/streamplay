@@ -186,4 +186,7 @@
     <string name="settings_audiofocus_hold">Hold Audiofocus</string>
     <string name="settings_audiofocus_lower">Lower Audio</string>
     <string name="settings_resume_live_after_pause">Resume Live After Pause</string>
+    <string name="couchdb_sync_success">CouchDB sync completed</string>
+    <string name="couchdb_sync_failed">CouchDB sync failed: %1$s</string>
+    <string name="couchdb_endpoint_required">CouchDB endpoint required</string>
 </resources>
