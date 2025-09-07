@@ -496,7 +496,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 val pass = couchPasswordPref.text ?: ""
                 this@initSettingsScreen.lifecycleScope.launch {
                     try {
-                        CouchDbHelper.pushStations(context, endpoint, user, pass)
+                        CouchDbHelper.pushPrefs(context, endpoint, user, pass)
                         if (couchShowLogsPref.isChecked) {
                             Toast.makeText(context, R.string.couchdb_push_success, Toast.LENGTH_SHORT).show()
                         }
@@ -531,7 +531,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 val pass = couchPasswordPref.text ?: ""
                 this@initSettingsScreen.lifecycleScope.launch {
                     try {
-                        CouchDbHelper.readStations(context, endpoint, user, pass)
+                        CouchDbHelper.readPrefs(context, endpoint, user, pass)
                         if (couchShowLogsPref.isChecked) {
                             Toast.makeText(context, R.string.couchdb_read_success, Toast.LENGTH_SHORT).show()
                         }
@@ -573,7 +573,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 val pass = couchPasswordPref.text ?: ""
                 lifecycleScope.launch {
                     try {
-                        CouchDbHelper.ensureStationsDocument(context, endpoint, user, pass)
+                        CouchDbHelper.ensurePrefsDocument(context, endpoint, user, pass)
                         if (couchShowLogsPref.isChecked) {
                             Toast.makeText(context, R.string.couchdb_ready, Toast.LENGTH_SHORT).show()
                         }

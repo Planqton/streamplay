@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                     Log.d("COUCHDB AUTO SYNC>", "Starting auto sync")
                     runBlocking {
                         try {
-                            CouchDbHelper.syncStations(this@MainActivity, endpoint, user, pass)
+                            CouchDbHelper.syncPrefs(this@MainActivity, endpoint, user, pass)
                             if (showLogs) {
                                 Toast.makeText(
                                     this@MainActivity,
@@ -259,6 +259,9 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == Keys.PREF_SCREEN_ORIENTATION) {
             applyOrientationPreference()
+        }
+        if (!CouchDbHelper.isApplyingPrefs) {
+            PreferencesHelper.maybePushCouchDb(this)
         }
     }
 }

@@ -57,7 +57,8 @@ object PreferencesHelper {
             .apply()
     }
 
-    private fun maybePushCouchDb(context: Context) {
+    fun maybePushCouchDb(context: Context) {
+        if (CouchDbHelper.isApplyingPrefs) return
         val settings = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         val auto = settings.getBoolean(Keys.PREF_AUTOSYNC_COUCHDB_STARTUP, false)
         val endpoint = settings.getString(Keys.PREF_COUCHDB_ENDPOINT, "") ?: ""
@@ -69,7 +70,7 @@ object PreferencesHelper {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                CouchDbHelper.pushStations(context, endpoint, user, pass)
+                CouchDbHelper.pushPrefs(context, endpoint, user, pass)
                 if (showLogs) {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(context, R.string.couchdb_push_success, Toast.LENGTH_SHORT).show()

@@ -3,6 +3,8 @@ package at.plankt0n.streamplay.helper
 import android.content.Context
 import at.plankt0n.streamplay.Keys
 import com.google.gson.Gson
+import com.google.gson.JsonParser
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Credentials
@@ -15,6 +17,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
 object CouchDbHelper {
+    @Volatile
+    var isApplyingPrefs = false
+        private set
     private val client = OkHttpClient()
 
     private fun buildUrls(endpoint: String): Pair<HttpUrl, HttpUrl> {
@@ -55,7 +60,7 @@ object CouchDbHelper {
         }
     }
 
-    suspend fun syncStations(
+    suspend fun syncPrefs(
         context: Context,
         endpoint: String,
         username: String,
@@ -79,11 +84,19 @@ object CouchDbHelper {
                 val body = response.body?.string() ?: "{}"
                 val obj = JSONObject(body)
                 val stations = obj.optJSONArray("stations")?.toString() ?: "[]"
-                StationImportHelper.importStationsFromJson(context, stations, true)
+                val prefsObj = obj.optJSONObject("prefs")?.toString()
+                isApplyingPrefs = true
+                try {
+                    prefsObj?.let { applyPrefs(context, it) }
+                    StationImportHelper.importStationsFromJson(context, stations, true)
+                } finally {
+                    isApplyingPrefs = false
+                }
             }
             404 -> {
                 val list = PreferencesHelper.getStations(context)
-                val json = Gson().toJson(mapOf("stations" to list))
+                val prefsMap = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE).all
+                val json = Gson().toJson(mapOf("stations" to list, "prefs" to prefsMap))
                 val putBuilder = Request.Builder().url(url)
                 auth?.let { putBuilder.header("Authorization", it) }
                 putBuilder.header("Accept", "application/json")
@@ -98,7 +111,7 @@ object CouchDbHelper {
         }
     }
 
-    suspend fun pushStations(
+    suspend fun pushPrefs(
         context: Context,
         endpoint: String,
         username: String,
@@ -123,7 +136,8 @@ object CouchDbHelper {
         }
 
         val list = PreferencesHelper.getStations(context)
-        val data = mutableMapOf<String, Any>("stations" to list)
+        val prefsMap = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE).all
+        val data = mutableMapOf<String, Any>("stations" to list, "prefs" to prefsMap)
         rev?.takeIf { it.isNotBlank() }?.let { data["_rev"] = it }
         val json = Gson().toJson(data)
         val putBuilder = Request.Builder().url(url)
@@ -138,7 +152,7 @@ object CouchDbHelper {
         }
     }
 
-    suspend fun readStations(
+    suspend fun readPrefs(
         context: Context,
         endpoint: String,
         username: String,
@@ -162,7 +176,14 @@ object CouchDbHelper {
                 val body = response.body?.string() ?: "{}"
                 val obj = JSONObject(body)
                 val stations = obj.optJSONArray("stations")?.toString() ?: "[]"
-                StationImportHelper.importStationsFromJson(context, stations, true)
+                val prefsObj = obj.optJSONObject("prefs")?.toString()
+                isApplyingPrefs = true
+                try {
+                    prefsObj?.let { applyPrefs(context, it) }
+                    StationImportHelper.importStationsFromJson(context, stations, true)
+                } finally {
+                    isApplyingPrefs = false
+                }
             }
             404 -> {
                 throw Exception("Document not found")
@@ -173,7 +194,7 @@ object CouchDbHelper {
         }
     }
 
-    suspend fun ensureStationsDocument(
+    suspend fun ensurePrefsDocument(
         context: Context,
         endpoint: String,
         username: String,
@@ -194,7 +215,8 @@ object CouchDbHelper {
         val headResponse = withContext(Dispatchers.IO) { client.newCall(headRequest).execute() }
         if (headResponse.code == 404) {
             val list = PreferencesHelper.getStations(context)
-            val json = Gson().toJson(mapOf("stations" to list))
+            val prefsMap = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE).all
+            val json = Gson().toJson(mapOf("stations" to list, "prefs" to prefsMap))
             val putBuilder = Request.Builder().url(url)
             auth?.let { putBuilder.header("Authorization", it) }
             putBuilder.header("Accept", "application/json")
@@ -208,5 +230,36 @@ object CouchDbHelper {
         } else if (headResponse.code !in 200..299) {
             throw Exception("HTTP ${headResponse.code}")
         }
+    }
+
+    private fun applyPrefs(context: Context, json: String) {
+        val obj = JsonParser.parseString(json).asJsonObject
+        val prefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        val editor = prefs.edit().clear()
+        for ((key, value) in obj.entrySet()) {
+            when {
+                value.isJsonPrimitive -> {
+                    val prim = value.asJsonPrimitive
+                    when {
+                        prim.isBoolean -> editor.putBoolean(key, prim.asBoolean)
+                        prim.isNumber -> {
+                            val num = prim.asNumber
+                            if (num.toString().contains('.')) {
+                                editor.putFloat(key, num.toFloat())
+                            } else {
+                                editor.putLong(key, num.toLong())
+                            }
+                        }
+                        prim.isString -> editor.putString(key, prim.asString)
+                    }
+                }
+                value.isJsonArray -> {
+                    val type = object : TypeToken<Set<String>>() {}.type
+                    val set: Set<String> = Gson().fromJson(value, type)
+                    editor.putStringSet(key, set)
+                }
+            }
+        }
+        editor.apply()
     }
 }
