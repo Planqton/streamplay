@@ -52,7 +52,6 @@ import com.google.android.material.imageview.ShapeableImageView
 import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
 import android.widget.Toast
 import kotlin.math.min
-import android.view.SoundEffectConstants
 import android.view.HapticFeedbackConstants
 
 class PlayerFragment : Fragment() {
@@ -305,7 +304,8 @@ class PlayerFragment : Fragment() {
                 updateOverlayUI(index)
                 updateManualLogButtonState(spotifyTrackViewModel.trackInfo.value)
                 if (prefs.getBoolean(Keys.PREF_CHANNEL_SWITCH_FEEDBACK, false)) {
-                    view?.playSoundEffect(SoundEffectConstants.CLICK)
+                    val audioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK)
                     view?.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                 }
             },
