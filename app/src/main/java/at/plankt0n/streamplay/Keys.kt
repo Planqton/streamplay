@@ -22,6 +22,7 @@ object Keys {
     const val PREF_COVER_ANIMATION_STYLE = "cover_animation_style"
     const val PREF_SCREEN_ORIENTATION = "screen_orientation"
     const val PREF_RESUME_LIVE_AFTER_PAUSE = "resume_live_after_pause"
+    const val PREF_CHANNEL_SWITCH_FEEDBACK = "channel_switch_feedback"
 
     const val PREF_PERSONAL_SYNC_URL = "personal_sync_url"
     const val DEFAULT_PERSONAL_SYNC_URL = "https://github.com/Planqton/streamplay/blob/main/teststations.json"
