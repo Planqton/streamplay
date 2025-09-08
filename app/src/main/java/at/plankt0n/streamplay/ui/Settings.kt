@@ -233,6 +233,14 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
     }
 
+    val channelSwitchFeedbackPref = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_CHANNEL_SWITCH_FEEDBACK
+        title = getString(R.string.settings_channel_switch_feedback)
+        setDefaultValue(false)
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
     val bannerSwitch = SwitchPreferenceCompat(context).apply {
         key = "show_exoplayer_banner"
         title = getString(R.string.settings_exoplayer_infobanner)
@@ -726,6 +734,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         minimizeSwitch,
         delayPreference,
         orientationPref,
+        channelSwitchFeedbackPref,
         bannerSwitch,
         resumeLiveSwitch,
         backgroundEffectPref,

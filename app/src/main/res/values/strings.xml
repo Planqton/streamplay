@@ -163,6 +163,7 @@
     <string name="minimizing_in">Minimizing in %1$d s</string>
     <string name="no_metadata_available">Keine Informationen verfügbar</string>
     <string name="settings_exoplayer_infobanner">Show Exoplayer Infobanner</string>
+    <string name="settings_channel_switch_feedback">Station change feedback</string>
     <string name="connecting">Verbindung wird hergestellt…</string>
     <string name="connected">Connected!</string>
     <string name="playback_error">Error: %1$s</string>
