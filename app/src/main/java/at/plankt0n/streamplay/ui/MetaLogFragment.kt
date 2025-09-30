@@ -3,15 +3,18 @@ package at.plankt0n.streamplay.ui
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.print.PrintAttributes
+import android.print.PrintManager
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.EditText
 import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.ImageButton
-import android.text.Editable
-import android.text.TextWatcher
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -19,6 +22,7 @@ import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.adapter.MetaLogAdapter
 import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.helper.MetaLogHelper
+import at.plankt0n.streamplay.helper.MetaLogPrintAdapter
 
 class MetaLogFragment : Fragment() {
     private lateinit var adapter: MetaLogAdapter
@@ -69,6 +73,10 @@ class MetaLogFragment : Fragment() {
             allLogs.clear()
             filterLogs("")
         }
+
+        view.findViewById<Button>(R.id.buttonPrintLogs).setOnClickListener {
+            printLogs()
+        }
     }
 
     override fun onResume() {
@@ -90,5 +98,27 @@ class MetaLogFragment : Fragment() {
             matchesQuery && manualOk
         }
         adapter.setItems(filtered)
+    }
+
+    private fun printLogs() {
+        val currentLogs = adapter.getItems()
+        if (currentLogs.isEmpty()) {
+            Toast.makeText(requireContext(), R.string.print_logs_empty, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val printManager = requireContext().getSystemService(PrintManager::class.java)
+        if (printManager == null) {
+            Toast.makeText(requireContext(), R.string.print_logs_unavailable, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val printAdapter = MetaLogPrintAdapter(requireContext(), currentLogs)
+        val attributes = PrintAttributes.Builder()
+            .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+            .setColorMode(PrintAttributes.COLOR_MODE_MONOCHROME)
+            .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
+            .build()
+        val jobName = getString(R.string.print_logs_job_name)
+        printManager.print(jobName, printAdapter, attributes)
     }
 }

@@ -94,6 +94,17 @@
     <string name="clear_logs">Clear Logs</string>
     <string name="filter_manual_logs">Show only manual logs</string>
     <string name="manual_log_saved">Manual log saved</string>
+    <string name="print_logs">Print</string>
+    <string name="print_logs_job_name">Meta log export</string>
+    <string name="print_logs_header">Meta log overview</string>
+    <string name="print_logs_subtitle">Generated on %1$s</string>
+    <string name="print_logs_time_label">Time: %1$s</string>
+    <string name="print_logs_station_label">Station: %1$s</string>
+    <string name="print_logs_track_label">Track: %1$s</string>
+    <string name="print_logs_manual_flag">Marked manually</string>
+    <string name="print_logs_empty">No logs available to print</string>
+    <string name="print_logs_page_footer">Page %1$d of %2$d</string>
+    <string name="print_logs_unavailable">Printing service is not available</string>
 
     <string name="drag_handle_desc">Move station</string>
 
