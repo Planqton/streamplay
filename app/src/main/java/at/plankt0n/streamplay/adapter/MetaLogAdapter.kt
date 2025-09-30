@@ -23,6 +23,8 @@ class MetaLogAdapter(
         notifyDataSetChanged()
     }
 
+    fun getItems(): List<MetaLogEntry> = items.toList()
+
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val line1: TextView = view.findViewById(R.id.log_line1)
         val line2: TextView = view.findViewById(R.id.log_line2)
