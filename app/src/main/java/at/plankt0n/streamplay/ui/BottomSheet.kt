@@ -1,6 +1,7 @@
 package at.plankt0n.streamplay.ui
 
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -14,6 +15,7 @@ import at.plankt0n.streamplay.ui.DiscoverFragment
 import at.plankt0n.streamplay.MainActivity
 import at.plankt0n.streamplay.ui.SettingsFragment
 import at.plankt0n.streamplay.ui.MetaLogFragment
+import at.plankt0n.streamplay.ToolsActivity
 
 class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
 
@@ -48,6 +50,11 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
         view.findViewById<LinearLayout>(R.id.option_logs).setOnClickListener {
             dismiss()
             openMetaLogFragment()
+        }
+
+        view.findViewById<LinearLayout>(R.id.option_tools).setOnClickListener {
+            dismiss()
+            openTools()
         }
 
         // Inflate settings fragment into this sheet
@@ -97,6 +104,10 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
             .replace(R.id.fragment_container, MetaLogFragment())
             .addToBackStack(null)
             .commit()
+    }
+
+    private fun openTools() {
+        startActivity(Intent(requireContext(), ToolsActivity::class.java))
     }
 
 }
