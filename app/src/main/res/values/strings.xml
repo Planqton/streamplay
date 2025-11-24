@@ -202,4 +202,18 @@
     <string name="couchdb_confirm_read">Read from CouchDB?</string>
     <string name="couchdb_yes">Yes</string>
     <string name="couchdb_abort">Abort</string>
+    <string name="menu_tools_list">Werkzeuge</string>
+    <string name="menu_tools_add">Werkzeug anlegen</string>
+    <string name="menu_open_tools_header">Geöffnete Werkzeuge</string>
+    <string name="tools_list_title">Werkzeug-Tabelle</string>
+    <string name="tools_add_title">Werkzeug anlegen</string>
+    <string name="tools_detail_title">Werkzeug %1$s bearbeiten</string>
+    <string name="tools_detail_nav_title">Werkzeug #%1$d</string>
+    <string name="field_order_number">Bestellnummer</string>
+    <string name="field_description">Beschreibung</string>
+    <string name="validation_required">Bitte alle Felder ausfüllen.</string>
+    <string name="toast_tool_saved">Werkzeug gespeichert</string>
+    <string name="toast_tool_missing">Werkzeug nicht gefunden</string>
+    <string name="drawer_open">Navigation öffnen</string>
+    <string name="drawer_close">Navigation schließen</string>
 </resources>

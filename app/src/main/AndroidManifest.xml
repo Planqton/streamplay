@@ -36,6 +36,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ToolsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.StreamPlay" />
+
         <service
             android:name=".StreamingService"
             android:exported="true"
