@@ -19,7 +19,7 @@ import at.plankt0n.streamplay.data.CoverMode
 import at.plankt0n.streamplay.helper.LiveCoverHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StationImportHelper
-import at.plankt0n.streamplay.helper.CouchDbHelper
+import at.plankt0n.streamplay.helper.StreamplayApiHelper
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Possible categories a preference can belong to. */
-enum class SettingsCategory { PLAYER, PLAYBACK, UI, METAINFO, SPOTIFY_META, PERSONAL_SYNC, COUCHDB, ABOUT }
+enum class SettingsCategory { PLAYER, PLAYBACK, UI, METAINFO, SPOTIFY_META, PERSONAL_SYNC, API_SYNC, ABOUT }
 
 private const val EXTRA_CATEGORY = "category"
 
@@ -153,7 +153,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 SettingsCategory.METAINFO -> getString(R.string.settings_category_metainfo)
                 SettingsCategory.SPOTIFY_META -> getString(R.string.settings_category_spotify_meta)
                 SettingsCategory.PERSONAL_SYNC -> getString(R.string.settings_category_personal_sync)
-                SettingsCategory.COUCHDB -> getString(R.string.settings_category_couchdb)
+                SettingsCategory.API_SYNC -> getString(R.string.settings_category_api_sync)
                 SettingsCategory.ABOUT -> getString(R.string.settings_category_about)
             }
             icon = when (cat) {
@@ -163,7 +163,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 SettingsCategory.METAINFO -> context.getDrawable(R.drawable.ic_sheet_discover)
                 SettingsCategory.SPOTIFY_META -> context.getDrawable(R.drawable.ic_sheet_settings)
                 SettingsCategory.PERSONAL_SYNC -> context.getDrawable(R.drawable.ic_sheet_settings)
-                SettingsCategory.COUCHDB -> context.getDrawable(R.drawable.ic_sheet_settings)
+                SettingsCategory.API_SYNC -> context.getDrawable(R.drawable.ic_sheet_settings)
                 SettingsCategory.ABOUT -> context.getDrawable(R.mipmap.ic_launcher)
             }
         }
@@ -439,9 +439,37 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
     }
 
-    val couchEndpointPref = EditTextPreference(context).apply {
-        key = Keys.PREF_COUCHDB_ENDPOINT
-        title = getString(R.string.settings_couchdb_endpoint)
+    // StreamPlay API Settings
+    val defaultApiEndpoint = Keys.DEFAULT_API_ENDPOINT
+    val apiPrefs = PreferenceManager.getDefaultSharedPreferences(context)
+    if (!apiPrefs.contains(Keys.PREF_API_ENDPOINT)) {
+        apiPrefs.edit().putString(Keys.PREF_API_ENDPOINT, defaultApiEndpoint).apply()
+    }
+
+    val apiEndpointPref = EditTextPreference(context).apply {
+        key = Keys.PREF_API_ENDPOINT
+        title = getString(R.string.settings_api_endpoint)
+        setDefaultValue(defaultApiEndpoint)
+        summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
+            val value = pref.text
+            if (value.isNullOrBlank()) defaultApiEndpoint else value
+        }
+        category = SettingsCategory.API_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        setOnPreferenceChangeListener { _, newValue ->
+            val newEndpoint = newValue as String
+            PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(Keys.PREF_API_ENDPOINT, newEndpoint.ifBlank { defaultApiEndpoint })
+                .apply()
+            true
+        }
+    }
+
+    val apiUsernamePref = EditTextPreference(context).apply {
+        key = Keys.PREF_API_USERNAME
+        title = getString(R.string.settings_api_username)
+        setDefaultValue("")
         summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
             val value = pref.text
             if (value.isNullOrBlank()) {
@@ -450,190 +478,96 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 value
             }
         }
-        category = SettingsCategory.COUCHDB
+        category = SettingsCategory.API_SYNC
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
-    val couchUserPref = EditTextPreference(context).apply {
-        key = Keys.PREF_COUCHDB_USERNAME
-        title = getString(R.string.settings_couchdb_username)
+    val apiPasswordPref = EditTextPreference(context).apply {
+        key = Keys.PREF_API_PASSWORD
+        title = getString(R.string.settings_api_password)
+        setDefaultValue("")
         summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
             val value = pref.text
             if (value.isNullOrBlank()) {
                 pref.context.getString(R.string.settings_personal_sync_url_empty)
             } else {
-                value
+                pref.context.getString(R.string.settings_api_password_hidden)
             }
         }
-        category = SettingsCategory.COUCHDB
+        category = SettingsCategory.API_SYNC
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
-    val couchPasswordPref = EditTextPreference(context).apply {
-        key = Keys.PREF_COUCHDB_PASSWORD
-        title = getString(R.string.settings_couchdb_password)
-        summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
-            val value = pref.text
-            if (value.isNullOrBlank()) {
-                pref.context.getString(R.string.settings_personal_sync_url_empty)
-            } else {
-                buildString { repeat(value.length) { append('•') } }
-            }
-        }
-        category = SettingsCategory.COUCHDB
-        icon = context.getDrawable(R.drawable.ic_sheet_settings)
-    }
-
-    val couchShowLogsPref = SwitchPreferenceCompat(context).apply {
-        key = Keys.PREF_COUCHDB_SHOW_LOGS
-        title = getString(R.string.settings_couchdb_show_logs)
-        setDefaultValue(true)
-        category = SettingsCategory.COUCHDB
-        icon = context.getDrawable(R.drawable.ic_sheet_settings)
-    }
-
-    val couchAutoSyncPref = SwitchPreferenceCompat(context).apply {
-        key = Keys.PREF_AUTOSYNC_COUCHDB_STARTUP
-        title = getString(R.string.settings_autosync_couchdb_startup)
-        setDefaultValue(false)
-        category = SettingsCategory.COUCHDB
-        icon = context.getDrawable(R.drawable.ic_sheet_settings)
-    }
-
-    val couchPushPref = Preference(context).apply {
-        key = "couchdb_push"
-        title = getString(R.string.settings_couchdb_push)
-        category = SettingsCategory.COUCHDB
+    val apiTestLoginPref = Preference(context).apply {
+        key = "api_test_login"
+        title = getString(R.string.settings_api_test_login)
+        category = SettingsCategory.API_SYNC
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
         setOnPreferenceClickListener {
-            val endpoint = couchEndpointPref.text ?: ""
-            if (endpoint.isNotBlank()) {
-                AlertDialog.Builder(context)
-                    .setMessage(R.string.couchdb_confirm_push)
-                    .setPositiveButton(R.string.couchdb_yes) { _, _ ->
-                        val user = couchUserPref.text ?: ""
-                        val pass = couchPasswordPref.text ?: ""
-                        this@initSettingsScreen.lifecycleScope.launch {
-                            try {
-                                CouchDbHelper.pushPrefs(context, endpoint, user, pass)
-                                if (couchShowLogsPref.isChecked) {
-                                    Toast.makeText(context, R.string.couchdb_push_success, Toast.LENGTH_SHORT).show()
-                                }
-                            } catch (e: Exception) {
-                                if (couchShowLogsPref.isChecked) {
-                                    Toast.makeText(
-                                        context,
-                                        getString(R.string.couchdb_push_failed, e.message ?: ""),
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                            }
-                        }
-                    }
-                    .setNegativeButton(R.string.couchdb_abort, null)
-                    .show()
-            } else {
-                if (couchShowLogsPref.isChecked) {
-                    Toast.makeText(context, R.string.couchdb_endpoint_required, Toast.LENGTH_LONG).show()
+            summary = getString(R.string.settings_api_testing)
+            this@initSettingsScreen.lifecycleScope.launch {
+                val result = StreamplayApiHelper.testLogin(
+                    context,
+                    apiUsernamePref.text,
+                    apiPasswordPref.text
+                )
+                summary = when (result) {
+                    is StreamplayApiHelper.ApiResult.Success ->
+                        getString(R.string.settings_api_success, result.data)
+                    is StreamplayApiHelper.ApiResult.Error ->
+                        getString(R.string.settings_api_error, result.message)
                 }
             }
             true
         }
     }
 
-    val couchReadPref = Preference(context).apply {
-        key = "couchdb_read"
-        title = getString(R.string.settings_couchdb_read)
-        category = SettingsCategory.COUCHDB
+    val apiPushProfilePref = Preference(context).apply {
+        key = "api_push_profile"
+        title = getString(R.string.settings_api_push_profile)
+        category = SettingsCategory.API_SYNC
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
         setOnPreferenceClickListener {
-            val endpoint = couchEndpointPref.text ?: ""
-            if (endpoint.isNotBlank()) {
-                AlertDialog.Builder(context)
-                    .setMessage(R.string.couchdb_confirm_read)
-                    .setPositiveButton(R.string.couchdb_yes) { _, _ ->
-                        val user = couchUserPref.text ?: ""
-                        val pass = couchPasswordPref.text ?: ""
-                        this@initSettingsScreen.lifecycleScope.launch {
-                            try {
-                                CouchDbHelper.readPrefs(context, endpoint, user, pass)
-                                if (couchShowLogsPref.isChecked) {
-                                    Toast.makeText(context, R.string.couchdb_read_success, Toast.LENGTH_SHORT).show()
-                                }
-                            } catch (e: Exception) {
-                                if (couchShowLogsPref.isChecked) {
-                                    Toast.makeText(
-                                        context,
-                                        getString(R.string.couchdb_read_failed, e.message ?: ""),
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                            }
-                        }
-                    }
-                    .setNegativeButton(R.string.couchdb_abort, null)
-                    .show()
-            } else {
-                if (couchShowLogsPref.isChecked) {
-                    Toast.makeText(context, R.string.couchdb_endpoint_required, Toast.LENGTH_LONG).show()
+            summary = getString(R.string.settings_api_pushing)
+            this@initSettingsScreen.lifecycleScope.launch {
+                val result = StreamplayApiHelper.pushToProfile(
+                    context,
+                    apiUsernamePref.text,
+                    apiPasswordPref.text
+                )
+                summary = when (result) {
+                    is StreamplayApiHelper.ApiResult.Success ->
+                        getString(R.string.settings_api_success, result.data)
+                    is StreamplayApiHelper.ApiResult.Error ->
+                        getString(R.string.settings_api_error, result.message)
                 }
             }
             true
         }
     }
 
-    /** Ensure autosync modes remain mutually exclusive without disabling any inputs. */
-    fun updateSyncPreferenceStates() {
-        if (couchAutoSyncPref.isChecked) {
-            autoSyncPref.isChecked = false
-        } else if (autoSyncPref.isChecked) {
-            couchAutoSyncPref.isChecked = false
-        }
-    }
-
-    couchAutoSyncPref.setOnPreferenceChangeListener { _, newValue ->
-        val enabled = newValue as Boolean
-        if (enabled) {
-            autoSyncPref.isChecked = false
-            val endpoint = couchEndpointPref.text ?: ""
-            if (endpoint.isNotBlank()) {
-                val user = couchUserPref.text ?: ""
-                val pass = couchPasswordPref.text ?: ""
-                lifecycleScope.launch {
-                    try {
-                        CouchDbHelper.ensurePrefsDocument(context, endpoint, user, pass)
-                        if (couchShowLogsPref.isChecked) {
-                            Toast.makeText(context, R.string.couchdb_ready, Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: Exception) {
-                        if (couchShowLogsPref.isChecked) {
-                            Toast.makeText(
-                                context,
-                                getString(R.string.couchdb_sync_failed, e.message ?: ""),
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                        couchAutoSyncPref.isChecked = false
-                    }
+    val apiReadProfilePref = Preference(context).apply {
+        key = "api_read_profile"
+        title = getString(R.string.settings_api_read_profile)
+        category = SettingsCategory.API_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        setOnPreferenceClickListener {
+            summary = getString(R.string.settings_api_reading)
+            this@initSettingsScreen.lifecycleScope.launch {
+                val result = StreamplayApiHelper.readFromProfile(
+                    context,
+                    apiUsernamePref.text,
+                    apiPasswordPref.text
+                )
+                summary = when (result) {
+                    is StreamplayApiHelper.ApiResult.Success ->
+                        getString(R.string.settings_api_read_success, result.data.stations.size)
+                    is StreamplayApiHelper.ApiResult.Error ->
+                        getString(R.string.settings_api_error, result.message)
                 }
-            } else {
-                if (couchShowLogsPref.isChecked) {
-                    Toast.makeText(context, R.string.couchdb_endpoint_required, Toast.LENGTH_LONG).show()
-                }
-                return@setOnPreferenceChangeListener false
             }
+            true
         }
-        updateSyncPreferenceStates()
-        true
-    }
-
-    autoSyncPref.setOnPreferenceChangeListener { _, newValue ->
-        val enabled = newValue as Boolean
-        if (enabled) {
-            couchAutoSyncPref.isChecked = false
-        }
-        updateSyncPreferenceStates()
-        true
     }
 
     val versionPref = Preference(context).apply {
@@ -738,13 +672,12 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         autoSyncPref,
         personalSyncPref,
         personalExportPref,
-        couchEndpointPref,
-        couchUserPref,
-        couchPasswordPref,
-        couchShowLogsPref,
-        couchAutoSyncPref,
-        couchPushPref,
-        couchReadPref,
+        apiEndpointPref,
+        apiUsernamePref,
+        apiPasswordPref,
+        apiTestLoginPref,
+        apiPushProfilePref,
+        apiReadProfilePref,
         versionPref,
         updatePref,
         addTestPref,
@@ -763,5 +696,4 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     preferenceScreen = screen
 
     updateSpotifyToggle()
-    updateSyncPreferenceStates()
 }

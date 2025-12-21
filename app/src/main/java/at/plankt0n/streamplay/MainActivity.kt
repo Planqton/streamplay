@@ -24,7 +24,6 @@ import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.ScreenOrientationMode
 import at.plankt0n.streamplay.ui.MainPagerFragment
 import at.plankt0n.streamplay.ui.DiscoverFragment
-import at.plankt0n.streamplay.helper.CouchDbHelper
 import at.plankt0n.streamplay.helper.StationImportHelper
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -73,62 +72,23 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     private fun autoSyncIfEnabled() {
         val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
-        when {
-            prefs.getBoolean(Keys.PREF_AUTOSYNC_COUCHDB_STARTUP, false) -> {
-                val endpoint = prefs.getString(Keys.PREF_COUCHDB_ENDPOINT, "") ?: ""
-                val showLogs = prefs.getBoolean(Keys.PREF_COUCHDB_SHOW_LOGS, true)
-                if (endpoint.isNotBlank()) {
-                    val user = prefs.getString(Keys.PREF_COUCHDB_USERNAME, "") ?: ""
-                    val pass = prefs.getString(Keys.PREF_COUCHDB_PASSWORD, "") ?: ""
-                    Log.d("COUCHDB AUTO SYNC>", "Starting auto sync")
-                    runBlocking {
-                        try {
-                            CouchDbHelper.syncPrefs(this@MainActivity, endpoint, user, pass)
-                            if (showLogs) {
-                                Toast.makeText(
-                                    this@MainActivity,
-                                    R.string.couchdb_sync_success,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            Log.d("COUCHDB AUTO SYNC>", "Auto sync completed")
-                        } catch (e: Exception) {
-                            if (showLogs) {
-                                Toast.makeText(
-                                    this@MainActivity,
-                                    getString(R.string.couchdb_sync_failed, e.message ?: ""),
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                            Log.e("COUCHDB AUTO SYNC>", "Auto sync failed: ${e.message}")
-                        }
+        if (prefs.getBoolean(Keys.PREF_AUTOSYNC_JSON_STARTUP, false)) {
+            val url = prefs.getString(Keys.PREF_PERSONAL_SYNC_URL, "") ?: ""
+            if (url.isNotBlank()) {
+                Log.d("JSON AUTO SYNC>", "Starting auto sync")
+                runBlocking {
+                    try {
+                        StationImportHelper.importStationsFromUrl(this@MainActivity, url, true)
+                        Log.d("JSON AUTO SYNC>", "Auto sync completed")
+                    } catch (e: Exception) {
+                        Log.e("JSON AUTO SYNC>", "Auto sync failed: ${e.message}")
                     }
-                } else {
-                    if (showLogs) {
-                        Toast.makeText(this, R.string.couchdb_endpoint_required, Toast.LENGTH_LONG).show()
-                    }
-                    Log.d("COUCHDB AUTO SYNC>", "No endpoint configured")
                 }
+            } else {
+                Log.d("JSON AUTO SYNC>", "No personal URL configured")
             }
-            prefs.getBoolean(Keys.PREF_AUTOSYNC_JSON_STARTUP, false) -> {
-                val url = prefs.getString(Keys.PREF_PERSONAL_SYNC_URL, "") ?: ""
-                if (url.isNotBlank()) {
-                    Log.d("JSON AUTO SYNC>", "Starting auto sync")
-                    runBlocking {
-                        try {
-                            StationImportHelper.importStationsFromUrl(this@MainActivity, url, true)
-                            Log.d("JSON AUTO SYNC>", "Auto sync completed")
-                        } catch (e: Exception) {
-                            Log.e("JSON AUTO SYNC>", "Auto sync failed: ${e.message}")
-                        }
-                    }
-                } else {
-                    Log.d("JSON AUTO SYNC>", "No personal URL configured")
-                }
-            }
-            else -> {
-                Log.d("JSON AUTO SYNC>", "Auto sync disabled")
-            }
+        } else {
+            Log.d("JSON AUTO SYNC>", "Auto sync disabled")
         }
     }
 
@@ -227,49 +187,13 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             .setTitle("Onboarding")
             .setMessage("Do you want help with setup?")
             .setPositiveButton(android.R.string.yes) { _, _ ->
-                askCouchDbDocument()
+                askSpotifyIfNeeded()
             }
             .setNegativeButton(android.R.string.no) { _, _ ->
                 finishOnboarding()
             }
             .setCancelable(false)
             .show()
-    }
-
-    private fun askCouchDbDocument() {
-        AlertDialog.Builder(this)
-            .setTitle("CouchDB")
-            .setMessage("Is there an existing document on CouchDB?")
-            .setPositiveButton(android.R.string.yes) { _, _ ->
-                askCouchDbConfig()
-            }
-            .setNegativeButton(android.R.string.no) { _, _ ->
-                AlertDialog.Builder(this)
-                    .setTitle("CouchDB")
-                    .setMessage("Set up a CouchDB (Docker or otherwise). Define an endpoint and configure it here.")
-                    .setPositiveButton(android.R.string.ok) { _, _ ->
-                        askCouchDbConfig()
-                    }
-                    .setCancelable(false)
-                    .show()
-            }
-            .setCancelable(false)
-            .show()
-    }
-
-    private fun askCouchDbConfig() {
-        askForInput("CouchDB endpoint") { endpoint ->
-            askForInput("CouchDB user") { user ->
-                askForInput("CouchDB password", true) { pass ->
-                    prefs.edit()
-                        .putString(Keys.PREF_COUCHDB_ENDPOINT, endpoint)
-                        .putString(Keys.PREF_COUCHDB_USERNAME, user)
-                        .putString(Keys.PREF_COUCHDB_PASSWORD, pass)
-                        .apply()
-                    askSpotifyIfNeeded()
-                }
-            }
-        }
     }
 
     private fun askSpotifyIfNeeded() {
@@ -335,10 +259,6 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == Keys.PREF_SCREEN_ORIENTATION) {
             applyOrientationPreference()
-            return
-        }
-        if (!CouchDbHelper.isApplyingPrefs) {
-            PreferencesHelper.maybePushCouchDb(this)
         }
     }
 }

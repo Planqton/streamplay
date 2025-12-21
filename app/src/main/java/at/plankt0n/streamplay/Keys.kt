@@ -26,12 +26,14 @@ object Keys {
     const val PREF_PERSONAL_SYNC_URL = "personal_sync_url"
     const val DEFAULT_PERSONAL_SYNC_URL = "https://github.com/Planqton/streamplay/blob/main/teststations.json"
     const val PREF_AUTOSYNC_JSON_STARTUP = "autosync_json_startup"
-    const val PREF_COUCHDB_ENDPOINT = "couchdb_endpoint"
-    const val PREF_COUCHDB_USERNAME = "couchdb_username"
-    const val PREF_COUCHDB_PASSWORD = "couchdb_password"
-    const val PREF_AUTOSYNC_COUCHDB_STARTUP = "autosync_couchdb_startup"
-    const val PREF_COUCHDB_SHOW_LOGS = "couchdb_show_logs"
     const val PREF_ONBOARDING_DONE = "onboarding_done"
+
+    // StreamPlay API Settings
+    const val PREF_API_ENDPOINT = "api_endpoint"
+    const val DEFAULT_API_ENDPOINT = "https://streamplayapi.printspace.at"
+    const val PREF_API_USERNAME = "api_username"
+    const val PREF_API_PASSWORD = "api_password"
+    const val PREF_API_TOKEN = "api_token"
 
 
 
