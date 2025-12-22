@@ -46,11 +46,14 @@ import at.plankt0n.streamplay.viewmodel.UITrackInfo
 import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.Keys
 import androidx.core.graphics.ColorUtils
+import androidx.annotation.OptIn
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
 import android.widget.Toast
 
+@OptIn(UnstableApi::class)
 class PlayerFragment : Fragment() {
 
     private var initialized = false
@@ -430,16 +433,18 @@ class PlayerFragment : Fragment() {
                 ?.getMediaItemAt(viewPager.currentItem)
                 ?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
 
-            // Bestimme die Cover-URL (gleiche Logik wie für meta_cover_image unten)
+            // Bestimme die Cover-URL für ViewPager
             val coverUrlToUse = if (coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
                 trackInfo.bestCoverUrl!!
             } else {
-                defaultIconUrl
+                defaultIconUrl.takeIf { it.isNotBlank() }
             }
 
             // Cover-URL im Adapter speichern für späteres Rebinding
             val currentPosition = viewPager.currentItem
-            coverPageAdapter?.setCoverUrlForPosition(currentPosition, coverUrlToUse)
+            if (coverUrlToUse != null) {
+                coverPageAdapter?.setCoverUrlForPosition(currentPosition, coverUrlToUse)
+            }
 
             // Funktion zum direkten Aktualisieren des Covers
             val updateCoverImage: () -> Unit = {
@@ -447,29 +452,35 @@ class PlayerFragment : Fragment() {
                 val holder = recyclerView?.findViewHolderForAdapterPosition(currentPosition)
                         as? CoverPageAdapter.CoverViewHolder
                 if (holder != null) {
-                    // Exakt gleicher Code wie für meta_cover_image
-                    Glide.with(requireContext())
-                        .load(coverUrlToUse)
-                        .placeholder(R.drawable.ic_placeholder_logo)
-                        .error(R.drawable.ic_stationcover_placeholder)
-                        .into(holder.coverImage)
+                    // Bei leerer URL direkt Placeholder setzen
+                    if (coverUrlToUse.isNullOrBlank()) {
+                        holder.coverImage.setImageResource(R.drawable.ic_placeholder_logo)
+                        holder.itemView.setBackgroundColor(requireContext().getColor(R.color.default_background))
+                    } else {
+                        // Cover mit URL laden
+                        Glide.with(requireContext())
+                            .load(coverUrlToUse)
+                            .placeholder(R.drawable.ic_placeholder_logo)
+                            .error(R.drawable.ic_stationcover_placeholder)
+                            .into(holder.coverImage)
 
-                    // Hintergrund-Effekt
-                    LiveCoverHelper.loadCoverWithBackground(
-                        context = requireContext(),
-                        imageUrl = coverUrlToUse,
-                        imageView = holder.coverImage,
-                        backgroundTarget = holder.itemView,
-                        defaultColor = requireContext().getColor(R.color.default_background),
-                        lastColor = holder.lastColor,
-                        lastEffect = holder.lastEffect,
-                        effect = backgroundEffect,
-                        onNewColor = {
-                            holder.lastColor = it
-                            updateOverlayColors(it)
-                        },
-                        onNewEffect = { holder.lastEffect = it }
-                    )
+                        // Hintergrund-Effekt
+                        LiveCoverHelper.loadCoverWithBackground(
+                            context = requireContext(),
+                            imageUrl = coverUrlToUse,
+                            imageView = holder.coverImage,
+                            backgroundTarget = holder.itemView,
+                            defaultColor = requireContext().getColor(R.color.default_background),
+                            lastColor = holder.lastColor,
+                            lastEffect = holder.lastEffect,
+                            effect = backgroundEffect,
+                            onNewColor = {
+                                holder.lastColor = it
+                                updateOverlayColors(it)
+                            },
+                            onNewEffect = { holder.lastEffect = it }
+                        )
+                    }
                 }
             }
 
@@ -488,25 +499,36 @@ class PlayerFragment : Fragment() {
                 if (holder != null && coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
                     showingMetaCover = true
                     holder.coverImage.setOnClickListener { view ->
-                        val targetUrl = if (showingMetaCover) defaultIconUrl else trackInfo.bestCoverUrl ?: defaultIconUrl
+                        val targetUrl = if (showingMetaCover) {
+                            defaultIconUrl.takeIf { it.isNotBlank() }
+                        } else {
+                            trackInfo.bestCoverUrl?.takeIf { it.isNotBlank() }
+                                ?: defaultIconUrl.takeIf { it.isNotBlank() }
+                        }
 
                         val loadNewCoverWithBackground = {
-                            // Cover UND Hintergrund aktualisieren
-                            LiveCoverHelper.loadCoverWithBackground(
-                                context = requireContext(),
-                                imageUrl = targetUrl,
-                                imageView = holder.coverImage,
-                                backgroundTarget = holder.itemView,
-                                defaultColor = requireContext().getColor(R.color.default_background),
-                                lastColor = holder.lastColor,
-                                lastEffect = holder.lastEffect,
-                                effect = backgroundEffect,
-                                onNewColor = {
-                                    holder.lastColor = it
-                                    updateOverlayColors(it)
-                                },
-                                onNewEffect = { holder.lastEffect = it }
-                            )
+                            // Bei leerer URL Placeholder setzen
+                            if (targetUrl.isNullOrBlank()) {
+                                holder.coverImage.setImageResource(R.drawable.ic_placeholder_logo)
+                                holder.itemView.setBackgroundColor(requireContext().getColor(R.color.default_background))
+                            } else {
+                                // Cover UND Hintergrund aktualisieren
+                                LiveCoverHelper.loadCoverWithBackground(
+                                    context = requireContext(),
+                                    imageUrl = targetUrl,
+                                    imageView = holder.coverImage,
+                                    backgroundTarget = holder.itemView,
+                                    defaultColor = requireContext().getColor(R.color.default_background),
+                                    lastColor = holder.lastColor,
+                                    lastEffect = holder.lastEffect,
+                                    effect = backgroundEffect,
+                                    onNewColor = {
+                                        holder.lastColor = it
+                                        updateOverlayColors(it)
+                                    },
+                                    onNewEffect = { holder.lastEffect = it }
+                                )
+                            }
                         }
 
                         // Animation basierend auf Einstellung (NONE verwendet FLIP als Fallback)
@@ -563,18 +585,24 @@ class PlayerFragment : Fragment() {
                 albumTextView?.text = getString(R.string.unknown_album)
             }
 
-            if (coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
-                Glide.with(requireContext())
-                    .load(trackInfo.bestCoverUrl)
-                    .placeholder(R.drawable.ic_placeholder_logo)
-                    .error(R.drawable.ic_stationcover_placeholder)
-                    .into(stationIconView!!)
+            // Bestimme die URL für meta_cover_image
+            val metaCoverUrl = if (coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
+                trackInfo.bestCoverUrl
             } else {
-                Glide.with(requireContext())
-                    .load(defaultIconUrl)
-                    .placeholder(R.drawable.ic_placeholder_logo)
-                    .error(R.drawable.ic_stationcover_placeholder)
-                    .into(stationIconView!!)
+                defaultIconUrl.takeIf { it.isNotBlank() }
+            }
+
+            // Lade Cover oder setze Placeholder direkt wenn keine URL vorhanden
+            if (stationIconView != null) {
+                if (metaCoverUrl.isNullOrBlank()) {
+                    stationIconView.setImageResource(R.drawable.ic_placeholder_logo)
+                } else {
+                    Glide.with(requireContext())
+                        .load(metaCoverUrl)
+                        .placeholder(R.drawable.ic_placeholder_logo)
+                        .error(R.drawable.ic_stationcover_placeholder)
+                        .into(stationIconView)
+                }
             }
 
             enableMarquee(titleTextView!!, artistTextView!!, genreTextView!!, albumTextView!!)

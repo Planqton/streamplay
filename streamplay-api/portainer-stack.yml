@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  streamplay-api:
+    image: vanillaboard/streamplay-api:latest
+    container_name: streamplay-api
+    ports:
+      - "3000:3000"
+    environment:
+      - ADMIN_USERNAME=admin123
+      - ADMIN_PASSWORD=password123
+      - JWT_SECRET=secret123
+      - DATABASE_URL=sqlite:/app/data/data.db?mode=rwc
+      - SERVER_PORT=3000
+      - RUST_LOG=info
+    volumes:
+      - streamplay-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  streamplay-data:

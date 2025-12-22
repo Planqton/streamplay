@@ -51,7 +51,15 @@ class CoverPageAdapter(
     override fun onBindViewHolder(holder: CoverViewHolder, position: Int) {
         val item = mediaItems[position]
         // Verwende gespeicherte Cover-URL falls vorhanden, sonst Station-Icon
-        val coverUrl = currentCoverUrls[position] ?: item.iconURL
+        val coverUrl = currentCoverUrls[position]?.takeIf { it.isNotBlank() }
+            ?: item.iconURL.takeIf { it.isNotBlank() }
+
+        // Falls keine URL vorhanden, zeige Placeholder direkt
+        if (coverUrl == null) {
+            holder.coverImage.setImageResource(R.drawable.ic_placeholder_logo)
+            holder.itemView.setBackgroundColor(holder.itemView.context.getColor(R.color.default_background))
+            return
+        }
 
         LiveCoverHelper.loadCoverWithBackground(
             context = holder.itemView.context,

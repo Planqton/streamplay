@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET:-change-this-secret-in-production}
+      - DATABASE_URL=sqlite:/app/data/data.db?mode=rwc
+      - SERVER_PORT=3000
+      - RUST_LOG=info
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
