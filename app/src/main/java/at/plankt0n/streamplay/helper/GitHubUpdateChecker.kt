@@ -37,7 +37,7 @@ class GitHubUpdateChecker(private val context: Context) {
             val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
             val bodyStr = response.body?.string()
             if (!response.isSuccessful || bodyStr.isNullOrEmpty()) {
-                throw Exception("HTTP ${'$'}{response.code}")
+                throw Exception("HTTP ${response.code}")
             }
             val json = JSONObject(bodyStr)
             val remoteVersion = json.getString("tag_name").removePrefix("v")

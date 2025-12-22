@@ -1,10 +1,14 @@
 package at.plankt0n.streamplay.ui
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
+import android.view.MotionEvent
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -29,6 +33,51 @@ import kotlinx.coroutines.withContext
 
 /** Possible categories a preference can belong to. */
 enum class SettingsCategory { PLAYER, PLAYBACK, UI, METAINFO, SPOTIFY_META, API_SYNC, ABOUT }
+
+/** Preference that requires long press (hold) to activate */
+@SuppressLint("ClickableViewAccessibility")
+class LongPressPreference(context: Context) : Preference(context) {
+    var holdDurationSeconds = 5
+    var holdTextFormat = "Halten… %1\$d"
+    var defaultSummary = ""
+    var onLongPressComplete: (() -> Unit)? = null
+
+    private val handler = Handler(Looper.getMainLooper())
+    private var counter = 0
+    private var runnable: Runnable? = null
+
+    override fun onBindViewHolder(holder: PreferenceViewHolder) {
+        super.onBindViewHolder(holder)
+        holder.itemView.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    counter = holdDurationSeconds
+                    summary = String.format(holdTextFormat, counter)
+                    runnable = object : Runnable {
+                        override fun run() {
+                            counter--
+                            if (counter > 0) {
+                                summary = String.format(holdTextFormat, counter)
+                                handler.postDelayed(this, 1000)
+                            } else {
+                                summary = defaultSummary
+                                onLongPressComplete?.invoke()
+                            }
+                        }
+                    }
+                    handler.postDelayed(runnable!!, 1000)
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    runnable?.let { handler.removeCallbacks(it) }
+                    summary = defaultSummary
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+}
 
 private const val EXTRA_CATEGORY = "category"
 
@@ -575,6 +624,29 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
     }
 
+    val factoryResetPref = LongPressPreference(context).apply {
+        key = "factory_reset"
+        title = getString(R.string.settings_factory_reset)
+        summary = getString(R.string.settings_factory_reset_summary)
+        category = SettingsCategory.ABOUT
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        holdDurationSeconds = 5
+        holdTextFormat = getString(R.string.settings_factory_reset_hold)
+        defaultSummary = getString(R.string.settings_factory_reset_summary)
+        onLongPressComplete = {
+            AlertDialog.Builder(context)
+                .setTitle(getString(R.string.settings_factory_reset_confirm_title))
+                .setMessage(getString(R.string.settings_factory_reset_confirm_message))
+                .setPositiveButton(android.R.string.yes) { _, _ ->
+                    // Löscht ALLE App-Daten und startet die App neu (wie Neuinstallation)
+                    (context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager)
+                        .clearApplicationUserData()
+                }
+                .setNegativeButton(android.R.string.no, null)
+                .show()
+        }
+    }
+
     val preferences = listOf(
         audioFocusPref,
         autoplaySwitch,
@@ -599,7 +671,8 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         versionPref,
         updatePref,
         addTestPref,
-        settingsTransferPref
+        settingsTransferPref,
+        factoryResetPref
     )
 
     SettingsCategory.values().forEach { cat ->

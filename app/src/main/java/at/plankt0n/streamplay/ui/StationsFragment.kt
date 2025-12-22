@@ -86,7 +86,7 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
         topbarTitle = view.findViewById(R.id.topbar_title)
 
         stationList = PreferencesHelper.getStations(requireContext()).toMutableList()
-        stationPrefs = requireContext().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        stationPrefs = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
 
         // Register for station update broadcasts
         LocalBroadcastManager.getInstance(requireContext())

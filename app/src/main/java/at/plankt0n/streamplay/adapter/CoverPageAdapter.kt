@@ -16,7 +16,13 @@ class CoverPageAdapter(
     var backgroundEffect: LiveCoverHelper.BackgroundEffect
 ) : RecyclerView.Adapter<CoverPageAdapter.CoverViewHolder>() {
 
-    val mediaItems: List<StationItem> = mediaServiceController.getCurrentPlaylist()
+    var mediaItems: List<StationItem> = mediaServiceController.getCurrentPlaylist()
+        private set
+
+    fun updateMediaItems() {
+        mediaItems = mediaServiceController.getCurrentPlaylist()
+        notifyDataSetChanged()
+    }
 
     inner class CoverViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val coverImage: ShapeableImageView = itemView.findViewById(R.id.cover_image)

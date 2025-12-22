@@ -64,16 +64,16 @@ object StreamplayApiHelper {
     }
 
     suspend fun login(context: Context, usernameOverride: String? = null, passwordOverride: String? = null): ApiResult<LoginResponse> = withContext(Dispatchers.IO) {
+        val endpoint = getApiEndpoint(context)
+        val (username, password) = getCredentials(context, usernameOverride, passwordOverride)
+
+        if (username.isBlank() || password.isBlank()) {
+            return@withContext ApiResult.Error("Username and password required")
+        }
+
+        val url = URL("$endpoint/api/user/login")
+        val connection = url.openConnection() as HttpURLConnection
         try {
-            val endpoint = getApiEndpoint(context)
-            val (username, password) = getCredentials(context, usernameOverride, passwordOverride)
-
-            if (username.isBlank() || password.isBlank()) {
-                return@withContext ApiResult.Error("Username and password required")
-            }
-
-            val url = URL("$endpoint/api/user/login")
-            val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "POST"
             connection.setRequestProperty("Content-Type", "application/json")
             connection.doOutput = true
@@ -101,6 +101,8 @@ object StreamplayApiHelper {
             }
         } catch (e: Exception) {
             ApiResult.Error("Connection error: ${e.message}")
+        } finally {
+            connection.disconnect()
         }
     }
 
@@ -121,10 +123,10 @@ object StreamplayApiHelper {
         val token = getStoredToken(context)
             ?: return@withContext ApiResult.Error("No token available")
 
+        val endpoint = getApiEndpoint(context)
+        val url = URL("$endpoint/api/user/data")
+        val connection = url.openConnection() as HttpURLConnection
         try {
-            val endpoint = getApiEndpoint(context)
-            val url = URL("$endpoint/api/user/data")
-            val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
             connection.setRequestProperty("Authorization", "Bearer $token")
             connection.connectTimeout = 10000
@@ -204,6 +206,8 @@ object StreamplayApiHelper {
             }
         } catch (e: Exception) {
             ApiResult.Error("Connection error: ${e.message}")
+        } finally {
+            connection.disconnect()
         }
     }
 
@@ -224,10 +228,10 @@ object StreamplayApiHelper {
         val token = getStoredToken(context)
             ?: return@withContext ApiResult.Error("No token available")
 
+        val endpoint = getApiEndpoint(context)
+        val url = URL("$endpoint/api/user/data")
+        val connection = url.openConnection() as HttpURLConnection
         try {
-            val endpoint = getApiEndpoint(context)
-            val url = URL("$endpoint/api/user/data")
-            val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "PUT"
             connection.setRequestProperty("Content-Type", "application/json")
             connection.setRequestProperty("Authorization", "Bearer $token")
@@ -275,6 +279,8 @@ object StreamplayApiHelper {
             }
         } catch (e: Exception) {
             ApiResult.Error("Connection error: ${e.message}")
+        } finally {
+            connection.disconnect()
         }
     }
 }

@@ -49,8 +49,9 @@ import at.plankt0n.streamplay.helper.MetaLogHelper
 import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.viewmodel.UITrackRepository
 import at.plankt0n.streamplay.viewmodel.UITrackInfo
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
@@ -63,6 +64,10 @@ class StreamingService : MediaSessionService() {
     private var icyStreamReader: IcyStreamReader? = null //alt
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
+
+    // Service-eigener CoroutineScope für Lifecycle-gebundene Coroutines
+    private val serviceJob = Job()
+    private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
 
     private var streams: List<StationItem> = emptyList()
     private var mediaItems: List<MediaItem> = emptyList()
@@ -290,14 +295,7 @@ class StreamingService : MediaSessionService() {
 
             }
 
-        // ⚠️ Dann Notification etc.
-        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.streaming_service_notification_title))
-            .setContentText(getString(R.string.streaming_service_notification_text))
-            .setSmallIcon(R.drawable.ic_radio)
-            .build()
-        startForeground(1, notification)
-
+        // ⚠️ ZUERST Notification Channel erstellen (vor startForeground!)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
@@ -309,6 +307,14 @@ class StreamingService : MediaSessionService() {
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
         }
+
+        // Dann Notification erstellen und Service in Vordergrund starten
+        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(getString(R.string.streaming_service_notification_title))
+            .setContentText(getString(R.string.streaming_service_notification_text))
+            .setSmallIcon(R.drawable.ic_radio)
+            .build()
+        startForeground(1, notification)
 
         setupPlaylist()
 
@@ -444,6 +450,7 @@ class StreamingService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        serviceJob.cancel() // Alle Coroutines beenden
         ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
         connectivityManager.unregisterNetworkCallback(networkCallback)
         prefs.unregisterOnSharedPreferenceChangeListener(prefListener)
@@ -513,7 +520,7 @@ class StreamingService : MediaSessionService() {
                     !prefs.getString(Keys.PREF_SPOTIFY_CLIENT_SECRET, "").isNullOrBlank()
 
             if (useSpotify && hasKeys) {
-                GlobalScope.launch(Dispatchers.IO) {
+                serviceScope.launch(Dispatchers.IO) {
                     val extendedInfo =
                         SpotifyMetaReader.getExtendedMetaInfo(this@StreamingService, artist, title)
                     withContext(Dispatchers.Main) {
@@ -588,7 +595,7 @@ class StreamingService : MediaSessionService() {
                     }
                 }
             } else {
-                GlobalScope.launch(Dispatchers.Main) {
+                serviceScope.launch(Dispatchers.Main) {
                     if (stationUuidAtFetchStart != currentStationUuid) {
                         updateMediaItemMetadata("", "", fallbackartworkUri ?: "")
                         return@launch
@@ -621,7 +628,7 @@ class StreamingService : MediaSessionService() {
                 "⚠️ Artist oder Title fehlen – kein Spotify-Request. Fallback auf alte meta"
             )
             // Sicherstellen, dass auch dieser Aufruf im Main-Thread läuft!
-            GlobalScope.launch(Dispatchers.Main) {
+            serviceScope.launch(Dispatchers.Main) {
                 if (stationUuidAtFetchStart != currentStationUuid) {
                     updateMediaItemMetadata("", "", fallbackartworkUri ?: "")
                     return@launch

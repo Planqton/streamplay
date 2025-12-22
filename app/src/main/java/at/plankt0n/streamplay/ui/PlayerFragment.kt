@@ -76,6 +76,7 @@ class PlayerFragment : Fragment() {
     private lateinit var buttonManualLog: ImageButton
     private lateinit var shortcutRecyclerView: RecyclerView
     private lateinit var shortcutAdapter: ShortcutAdapter
+    private var coverPageAdapter: CoverPageAdapter? = null
     private lateinit var countdownTextView: TextView
     private lateinit var connectingBanner: TextView
     private lateinit var metaFlipper: ViewFlipper
@@ -267,12 +268,12 @@ class PlayerFragment : Fragment() {
                     StateHelper.hasAutoOpenedDiscover = false
                 }
 
-                val coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
+                coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
                 viewPager.adapter = coverPageAdapter
                 dotsIndicator.setViewPager2(viewPager)
                 adjustDotsIndicatorScale()
 
-                coverPageAdapter.mediaItems.forEach { item ->
+                coverPageAdapter?.mediaItems?.forEach { item ->
                     Glide.with(requireContext())
                         .load(item.iconURL)
                         .preload()
@@ -701,14 +702,22 @@ class PlayerFragment : Fragment() {
         }
         shortcutAdapter.setItems(shortcuts)
 
-        val coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
-        viewPager.adapter = coverPageAdapter
-        dotsIndicator.setViewPager2(viewPager)
-        adjustDotsIndicatorScale()
-
-        coverPageAdapter.mediaItems.forEach { item ->
-            Glide.with(requireContext()).load(item.iconURL).preload()
+        // Adapter wiederverwenden statt neu erstellen
+        coverPageAdapter?.let { adapter ->
+            adapter.updateMediaItems()
+            adapter.mediaItems.forEach { item ->
+                Glide.with(requireContext()).load(item.iconURL).preload()
+            }
+        } ?: run {
+            // Fallback: neuen Adapter erstellen falls noch keiner existiert
+            coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
+            viewPager.adapter = coverPageAdapter
+            dotsIndicator.setViewPager2(viewPager)
+            coverPageAdapter?.mediaItems?.forEach { item ->
+                Glide.with(requireContext()).load(item.iconURL).preload()
+            }
         }
+        adjustDotsIndicatorScale()
 
         val currentIndex = mediaServiceController.getCurrentStreamIndex()
         viewPager.setCurrentItem(currentIndex, false)
@@ -719,8 +728,13 @@ class PlayerFragment : Fragment() {
         val count = viewPager.adapter?.itemCount ?: 0
         if (count <= 0) return
         val scale = min(1f, 7f / count.toFloat())
-        dotsIndicator.scaleX = scale
-        dotsIndicator.scaleY = scale
+        // Post um sicherzustellen dass die View ihre Größe hat
+        dotsIndicator.post {
+            dotsIndicator.pivotX = dotsIndicator.width / 2f
+            dotsIndicator.pivotY = dotsIndicator.height / 2f
+            dotsIndicator.scaleX = scale
+            dotsIndicator.scaleY = scale
+        }
     }
 
     override fun onDestroyView() {

@@ -202,4 +202,11 @@
     <string name="settings_api_success">Success: %1$s</string>
     <string name="settings_api_error">Error: %1$s</string>
     <string name="settings_api_read_success">Profile loaded: %1$d stations</string>
+
+    <!-- Factory Reset -->
+    <string name="settings_factory_reset">Factory Reset</string>
+    <string name="settings_factory_reset_summary">5 Sekunden gedrückt halten</string>
+    <string name="settings_factory_reset_hold">Halten… %1$d</string>
+    <string name="settings_factory_reset_confirm_title">Wirklich zurücksetzen?</string>
+    <string name="settings_factory_reset_confirm_message">Alle Einstellungen, Stationen und Cache werden gelöscht. Die App wird neu gestartet.</string>
 </resources>

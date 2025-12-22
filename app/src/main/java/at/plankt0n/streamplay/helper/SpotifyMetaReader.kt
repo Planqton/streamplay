@@ -155,15 +155,16 @@ object SpotifyMetaReader {
                     .header("Authorization", "Bearer $token")
                     .build()
 
-                val artistResponse = client.newCall(artistRequest).execute()
-                if (artistResponse.isSuccessful) {
-                    val artistJson = JSONObject(artistResponse.body?.string() ?: "")
-                    val genres = artistJson.optJSONArray("genres")
-                    if (genres != null && genres.length() > 0) {
-                        genre = genres.getString(0)
+                client.newCall(artistRequest).execute().use { artistResponse ->
+                    if (artistResponse.isSuccessful) {
+                        val artistJson = JSONObject(artistResponse.body?.string() ?: "")
+                        val genres = artistJson.optJSONArray("genres")
+                        if (genres != null && genres.length() > 0) {
+                            genre = genres.getString(0)
+                        }
+                    } else {
+                        Log.w("SpotifyMetaReader", "⚠️ Spotify Artist API-Fehler: ${artistResponse.code}")
                     }
-                } else {
-                    Log.w("SpotifyMetaReader", "⚠️ Spotify Artist API-Fehler: ${artistResponse.code}")
                 }
             }
 
@@ -176,14 +177,15 @@ object SpotifyMetaReader {
                 .header("Authorization", "Bearer $token")
                 .build()
 
-            val albumResponse = client.newCall(albumRequest).execute()
-            val bestAlbumCoverUrl = if (albumResponse.isSuccessful) {
-                val albumJson = JSONObject(albumResponse.body?.string() ?: "")
-                val albumImages = albumJson.getJSONArray("images")
-                if (albumImages.length() > 0) albumImages.getJSONObject(0).getString("url") else null
-            } else {
-                Log.w("SpotifyMetaReader", "⚠️ Spotify Album API-Fehler: ${albumResponse.code}")
-                null
+            val bestAlbumCoverUrl = client.newCall(albumRequest).execute().use { albumResponse ->
+                if (albumResponse.isSuccessful) {
+                    val albumJson = JSONObject(albumResponse.body?.string() ?: "")
+                    val albumImages = albumJson.getJSONArray("images")
+                    if (albumImages.length() > 0) albumImages.getJSONObject(0).getString("url") else null
+                } else {
+                    Log.w("SpotifyMetaReader", "⚠️ Spotify Album API-Fehler: ${albumResponse.code}")
+                    null
+                }
             }
 
             return@withContext ExtendedMetaInfo(

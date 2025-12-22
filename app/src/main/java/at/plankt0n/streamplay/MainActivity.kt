@@ -65,6 +65,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     }
 
     override fun onDestroy() {
+        shortcutController?.disconnect()
+        shortcutController = null
         prefs.unregisterOnSharedPreferenceChangeListener(this)
         super.onDestroy()
     }
@@ -164,6 +166,9 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                 val idx = shortcutController?.findIndexByMediaId(station.streamURL)?.takeIf { it >= 0 } ?: index
                 shortcutController?.playAtIndex(idx)
                 StateHelper.isPlaylistChangePending = false
+                // Controller nach erfolgreicher Wiedergabe freigeben
+                shortcutController?.disconnect()
+                shortcutController = null
             },
         )
         showPlayerPage()
@@ -192,7 +197,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             .setTitle("Onboarding")
             .setMessage("Do you want help with setup?")
             .setPositiveButton(android.R.string.yes) { _, _ ->
-                askSpotifyIfNeeded()
+                askApiEndpoint()
             }
             .setNegativeButton(android.R.string.no) { _, _ ->
                 finishOnboarding()
@@ -201,41 +206,41 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             .show()
     }
 
-    private fun askSpotifyIfNeeded() {
-        val api = prefs.getString(Keys.PREF_SPOTIFY_CLIENT_ID, "") ?: ""
-        val secret = prefs.getString(Keys.PREF_SPOTIFY_CLIENT_SECRET, "") ?: ""
-        if (api.isNotBlank() && secret.isNotBlank()) {
-            finishOnboarding()
-        } else {
-            AlertDialog.Builder(this)
-                .setTitle("Spotify")
-                .setMessage("Configure Spotify?")
-                .setPositiveButton(android.R.string.yes) { _, _ ->
-                    askForInput("Spotify API key") { apiKey ->
-                        askForInput("Spotify secret key", true) { secretKey ->
-                            prefs.edit()
-                                .putString(Keys.PREF_SPOTIFY_CLIENT_ID, apiKey)
-                                .putString(Keys.PREF_SPOTIFY_CLIENT_SECRET, secretKey)
-                                .apply()
-                            finishOnboarding()
-                        }
-                    }
-                }
-                .setNegativeButton(android.R.string.no) { _, _ ->
-                    finishOnboarding()
-                }
-                .setCancelable(false)
-                .show()
+    private fun askApiEndpoint() {
+        val currentEndpoint = prefs.getString(Keys.PREF_API_ENDPOINT, "") ?: ""
+        askForInput("API Endpoint", false, currentEndpoint.ifBlank { Keys.DEFAULT_API_ENDPOINT }) { endpoint ->
+            val finalEndpoint = endpoint.ifBlank { Keys.DEFAULT_API_ENDPOINT }
+            prefs.edit().putString(Keys.PREF_API_ENDPOINT, finalEndpoint).apply()
+            askApiUsername()
         }
     }
 
-    private fun askForInput(title: String, isPassword: Boolean = false, callback: (String) -> Unit) {
+    private fun askApiUsername() {
+        val currentUsername = prefs.getString(Keys.PREF_API_USERNAME, "") ?: ""
+        askForInput("Benutzername", false, currentUsername) { username ->
+            prefs.edit().putString(Keys.PREF_API_USERNAME, username).apply()
+            askApiPassword()
+        }
+    }
+
+    private fun askApiPassword() {
+        askForInput("Passwort", true) { password ->
+            prefs.edit()
+                .putString(Keys.PREF_API_PASSWORD, password)
+                .putBoolean(Keys.PREF_API_SYNC_ENABLED, true)
+                .apply()
+            finishOnboarding()
+        }
+    }
+
+    private fun askForInput(title: String, isPassword: Boolean = false, defaultValue: String = "", callback: (String) -> Unit) {
         val input = EditText(this)
         if (isPassword) {
             input.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
         } else {
             input.inputType = InputType.TYPE_CLASS_TEXT
         }
+        input.setText(defaultValue)
         AlertDialog.Builder(this)
             .setTitle(title)
             .setView(input)
@@ -248,6 +253,12 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     private fun finishOnboarding() {
         prefs.edit().putBoolean(Keys.PREF_ONBOARDING_DONE, true).apply()
+        // Nach dem Onboarding: Stationen von der API laden (nicht pushen!)
+        if (prefs.getBoolean(Keys.PREF_API_SYNC_ENABLED, false)) {
+            lifecycleScope.launch {
+                StreamplayApiHelper.readFromProfile(this@MainActivity)
+            }
+        }
     }
 
     private fun applyOrientationPreference() {
@@ -272,7 +283,8 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             Keys.PREF_API_PASSWORD,
             Keys.PREF_API_TOKEN,
             Keys.PREF_API_SYNC_ENABLED,
-            Keys.PREF_SCREEN_ORIENTATION
+            Keys.PREF_SCREEN_ORIENTATION,
+            Keys.PREF_ONBOARDING_DONE
         )
         if (key != null && key !in excludedKeys) {
             lifecycleScope.launch {
