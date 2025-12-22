@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-12-22T07:31:42.734109031Z">
+        <DropdownSelection timestamp="2025-12-22T23:12:59.785540361Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/home/planqton/.android/avd/New_Device.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=sg9t65k7heojknws" />
             </handle>
           </Target>
         </DropdownSelection>
