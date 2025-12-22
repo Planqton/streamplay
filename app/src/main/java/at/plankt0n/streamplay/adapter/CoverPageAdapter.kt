@@ -19,9 +19,21 @@ class CoverPageAdapter(
     var mediaItems: List<StationItem> = mediaServiceController.getCurrentPlaylist()
         private set
 
+    // Speichert die aktuell angezeigte Cover-URL pro Position (Metadata oder Station)
+    private val currentCoverUrls = mutableMapOf<Int, String>()
+
     fun updateMediaItems() {
         mediaItems = mediaServiceController.getCurrentPlaylist()
+        currentCoverUrls.clear()
         notifyDataSetChanged()
+    }
+
+    fun setCoverUrlForPosition(position: Int, url: String) {
+        currentCoverUrls[position] = url
+    }
+
+    fun getCoverUrlForPosition(position: Int): String? {
+        return currentCoverUrls[position]
     }
 
     inner class CoverViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -38,10 +50,12 @@ class CoverPageAdapter(
 
     override fun onBindViewHolder(holder: CoverViewHolder, position: Int) {
         val item = mediaItems[position]
+        // Verwende gespeicherte Cover-URL falls vorhanden, sonst Station-Icon
+        val coverUrl = currentCoverUrls[position] ?: item.iconURL
 
         LiveCoverHelper.loadCoverWithBackground(
             context = holder.itemView.context,
-            imageUrl = item.iconURL,
+            imageUrl = coverUrl,
             imageView = holder.coverImage,
             backgroundTarget = holder.itemView,
             defaultColor = holder.itemView.context.getColor(R.color.default_background),
