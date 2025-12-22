@@ -490,12 +490,23 @@ class PlayerFragment : Fragment() {
                     holder.coverImage.setOnClickListener { view ->
                         val targetUrl = if (showingMetaCover) defaultIconUrl else trackInfo.bestCoverUrl!!
 
-                        val loadNewCover = {
-                            Glide.with(requireContext())
-                                .load(targetUrl)
-                                .placeholder(R.drawable.ic_placeholder_logo)
-                                .error(R.drawable.ic_stationcover_placeholder)
-                                .into(holder.coverImage)
+                        val loadNewCoverWithBackground = {
+                            // Cover UND Hintergrund aktualisieren
+                            LiveCoverHelper.loadCoverWithBackground(
+                                context = requireContext(),
+                                imageUrl = targetUrl,
+                                imageView = holder.coverImage,
+                                backgroundTarget = holder.itemView,
+                                defaultColor = requireContext().getColor(R.color.default_background),
+                                lastColor = holder.lastColor,
+                                lastEffect = holder.lastEffect,
+                                effect = backgroundEffect,
+                                onNewColor = {
+                                    holder.lastColor = it
+                                    updateOverlayColors(it)
+                                },
+                                onNewEffect = { holder.lastEffect = it }
+                            )
                         }
 
                         // Animation basierend auf Einstellung (NONE verwendet FLIP als Fallback)
@@ -511,7 +522,7 @@ class PlayerFragment : Fragment() {
                                     .rotationY(90f)
                                     .setDuration(150)
                                     .withEndAction {
-                                        loadNewCover()
+                                        loadNewCoverWithBackground()
                                         holder.coverImage.rotationY = -90f
                                         holder.coverImage.animate().rotationY(0f).setDuration(150).start()
                                     }
@@ -522,13 +533,13 @@ class PlayerFragment : Fragment() {
                                     .alpha(0f)
                                     .setDuration(150)
                                     .withEndAction {
-                                        loadNewCover()
+                                        loadNewCoverWithBackground()
                                         holder.coverImage.alpha = 0f
                                         holder.coverImage.animate().alpha(1f).setDuration(150).start()
                                     }
                                     .start()
                             }
-                            CoverAnimationStyle.NONE -> loadNewCover()
+                            CoverAnimationStyle.NONE -> loadNewCoverWithBackground()
                         }
 
                         showingMetaCover = !showingMetaCover
