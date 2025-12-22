@@ -49,16 +49,13 @@ import androidx.core.graphics.ColorUtils
 import androidx.media3.common.Player
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
-import com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
 import android.widget.Toast
-import kotlin.math.min
 
 class PlayerFragment : Fragment() {
 
     private var initialized = false
 
     private lateinit var viewPager: ViewPager2
-    private lateinit var dotsIndicator: WormDotsIndicator
     private lateinit var mediaServiceController: MediaServiceController
     private lateinit var spotifyTrackViewModel: UITrackViewModel
 
@@ -172,7 +169,6 @@ class PlayerFragment : Fragment() {
         shortcutRecyclerView.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
 
-        dotsIndicator = view.findViewById(R.id.dots_indicator)
         stationNameTextView = view.findViewById(R.id.station_overlay_stationname)
         stationIconImageView = view.findViewById(R.id.station_overlay_stationIcon)
         playPauseButton = view.findViewById(R.id.button_play_pause)
@@ -248,6 +244,7 @@ class PlayerFragment : Fragment() {
                     ShortcutItem(label, iconUrl, mediaId, i)
                 }
                 shortcutAdapter.setItems(shortcuts)
+                shortcutAdapter.selectedIndex = controller.currentMediaItemIndex
 
                 if (controller.mediaItemCount == 0) {
                     if (!StateHelper.hasAutoOpenedDiscover) {
@@ -270,8 +267,6 @@ class PlayerFragment : Fragment() {
 
                 coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
                 viewPager.adapter = coverPageAdapter
-                dotsIndicator.setViewPager2(viewPager)
-                adjustDotsIndicatorScale()
 
                 coverPageAdapter?.mediaItems?.forEach { item ->
                     Glide.with(requireContext())
@@ -294,6 +289,10 @@ class PlayerFragment : Fragment() {
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
                         mediaServiceController.seekToIndex(position)
+
+                        // Shortcut hervorheben und dorthin scrollen
+                        shortcutAdapter.selectedIndex = position
+                        shortcutRecyclerView.smoothScrollToPosition(position)
                     }
                 })
 
@@ -724,6 +723,7 @@ class PlayerFragment : Fragment() {
             ShortcutItem(label, iconUrl, mediaId, i)
         }
         shortcutAdapter.setItems(shortcuts)
+        shortcutAdapter.selectedIndex = controller.currentMediaItemIndex
 
         // Adapter wiederverwenden statt neu erstellen
         coverPageAdapter?.let { adapter ->
@@ -735,29 +735,14 @@ class PlayerFragment : Fragment() {
             // Fallback: neuen Adapter erstellen falls noch keiner existiert
             coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
             viewPager.adapter = coverPageAdapter
-            dotsIndicator.setViewPager2(viewPager)
             coverPageAdapter?.mediaItems?.forEach { item ->
                 Glide.with(requireContext()).load(item.iconURL).preload()
             }
         }
-        adjustDotsIndicatorScale()
 
         val currentIndex = mediaServiceController.getCurrentStreamIndex()
         viewPager.setCurrentItem(currentIndex, false)
         updateOverlayUI(currentIndex)
-    }
-
-    private fun adjustDotsIndicatorScale() {
-        val count = viewPager.adapter?.itemCount ?: 0
-        if (count <= 0) return
-        val scale = min(1f, 7f / count.toFloat())
-        // Post um sicherzustellen dass die View ihre Größe hat
-        dotsIndicator.post {
-            dotsIndicator.pivotX = dotsIndicator.width / 2f
-            dotsIndicator.pivotY = dotsIndicator.height / 2f
-            dotsIndicator.scaleX = scale
-            dotsIndicator.scaleY = scale
-        }
     }
 
     override fun onDestroyView() {

@@ -16,6 +16,14 @@ class ShortcutAdapter(
 
     private val items = mutableListOf<ShortcutItem>()
 
+    var selectedIndex: Int = -1
+        set(value) {
+            val oldIndex = field
+            field = value
+            if (oldIndex >= 0 && oldIndex < items.size) notifyItemChanged(oldIndex)
+            if (value >= 0 && value < items.size) notifyItemChanged(value)
+        }
+
     fun setItems(newItems: List<ShortcutItem>) {
         items.clear()
         items.addAll(newItems)
@@ -47,5 +55,11 @@ class ShortcutAdapter(
             .into(holder.iconImageView)
 
         holder.itemView.setOnClickListener { onClick(item) }
+
+        // Ausgewähltes Item vergrößern
+        val isSelected = position == selectedIndex
+        val scale = if (isSelected) 1.2f else 1.0f
+        holder.itemView.scaleX = scale
+        holder.itemView.scaleY = scale
     }
 }
