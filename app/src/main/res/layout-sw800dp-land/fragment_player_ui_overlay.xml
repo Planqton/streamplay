@@ -293,7 +293,7 @@
 
                 <ViewFlipper
                     android:id="@+id/meta_flipper"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inAnimation="@android:anim/slide_in_left"
                     android:outAnimation="@android:anim/slide_out_right"
@@ -303,12 +303,12 @@
                     <!-- Seite 1: Titel + Artist -->
                     <LinearLayout
                         android:orientation="vertical"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content">
 
                         <TextView
                             android:id="@+id/meta_overlay_Title"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:textColor="@color/primary_text_default_material_dark"
                             android:text="@string/unknown_title"
@@ -318,7 +318,7 @@
 
                         <TextView
                             android:id="@+id/meta_overlay_Artist"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:textColor="@color/primary_text_default_material_dark"
                             android:text="@string/unknown_artist"
@@ -331,12 +331,12 @@
                     <!-- Seite 2: Kombinierter Text -->
                     <LinearLayout
                         android:orientation="vertical"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content">
 
                         <TextView
                             android:id="@+id/meta_overlay_Album"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ellipsize="marquee"
                             android:marqueeRepeatLimit="marquee_forever"
@@ -350,7 +350,7 @@
 
                         <TextView
                             android:id="@+id/meta_overlay_Genre"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:textColor="@color/primary_text_default_material_dark"
                             android:text="@string/unknown_genre"

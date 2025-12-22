@@ -585,13 +585,22 @@ class PlayerFragment : Fragment() {
     private fun updateOverlayColors(color: Int) {
         val luminance = ColorUtils.calculateLuminance(color)
         val foreground = if (luminance > 0.5) Color.BLACK else Color.WHITE
+        val shadowColor = if (luminance > 0.5) Color.WHITE else Color.BLACK
+        val shadowRadius = 4f
+        val shadowDx = 1f
+        val shadowDy = 1f
 
-        stationNameTextView.setTextColor(foreground)
+        // Hilfsfunktion für Text + Schatten
+        fun TextView.applyStyle() {
+            setTextColor(foreground)
+            setShadowLayer(shadowRadius, shadowDx, shadowDy, shadowColor)
+        }
 
-        view?.findViewById<TextView>(R.id.meta_overlay_Title)?.setTextColor(foreground)
-        view?.findViewById<TextView>(R.id.meta_overlay_Artist)?.setTextColor(foreground)
-        view?.findViewById<TextView>(R.id.meta_overlay_Album)?.setTextColor(foreground)
-        view?.findViewById<TextView>(R.id.meta_overlay_Genre)?.setTextColor(foreground)
+        stationNameTextView.applyStyle()
+        view?.findViewById<TextView>(R.id.meta_overlay_Title)?.applyStyle()
+        view?.findViewById<TextView>(R.id.meta_overlay_Artist)?.applyStyle()
+        view?.findViewById<TextView>(R.id.meta_overlay_Album)?.applyStyle()
+        view?.findViewById<TextView>(R.id.meta_overlay_Genre)?.applyStyle()
 
         buttonBack.setColorFilter(foreground)
         playPauseButton.setColorFilter(foreground)
