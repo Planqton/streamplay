@@ -6,6 +6,9 @@ import androidx.preference.PreferenceManager
 import at.plankt0n.streamplay.data.StationItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 object PreferencesHelper {
 
@@ -27,9 +30,14 @@ object PreferencesHelper {
         }
     }
 
-    fun saveStations(context: Context, stationList: List<StationItem>) {
+    fun saveStations(context: Context, stationList: List<StationItem>, syncToApi: Boolean = true) {
         val json = Gson().toJson(stationList)
         getPrefs(context).edit().putString(KEY_STATIONS, json).apply()
+        if (syncToApi) {
+            CoroutineScope(Dispatchers.IO).launch {
+                StreamplayApiHelper.pushIfSyncEnabled(context)
+            }
+        }
     }
 
     fun clearStations(context: Context) {

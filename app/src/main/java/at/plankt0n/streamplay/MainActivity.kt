@@ -19,14 +19,13 @@ import at.plankt0n.streamplay.helper.GitHubUpdateChecker
 import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StateHelper
+import at.plankt0n.streamplay.helper.StreamplayApiHelper
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.ScreenOrientationMode
 import at.plankt0n.streamplay.ui.MainPagerFragment
 import at.plankt0n.streamplay.ui.DiscoverFragment
-import at.plankt0n.streamplay.helper.StationImportHelper
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -44,7 +43,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
         setContentView(R.layout.activity_main)
 
-        autoSyncIfEnabled()
+        apiSyncIfEnabled()
 
         lifecycleScope.launch {
             GitHubUpdateChecker(this@MainActivity).silentCheckForUpdate()
@@ -70,25 +69,31 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         super.onDestroy()
     }
 
-    private fun autoSyncIfEnabled() {
-        val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
-        if (prefs.getBoolean(Keys.PREF_AUTOSYNC_JSON_STARTUP, false)) {
-            val url = prefs.getString(Keys.PREF_PERSONAL_SYNC_URL, "") ?: ""
-            if (url.isNotBlank()) {
-                Log.d("JSON AUTO SYNC>", "Starting auto sync")
-                runBlocking {
-                    try {
-                        StationImportHelper.importStationsFromUrl(this@MainActivity, url, true)
-                        Log.d("JSON AUTO SYNC>", "Auto sync completed")
-                    } catch (e: Exception) {
-                        Log.e("JSON AUTO SYNC>", "Auto sync failed: ${e.message}")
+    private fun apiSyncIfEnabled() {
+        val syncEnabled = prefs.getBoolean(Keys.PREF_API_SYNC_ENABLED, false)
+        val username = prefs.getString(Keys.PREF_API_USERNAME, "") ?: ""
+        val hasPassword = !prefs.getString(Keys.PREF_API_PASSWORD, "").isNullOrEmpty()
+        Log.d("API_SYNC", "apiSyncIfEnabled: enabled=$syncEnabled, user=$username, hasPass=$hasPassword")
+
+        if (syncEnabled) {
+            Log.d("API_SYNC", "Starting API sync on startup")
+            lifecycleScope.launch {
+                try {
+                    val result = StreamplayApiHelper.readFromProfile(this@MainActivity)
+                    when (result) {
+                        is StreamplayApiHelper.ApiResult.Success -> {
+                            Log.d("API_SYNC", "Sync completed: ${result.data.stations.size} stations")
+                        }
+                        is StreamplayApiHelper.ApiResult.Error -> {
+                            Log.e("API_SYNC", "Sync failed: ${result.message}")
+                        }
                     }
+                } catch (e: Exception) {
+                    Log.e("API_SYNC", "Sync exception: ${e.message}", e)
                 }
-            } else {
-                Log.d("JSON AUTO SYNC>", "No personal URL configured")
             }
         } else {
-            Log.d("JSON AUTO SYNC>", "Auto sync disabled")
+            Log.d("API_SYNC", "API sync disabled")
         }
     }
 
@@ -259,6 +264,20 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == Keys.PREF_SCREEN_ORIENTATION) {
             applyOrientationPreference()
+        }
+        // Exclude certain keys from triggering sync
+        val excludedKeys = setOf(
+            Keys.PREF_API_ENDPOINT,
+            Keys.PREF_API_USERNAME,
+            Keys.PREF_API_PASSWORD,
+            Keys.PREF_API_TOKEN,
+            Keys.PREF_API_SYNC_ENABLED,
+            Keys.PREF_SCREEN_ORIENTATION
+        )
+        if (key != null && key !in excludedKeys) {
+            lifecycleScope.launch {
+                StreamplayApiHelper.pushIfSyncEnabled(this@MainActivity)
+            }
         }
     }
 }

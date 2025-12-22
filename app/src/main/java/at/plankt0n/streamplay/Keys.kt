@@ -34,6 +34,8 @@ object Keys {
     const val PREF_API_USERNAME = "api_username"
     const val PREF_API_PASSWORD = "api_password"
     const val PREF_API_TOKEN = "api_token"
+    const val PREF_API_SYNC_ENABLED = "api_sync_enabled"
+    const val ACTION_STATIONS_UPDATED = "at.plankt0n.streamplay.ACTION_STATIONS_UPDATED"
 
 
 

@@ -104,24 +104,31 @@
             android:textAppearance="?attr/textAppearanceBody1" />
     </LinearLayout>
 
-    <!-- Eintrag 3: Abstandhalter -->
-    <View
+    <!-- Eintrag: Settings -->
+    <LinearLayout
+        android:id="@+id/option_settings"
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="16dp" />
+        android:layout_height="wrap_content"
+        android:paddingVertical="12dp"
+        android:clickable="true"
+        android:foreground="?attr/selectableItemBackground">
 
-        <!-- Settings Header -->
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_sheet_settings"
+            android:contentDescription="@string/bottom_sheet_settings_content_desc"
+            android:tint="?attr/colorOnSurface" />
+
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/settings_title"
-            android:textAppearance="?attr/textAppearanceHeadline6"
-            android:paddingTop="24dp"
-            android:paddingBottom="8dp" />
-
-        <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/settings_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_weight="1"
+            android:paddingStart="16dp"
+            android:text="@string/bottom_sheet_settings_text"
+            android:textAppearance="?attr/textAppearanceBody1" />
+    </LinearLayout>
 
     </LinearLayout>
 

@@ -1,8 +1,10 @@
 package at.plankt0n.streamplay.ui
 
 import android.app.Activity
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
@@ -34,6 +36,7 @@ import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.MainActivity
 import androidx.viewpager2.widget.ViewPager2
 import androidx.activity.OnBackPressedCallback
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import at.plankt0n.streamplay.helper.StationImportHelper
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -55,6 +58,20 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
     private var backPressedCallback: OnBackPressedCallback? = null
     private lateinit var stationPrefs: SharedPreferences
 
+    private val stationsUpdateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == Keys.ACTION_STATIONS_UPDATED) {
+                refreshStationList()
+            }
+        }
+    }
+
+    private fun refreshStationList() {
+        stationList.clear()
+        stationList.addAll(PreferencesHelper.getStations(requireContext()))
+        adapter.notifyDataSetChanged()
+    }
+
     companion object {
         private const val REQUEST_CODE_IMPORT_JSON = 1001
     }
@@ -70,6 +87,10 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
 
         stationList = PreferencesHelper.getStations(requireContext()).toMutableList()
         stationPrefs = requireContext().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+
+        // Register for station update broadcasts
+        LocalBroadcastManager.getInstance(requireContext())
+            .registerReceiver(stationsUpdateReceiver, IntentFilter(Keys.ACTION_STATIONS_UPDATED))
 
         recyclerView = view.findViewById(R.id.recyclerViewStations)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -332,9 +353,7 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
     override fun onResume() {
         super.onResume()
         stationPrefs.registerOnSharedPreferenceChangeListener(this)
-        stationList.clear()
-        stationList.addAll(PreferencesHelper.getStations(requireContext()))
-        adapter.notifyDataSetChanged()
+        refreshStationList()
         parentFragment?.view
             ?.findViewById<ViewPager2>(R.id.main_view_pager)
             ?.isUserInputEnabled = false
@@ -363,13 +382,13 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
     override fun onDestroyView() {
         super.onDestroyView()
         mediaServiceController.disconnect()
+        LocalBroadcastManager.getInstance(requireContext())
+            .unregisterReceiver(stationsUpdateReceiver)
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == "stations") {
-            stationList.clear()
-            stationList.addAll(PreferencesHelper.getStations(requireContext()))
-            adapter.notifyDataSetChanged()
+            refreshStationList()
         }
     }
 }

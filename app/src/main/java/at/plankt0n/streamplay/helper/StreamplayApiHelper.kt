@@ -2,7 +2,8 @@ package at.plankt0n.streamplay.helper
 
 import android.content.Context
 import android.content.Intent
-import androidx.preference.PreferenceManager
+import android.util.Log
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.data.StationItem
@@ -37,26 +38,26 @@ object StreamplayApiHelper {
         val settings: Map<String, Any?>
     )
 
+    private fun getPrefs(context: Context) = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+
     private fun getApiEndpoint(context: Context): String {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        return prefs.getString(Keys.PREF_API_ENDPOINT, Keys.DEFAULT_API_ENDPOINT)
+        return getPrefs(context).getString(Keys.PREF_API_ENDPOINT, Keys.DEFAULT_API_ENDPOINT)
             ?: Keys.DEFAULT_API_ENDPOINT
     }
 
     private fun getCredentials(context: Context, usernameOverride: String? = null, passwordOverride: String? = null): Pair<String, String> {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        val prefs = getPrefs(context)
         val username = usernameOverride ?: prefs.getString(Keys.PREF_API_USERNAME, "") ?: ""
         val password = passwordOverride ?: prefs.getString(Keys.PREF_API_PASSWORD, "") ?: ""
         return Pair(username, password)
     }
 
     private fun getStoredToken(context: Context): String? {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        return prefs.getString(Keys.PREF_API_TOKEN, null)
+        return getPrefs(context).getString(Keys.PREF_API_TOKEN, null)
     }
 
     private fun saveToken(context: Context, token: String) {
-        PreferenceManager.getDefaultSharedPreferences(context)
+        getPrefs(context)
             .edit()
             .putString(Keys.PREF_API_TOKEN, token)
             .apply()
@@ -153,15 +154,18 @@ object StreamplayApiHelper {
                     emptyMap()
                 }
 
-                // Apply stations
-                if (stations.isNotEmpty()) {
-                    PreferencesHelper.saveStations(context, stations)
-                    StateHelper.isPlaylistChangePending = true
-                    val intent = Intent(context, StreamingService::class.java).apply {
-                        action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
-                    }
-                    context.startService(intent)
+                // Apply stations (don't sync back to API to avoid loop)
+                Log.d("API SYNC>", "Applying ${stations.size} stations from API")
+                PreferencesHelper.saveStations(context, stations, syncToApi = false)
+                StateHelper.isPlaylistChangePending = true
+                val playlistIntent = Intent(context, StreamingService::class.java).apply {
+                    action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
                 }
+                context.startService(playlistIntent)
+
+                // Notify UI about station updates
+                val updateIntent = Intent(Keys.ACTION_STATIONS_UPDATED)
+                LocalBroadcastManager.getInstance(context).sendBroadcast(updateIntent)
 
                 // Apply settings (excluding API credentials and screen orientation)
                 if (settings.isNotEmpty()) {
@@ -201,6 +205,13 @@ object StreamplayApiHelper {
         } catch (e: Exception) {
             ApiResult.Error("Connection error: ${e.message}")
         }
+    }
+
+    suspend fun pushIfSyncEnabled(context: Context) {
+        if (!getPrefs(context).getBoolean(Keys.PREF_API_SYNC_ENABLED, false)) {
+            return
+        }
+        pushToProfile(context)
     }
 
     suspend fun pushToProfile(context: Context, usernameOverride: String? = null, passwordOverride: String? = null): ApiResult<String> = withContext(Dispatchers.IO) {

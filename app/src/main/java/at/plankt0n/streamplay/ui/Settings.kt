@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Possible categories a preference can belong to. */
-enum class SettingsCategory { PLAYER, PLAYBACK, UI, METAINFO, SPOTIFY_META, PERSONAL_SYNC, API_SYNC, ABOUT }
+enum class SettingsCategory { PLAYER, PLAYBACK, UI, METAINFO, SPOTIFY_META, API_SYNC, ABOUT }
 
 private const val EXTRA_CATEGORY = "category"
 
@@ -55,20 +55,6 @@ fun PreferenceFragmentCompat.updateSpotifyToggle(
 fun PreferenceFragmentCompat.initSettingsScreen() {
     val context = preferenceManager.context
     val screen = preferenceManager.createPreferenceScreen(context)
-
-    val exportJsonLauncher =
-        registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
-            uri?.let {
-                lifecycleScope.launch {
-                    val json = Gson().toJson(PreferencesHelper.getStations(context))
-                    withContext(Dispatchers.IO) {
-                        context.contentResolver.openOutputStream(it)?.use { output ->
-                            output.write(json.toByteArray())
-                        }
-                    }
-                }
-            }
-        }
 
     val exportSettingsLauncher =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -152,7 +138,6 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 SettingsCategory.UI -> getString(R.string.settings_category_ui)
                 SettingsCategory.METAINFO -> getString(R.string.settings_category_metainfo)
                 SettingsCategory.SPOTIFY_META -> getString(R.string.settings_category_spotify_meta)
-                SettingsCategory.PERSONAL_SYNC -> getString(R.string.settings_category_personal_sync)
                 SettingsCategory.API_SYNC -> getString(R.string.settings_category_api_sync)
                 SettingsCategory.ABOUT -> getString(R.string.settings_category_about)
             }
@@ -162,7 +147,6 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 SettingsCategory.UI -> context.getDrawable(R.drawable.ic_sheet_settings)
                 SettingsCategory.METAINFO -> context.getDrawable(R.drawable.ic_sheet_discover)
                 SettingsCategory.SPOTIFY_META -> context.getDrawable(R.drawable.ic_sheet_settings)
-                SettingsCategory.PERSONAL_SYNC -> context.getDrawable(R.drawable.ic_sheet_settings)
                 SettingsCategory.API_SYNC -> context.getDrawable(R.drawable.ic_sheet_settings)
                 SettingsCategory.ABOUT -> context.getDrawable(R.mipmap.ic_launcher)
             }
@@ -367,79 +351,16 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         true
     }
 
-    val defaultPersonalUrl = Keys.DEFAULT_PERSONAL_SYNC_URL
-    val startPrefs = PreferenceManager.getDefaultSharedPreferences(context)
-    if (!startPrefs.contains(Keys.PREF_PERSONAL_SYNC_URL)) {
-        startPrefs.edit().putString(Keys.PREF_PERSONAL_SYNC_URL, defaultPersonalUrl).apply()
-    }
-
-    val personalUrlPref = EditTextPreference(context).apply {
-        key = Keys.PREF_PERSONAL_SYNC_URL
-        title = getString(R.string.settings_personal_sync_url)
-        setDefaultValue(defaultPersonalUrl)
-        summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
-            val value = pref.text
-            if (value.isNullOrBlank()) {
-                pref.context.getString(R.string.settings_personal_sync_url_empty)
-            } else {
-                value
-            }
-        }
-        category = SettingsCategory.PERSONAL_SYNC
-        icon = context.getDrawable(R.drawable.ic_sheet_settings)
-    }
-
-    val autoSyncPref = SwitchPreferenceCompat(context).apply {
-        key = Keys.PREF_AUTOSYNC_JSON_STARTUP
-        title = getString(R.string.settings_autosync_json_startup)
-        setDefaultValue(false)
-        category = SettingsCategory.PERSONAL_SYNC
-        icon = context.getDrawable(R.drawable.ic_sheet_settings)
-    }
-
-    val personalSyncPref = Preference(context).apply {
-        key = "personal_sync_now"
-        title = getString(R.string.settings_sync_personal_json)
-        category = SettingsCategory.PERSONAL_SYNC
-        icon = context.getDrawable(R.drawable.ic_sheet_settings)
-        setOnPreferenceClickListener {
-            val url = personalUrlPref.text ?: ""
-            if (url.isBlank()) {
-                Toast.makeText(context, "URL erforderlich", Toast.LENGTH_SHORT).show()
-            } else {
-                this@initSettingsScreen.lifecycleScope.launch {
-                    try {
-                        val result = StationImportHelper.importStationsFromUrl(context, url, true)
-                        Toast.makeText(
-                            context,
-                            "Sync abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } catch (e: Exception) {
-                        Toast.makeText(
-                            context,
-                            "Fehler beim Sync: ${e.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
-            }
-            true
-        }
-    }
-
-    val personalExportPref = Preference(context).apply {
-        key = "personal_export_json"
-        title = getString(R.string.settings_export_personal_json)
-        category = SettingsCategory.PERSONAL_SYNC
-        icon = context.getDrawable(R.drawable.ic_sheet_settings)
-        setOnPreferenceClickListener {
-            exportJsonLauncher.launch("stations.json")
-            true
-        }
-    }
-
     // StreamPlay API Settings
+    val apiSyncEnabledPref = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_API_SYNC_ENABLED
+        title = getString(R.string.settings_api_sync_enabled)
+        summary = getString(R.string.settings_api_sync_enabled_summary)
+        setDefaultValue(false)
+        category = SettingsCategory.API_SYNC
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
     val defaultApiEndpoint = Keys.DEFAULT_API_ENDPOINT
     val apiPrefs = PreferenceManager.getDefaultSharedPreferences(context)
     if (!apiPrefs.contains(Keys.PREF_API_ENDPOINT)) {
@@ -668,10 +589,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         spotifyApiKeyPref,
         spotifySecretKeyPref,
         useSpotifyMetaPref,
-        personalUrlPref,
-        autoSyncPref,
-        personalSyncPref,
-        personalExportPref,
+        apiSyncEnabledPref,
         apiEndpointPref,
         apiUsernamePref,
         apiPasswordPref,

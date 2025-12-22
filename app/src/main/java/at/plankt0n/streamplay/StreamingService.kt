@@ -10,6 +10,7 @@ import android.content.Intent
 import android.net.Uri
 import android.net.ConnectivityManager
 import android.net.Network
+import android.net.NetworkCapabilities
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -76,6 +77,18 @@ class StreamingService : MediaSessionService() {
     private var resumeOnNetwork = false
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
+            tryResumePlayback()
+        }
+
+        override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
+            // Triggert wenn Internet-Verbindung wiederhergestellt wird
+            if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) {
+                tryResumePlayback()
+            }
+        }
+
+        private fun tryResumePlayback() {
             Handler(Looper.getMainLooper()).post {
                 if (resumeOnNetwork && !player.isPlaying) {
                     resumeOnNetwork = false
@@ -255,9 +268,9 @@ class StreamingService : MediaSessionService() {
                             lastArtworkUri ?: "",
                         )
 
+                        // IO-Error-Codes liegen im Bereich 2000-2999
                         resumeOnNetwork = player.playWhenReady &&
-                            (error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
-                             error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT)
+                            (error.errorCode >= 2000 && error.errorCode < 3000)
                     }
 
                     override fun onMediaMetadataChanged(metadata: MediaMetadata) {

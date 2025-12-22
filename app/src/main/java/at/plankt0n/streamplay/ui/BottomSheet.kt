@@ -12,7 +12,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.ui.DiscoverFragment
 import at.plankt0n.streamplay.MainActivity
-import at.plankt0n.streamplay.ui.SettingsFragment
+import at.plankt0n.streamplay.ui.SettingsPageFragment
 import at.plankt0n.streamplay.ui.MetaLogFragment
 
 class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
@@ -50,11 +50,9 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
             openMetaLogFragment()
         }
 
-        // Inflate settings fragment into this sheet
-        if (savedInstanceState == null) {
-            childFragmentManager.beginTransaction()
-                .replace(R.id.settings_container, SettingsFragment())
-                .commit()
+        view.findViewById<LinearLayout>(R.id.option_settings).setOnClickListener {
+            dismiss()
+            openSettingsFragment()
         }
 
         return view
@@ -95,6 +93,14 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
         requireActivity().supportFragmentManager.beginTransaction()
             .setReorderingAllowed(true)
             .replace(R.id.fragment_container, MetaLogFragment())
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun openSettingsFragment() {
+        requireActivity().supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .replace(R.id.fragment_container, SettingsPageFragment())
             .addToBackStack(null)
             .commit()
     }

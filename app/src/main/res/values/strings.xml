@@ -88,6 +88,8 @@
     <string name="bottom_sheet_discover_content_desc">Browse online stations</string>
     <string name="bottom_sheet_logs_text">Show Logs</string>
     <string name="bottom_sheet_logs_content_desc">View metadata log</string>
+    <string name="bottom_sheet_settings_text">Settings</string>
+    <string name="bottom_sheet_settings_content_desc">Open settings</string>
 
     <!-- Meta log -->
     <string name="search_logs_hint">Search logs</string>
@@ -185,6 +187,8 @@
 
     <!-- StreamPlay API Sync -->
     <string name="settings_category_api_sync">StreamPlay API</string>
+    <string name="settings_api_sync_enabled">Auto-Sync</string>
+    <string name="settings_api_sync_enabled_summary">Sync settings and stations with API on start and on changes</string>
     <string name="settings_api_endpoint">API Endpoint</string>
     <string name="settings_api_username">Username</string>
     <string name="settings_api_password">Password</string>
