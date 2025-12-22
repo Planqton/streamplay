@@ -474,21 +474,22 @@ class PlayerFragment : Fragment() {
                 }
             }
 
-            // Mehrfach versuchen mit verschiedenen Delays
+            // Mehrfach versuchen mit verschiedenen Delays (lifecycle-safe)
             updateCoverImage()
-            viewPager.post { updateCoverImage() }
-            viewPager.postDelayed({ updateCoverImage() }, 100)
-            viewPager.postDelayed({ updateCoverImage() }, 500)
+            viewPager.post { if (isAdded && view != null) updateCoverImage() }
+            viewPager.postDelayed({ if (isAdded && view != null) updateCoverImage() }, 100)
+            viewPager.postDelayed({ if (isAdded && view != null) updateCoverImage() }, 500)
 
             // Click-Listener für Flip zwischen Metadata und Station-Cover
             viewPager.post {
+                if (!isAdded || view == null) return@post
                 val recyclerView = viewPager.getChildAt(0) as? RecyclerView
                 val holder = recyclerView?.findViewHolderForAdapterPosition(currentPosition)
                         as? CoverPageAdapter.CoverViewHolder
                 if (holder != null && coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
                     showingMetaCover = true
                     holder.coverImage.setOnClickListener { view ->
-                        val targetUrl = if (showingMetaCover) defaultIconUrl else trackInfo.bestCoverUrl!!
+                        val targetUrl = if (showingMetaCover) defaultIconUrl else trackInfo.bestCoverUrl ?: defaultIconUrl
 
                         val loadNewCoverWithBackground = {
                             // Cover UND Hintergrund aktualisieren
