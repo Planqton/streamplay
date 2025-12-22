@@ -596,20 +596,26 @@ class PlayerFragment : Fragment() {
             setShadowLayer(shadowRadius, shadowDx, shadowDy, shadowColor)
         }
 
+        // Hilfsfunktion für Buttons + Schatten (via Elevation)
+        fun ImageButton.applyStyle() {
+            setColorFilter(foreground)
+            elevation = shadowRadius
+        }
+
         stationNameTextView.applyStyle()
         view?.findViewById<TextView>(R.id.meta_overlay_Title)?.applyStyle()
         view?.findViewById<TextView>(R.id.meta_overlay_Artist)?.applyStyle()
         view?.findViewById<TextView>(R.id.meta_overlay_Album)?.applyStyle()
         view?.findViewById<TextView>(R.id.meta_overlay_Genre)?.applyStyle()
 
-        buttonBack.setColorFilter(foreground)
-        playPauseButton.setColorFilter(foreground)
-        buttonForward.setColorFilter(foreground)
-        buttonMute.setColorFilter(foreground)
-        buttonShare.setColorFilter(foreground)
-        buttonMenu.setColorFilter(foreground)
-        buttonSpotify.setColorFilter(foreground)
-        buttonManualLog.setColorFilter(foreground)
+        buttonBack.applyStyle()
+        playPauseButton.applyStyle()
+        buttonForward.applyStyle()
+        buttonMute.applyStyle()
+        buttonShare.applyStyle()
+        buttonMenu.applyStyle()
+        buttonSpotify.applyStyle()
+        buttonManualLog.applyStyle()
     }
 
     private fun updateOverlayUI(index: Int) {
