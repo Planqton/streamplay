@@ -295,6 +295,9 @@ class StreamingService : MediaSessionService() {
 
             }
 
+        // Migriere autoplay_delay von Float zu Int falls nötig
+        migrateAutoplayDelayPreference()
+
         // ⚠️ ZUERST Notification Channel erstellen (vor startForeground!)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -413,7 +416,12 @@ class StreamingService : MediaSessionService() {
         if (!autoplay) return
         if (ignoreIfWasPlaying) return
 
-        val delay = prefs.getInt("autoplay_delay", 0)
+        val delay = try {
+            prefs.getInt("autoplay_delay", 0)
+        } catch (e: ClassCastException) {
+            // Fallback für alte Float-Werte
+            prefs.getFloat("autoplay_delay", 0f).toInt()
+        }
         val minimize = prefs.getBoolean("minimize_after_autoplay", false)
 
         player.play()
@@ -791,5 +799,21 @@ class StreamingService : MediaSessionService() {
         }
     }
 
+    private fun migrateAutoplayDelayPreference() {
+        val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        try {
+            // Versuche als Float zu lesen - wenn erfolgreich, migriere zu Int
+            val floatValue = prefs.getFloat("autoplay_delay", -1f)
+            if (floatValue >= 0f) {
+                prefs.edit()
+                    .remove("autoplay_delay")
+                    .putInt("autoplay_delay", floatValue.toInt())
+                    .apply()
+                Log.d("StreamingService", "Migriert autoplay_delay von Float zu Int: ${floatValue.toInt()}")
+            }
+        } catch (e: ClassCastException) {
+            // Schon ein Int - keine Migration nötig
+        }
+    }
 
 }

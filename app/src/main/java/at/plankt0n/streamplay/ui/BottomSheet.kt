@@ -82,25 +82,31 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun openDiscoverFragment() {
+        val currentFragment = requireActivity().supportFragmentManager.findFragmentById(R.id.fragment_container)
         requireActivity().supportFragmentManager.beginTransaction()
             .setReorderingAllowed(true)
-            .replace(R.id.fragment_container, DiscoverFragment())
+            .hide(currentFragment!!)
+            .add(R.id.fragment_container, DiscoverFragment())
             .addToBackStack(null)
             .commit()
     }
 
     private fun openMetaLogFragment() {
+        val currentFragment = requireActivity().supportFragmentManager.findFragmentById(R.id.fragment_container)
         requireActivity().supportFragmentManager.beginTransaction()
             .setReorderingAllowed(true)
-            .replace(R.id.fragment_container, MetaLogFragment())
+            .hide(currentFragment!!)
+            .add(R.id.fragment_container, MetaLogFragment())
             .addToBackStack(null)
             .commit()
     }
 
     private fun openSettingsFragment() {
+        val currentFragment = requireActivity().supportFragmentManager.findFragmentById(R.id.fragment_container)
         requireActivity().supportFragmentManager.beginTransaction()
             .setReorderingAllowed(true)
-            .replace(R.id.fragment_container, SettingsPageFragment())
+            .hide(currentFragment!!)
+            .add(R.id.fragment_container, SettingsPageFragment())
             .addToBackStack(null)
             .commit()
     }

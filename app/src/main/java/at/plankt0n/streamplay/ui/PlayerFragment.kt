@@ -110,7 +110,10 @@ class PlayerFragment : Fragment() {
             } catch (e: IllegalArgumentException) {
                 CoverMode.META
             }
-            if (initialized) reloadPlaylist()
+            if (initialized) {
+                reloadPlaylist()
+                refreshCurrentCover()
+            }
         }
         if (key == Keys.PREF_COVER_ANIMATION_STYLE) {
             coverAnimationStyle = try {
@@ -238,6 +241,7 @@ class PlayerFragment : Fragment() {
         mediaServiceController = MediaServiceController(requireContext())
         mediaServiceController.initializeAndConnect(
             onConnected = { controller ->
+                if (!isAdded) return@initializeAndConnect
                 val shortcuts = (0 until controller.mediaItemCount).mapNotNull { i ->
                     val mediaItem = controller.getMediaItemAt(i)
                     val extras = mediaItem.mediaMetadata.extras ?: return@mapNotNull null
@@ -256,10 +260,12 @@ class PlayerFragment : Fragment() {
                             "\u26a0\ufe0f MediaSession ist leer! Öffne DiscoverFragment."
                         )
                         StateHelper.hasAutoOpenedDiscover = true
+                        val currentFragment = requireActivity().supportFragmentManager.findFragmentById(R.id.fragment_container)
                         requireActivity().supportFragmentManager
                             .beginTransaction()
                             .setReorderingAllowed(true)
-                            .replace(R.id.fragment_container, DiscoverFragment())
+                            .hide(currentFragment!!)
+                            .add(R.id.fragment_container, DiscoverFragment())
                             .addToBackStack(null)
                             .commit()
                     }
@@ -300,24 +306,31 @@ class PlayerFragment : Fragment() {
                 })
 
             },
-            onPlaybackChanged = { updatePlayPauseIcon(it) },
+            onPlaybackChanged = {
+                if (!isAdded) return@initializeAndConnect
+                updatePlayPauseIcon(it)
+            },
             onStreamIndexChanged = { index ->
+                if (!isAdded) return@initializeAndConnect
                 viewPager.setCurrentItem(index, true)
                 updateOverlayUI(index)
                 updateManualLogButtonState(spotifyTrackViewModel.trackInfo.value)
             },
             onMetadataChanged = {},
             onTimelineChanged = {
-                Log.d("PlayerFragment", "\uD83D\uDD01 Timeline ge\u00E4ndert! Grund: $it")
+                if (!isAdded) return@initializeAndConnect
+                Log.d("PlayerFragment", "\uD83D\uDD01 Timeline geändert! Grund: $it")
                 reloadPlaylist()
             },
             onPlaybackStateChanged = { state ->
+                if (!isAdded) return@initializeAndConnect
                 when (state) {
                     Player.STATE_BUFFERING -> showConnecting()
                     Player.STATE_READY -> showConnected()
                 }
             },
             onPlayerError = { error ->
+                if (!isAdded) return@initializeAndConnect
                 showError(error.message)
             }
         )
@@ -773,15 +786,51 @@ class PlayerFragment : Fragment() {
         updateOverlayUI(currentIndex)
     }
 
+    private fun refreshCurrentCover() {
+        val controller = mediaServiceController.mediaController ?: return
+        val currentIndex = controller.currentMediaItemIndex
+        if (currentIndex < 0 || currentIndex >= controller.mediaItemCount) return
+
+        val mediaItem = controller.getMediaItemAt(currentIndex)
+        val defaultIconUrl = mediaItem.mediaMetadata.extras?.getString("EXTRA_ICON_URL") ?: ""
+
+        // Hole aktuelle Track-Info aus ViewModel
+        val trackInfo = spotifyTrackViewModel.trackInfo.value
+
+        // Bestimme Cover-URL basierend auf aktueller coverMode Einstellung
+        val coverUrlToUse = if (coverMode == CoverMode.META && trackInfo?.bestCoverUrl?.isNotBlank() == true) {
+            trackInfo.bestCoverUrl!!
+        } else {
+            defaultIconUrl
+        }
+
+        // Update Adapter mit neuer Cover-URL
+        coverPageAdapter?.updateCoverUrl(currentIndex, coverUrlToUse)
+    }
+
     override fun onDestroyView() {
         if (initialized) {
             requireContext().unregisterReceiver(autoplayReceiver)
             countdownHandler.removeCallbacksAndMessages(null)
             bannerHandler.removeCallbacksAndMessages(null)
             prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
-            mediaServiceController.disconnect()
+            // Nur trennen wenn Fragment wirklich entfernt wird (nicht nur versteckt)
+            if (isRemoving || requireActivity().isFinishing) {
+                mediaServiceController.disconnect()
+            }
         }
         super.onDestroyView()
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden && initialized) {
+            // Fragment wird wieder sichtbar - prüfe ob UI-Rebuild nötig
+            if (StateHelper.isPlaylistChangePending) {
+                reloadPlaylist()
+                StateHelper.isPlaylistChangePending = false
+            }
+        }
     }
 
     private fun showBottomSheet() {

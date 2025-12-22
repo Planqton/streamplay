@@ -32,6 +32,11 @@ class CoverPageAdapter(
         currentCoverUrls[position] = url
     }
 
+    fun updateCoverUrl(position: Int, url: String) {
+        currentCoverUrls[position] = url
+        notifyItemChanged(position)
+    }
+
     fun getCoverUrlForPosition(position: Int): String? {
         return currentCoverUrls[position]
     }

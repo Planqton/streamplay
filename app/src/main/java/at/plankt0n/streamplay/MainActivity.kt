@@ -60,6 +60,17 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         }
 
         supportFragmentManager.executePendingTransactions()
+
+        // BackStack-Listener um MainPagerFragment wieder anzuzeigen
+        supportFragmentManager.addOnBackStackChangedListener {
+            val mainFragment = supportFragmentManager.findFragmentByTag("mainPager")
+            if (mainFragment != null && mainFragment.isHidden) {
+                supportFragmentManager.beginTransaction()
+                    .show(mainFragment)
+                    .commit()
+            }
+        }
+
         handleShortcutIntent(intent)
         maybeShowOnboarding()
     }
@@ -183,9 +194,11 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     }
 
     private fun openDiscoverPage() {
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
         supportFragmentManager.beginTransaction()
             .setReorderingAllowed(true)
-            .replace(R.id.fragment_container, DiscoverFragment())
+            .hide(currentFragment!!)
+            .add(R.id.fragment_container, DiscoverFragment())
             .addToBackStack(null)
             .commit()
     }
