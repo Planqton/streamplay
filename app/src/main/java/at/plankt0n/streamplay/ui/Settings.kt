@@ -141,10 +141,12 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                                             prim.isBoolean -> editor.putBoolean(key, prim.asBoolean)
                                             prim.isNumber -> {
                                                 val num = prim.asNumber
-                                                if (num.toString().contains('.')) {
-                                                    editor.putFloat(key, num.toFloat())
+                                                val doubleVal = num.toDouble()
+                                                // Store as Int if it's a whole number, otherwise Float
+                                                if (doubleVal == doubleVal.toLong().toDouble()) {
+                                                    editor.putInt(key, doubleVal.toInt())
                                                 } else {
-                                                    editor.putLong(key, num.toLong())
+                                                    editor.putFloat(key, num.toFloat())
                                                 }
                                             }
                                             prim.isString -> editor.putString(key, prim.asString)
@@ -237,11 +239,23 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_pip)
     }
 
+    // Migrate autoplay_delay from Float to Int if needed (defensive check)
+    val prefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+    try {
+        val floatValue = prefs.getFloat("autoplay_delay", -1f)
+        if (floatValue >= 0f) {
+            prefs.edit().remove("autoplay_delay").putInt("autoplay_delay", floatValue.toInt()).commit()
+        }
+    } catch (_: ClassCastException) {
+        // Already an Int - no migration needed
+    }
+
     val delayPreference = SeekBarPreference(context).apply {
         key = "autoplay_delay"
         title = getString(R.string.settings_delay)
         min = 0
         max = 30
+        setDefaultValue(0)
         showSeekBarValue = true
         category = SettingsCategory.UI
         icon = context.getDrawable(R.drawable.ic_timer)
