@@ -57,6 +57,7 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
     private lateinit var topbarTitle: TextView
     private var backPressedCallback: OnBackPressedCallback? = null
     private lateinit var stationPrefs: SharedPreferences
+    private var hasChanges: Boolean = false
 
     private val stationsUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -112,6 +113,7 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
             override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
                 super.clearView(recyclerView, viewHolder)
                 PreferencesHelper.saveStations(requireContext(), stationList)
+                hasChanges = true
                 refreshPlaylist()
             }
 
@@ -120,6 +122,7 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
                 stationList.removeAt(position)
                 PreferencesHelper.saveStations(requireContext(), stationList)
                 adapter.notifyItemRemoved(position)
+                hasChanges = true
                 refreshPlaylist()
             }
 
@@ -165,6 +168,7 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
         adapter = StationListAdapter(stationList, { holder ->
             itemTouchHelper.startDrag(holder)
         }, {
+            hasChanges = true
             refreshPlaylist()
         }, { index ->
             mediaServiceController.playAtIndex(index)
@@ -208,7 +212,9 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
         }
 
         topbarBackButton.setOnClickListener {
-            refreshPlaylist()
+            if (hasChanges) {
+                refreshPlaylist()
+            }
             (activity as? MainActivity)?.showPlayerPage()
         }
 
@@ -254,6 +260,7 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
                     stationList.add(station)
                     PreferencesHelper.saveStations(requireContext(), stationList)
                     adapter.notifyItemInserted(stationList.size - 1)
+                    hasChanges = true
                     refreshPlaylist()
                 }
             }
@@ -352,6 +359,7 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
 
     override fun onResume() {
         super.onResume()
+        hasChanges = false
         stationPrefs.registerOnSharedPreferenceChangeListener(this)
         refreshStationList()
         parentFragment?.view
@@ -360,7 +368,9 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
 
         backPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                refreshPlaylist()
+                if (hasChanges) {
+                    refreshPlaylist()
+                }
                 (activity as? MainActivity)?.showPlayerPage()
             }
         }
