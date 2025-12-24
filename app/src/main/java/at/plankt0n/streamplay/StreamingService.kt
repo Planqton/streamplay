@@ -11,6 +11,7 @@ import android.net.Uri
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -36,6 +37,7 @@ import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import at.plankt0n.streamplay.Keys
+import at.plankt0n.streamplay.NetworkType
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.metadata.icy.IcyInfo
@@ -80,28 +82,174 @@ class StreamingService : MediaSessionService() {
 
     private lateinit var connectivityManager: ConnectivityManager
     private var resumeOnNetwork = false
-    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
-        override fun onAvailable(network: Network) {
-            tryResumePlayback()
-        }
+    private var boundNetwork: Network? = null
+    private var boundNetworkCallback: ConnectivityManager.NetworkCallback? = null
 
-        override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-            // Triggert wenn Internet-Verbindung wiederhergestellt wird
-            if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) {
-                tryResumePlayback()
+    private val defaultNetworkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            Handler(Looper.getMainLooper()).post {
+                updateNetworkBinding()
             }
         }
 
-        private fun tryResumePlayback() {
+        override fun onLost(network: Network) {
             Handler(Looper.getMainLooper()).post {
-                if (resumeOnNetwork && !player.isPlaying) {
-                    resumeOnNetwork = false
+                updateNetworkBinding()
+            }
+        }
+
+        override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
+            Handler(Looper.getMainLooper()).post {
+                updateNetworkBinding()
+            }
+        }
+    }
+
+    // Callback der das gebundene Netzwerk überwacht
+    private fun createBoundNetworkCallback(): ConnectivityManager.NetworkCallback {
+        return object : ConnectivityManager.NetworkCallback() {
+            override fun onLost(network: Network) {
+                Handler(Looper.getMainLooper()).post {
+                    if (network == boundNetwork) {
+                        Log.d("StreamingService", "🌐 Gebundenes Netzwerk verloren!")
+                        // Netzwerk ist weg - Player stoppen
+                        connectivityManager.bindProcessToNetwork(null)
+                        boundNetwork = null
+                        unregisterBoundNetworkCallback()
+                        if (player.isPlaying || player.playbackState == Player.STATE_BUFFERING) {
+                            resumeOnNetwork = true
+                            player.stop()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun unregisterBoundNetworkCallback() {
+        boundNetworkCallback?.let {
+            try {
+                connectivityManager.unregisterNetworkCallback(it)
+            } catch (e: Exception) {
+                // Callback war nicht registriert
+            }
+        }
+        boundNetworkCallback = null
+    }
+
+    private fun updateNetworkBinding() {
+        val networkType = NetworkType.fromName(prefs.getString(Keys.PREF_NETWORK_TYPE, NetworkType.ALL.name))
+        val wasPlaying = player.isPlaying || player.playbackState == Player.STATE_BUFFERING
+
+        if (networkType == NetworkType.ALL) {
+            // Keine Bindung nötig - alle Netzwerke erlaubt
+            if (boundNetwork != null) {
+                // Wechsel von spezifischem Netzwerk zu "Alle" - neu starten
+                val needsRestart = wasPlaying
+                if (needsRestart) player.stop()
+                unregisterBoundNetworkCallback()
+                connectivityManager.bindProcessToNetwork(null)
+                boundNetwork = null
+                if (needsRestart && hasAnyNetwork()) {
                     player.prepare()
                     player.play()
                 }
             }
+            // Prüfen ob wir fortsetzen können
+            if (resumeOnNetwork && !player.isPlaying && hasAnyNetwork()) {
+                resumeOnNetwork = false
+                player.prepare()
+                player.play()
+            }
+            return
         }
+
+        // Suche nach dem gewünschten Netzwerk
+        val desiredNetwork = findNetworkByType(networkType)
+
+        if (desiredNetwork != null) {
+            // Gewünschtes Netzwerk gefunden - binden
+            if (boundNetwork != desiredNetwork) {
+                // Netzwerk wechselt - Player muss neu starten
+                val needsRestart = wasPlaying
+                if (needsRestart) player.stop()
+
+                // Alten Callback entfernen
+                unregisterBoundNetworkCallback()
+
+                // Neues Netzwerk binden
+                connectivityManager.bindProcessToNetwork(desiredNetwork)
+                boundNetwork = desiredNetwork
+                Log.d("StreamingService", "🌐 Gebunden an Netzwerk: ${networkType.name}")
+
+                // Callback für dieses spezifische Netzwerk registrieren
+                boundNetworkCallback = createBoundNetworkCallback()
+                val request = NetworkRequest.Builder()
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .apply {
+                        when (networkType) {
+                            NetworkType.WIFI_ONLY -> addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                            NetworkType.MOBILE_ONLY -> addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+                            else -> {}
+                        }
+                    }
+                    .build()
+                connectivityManager.registerNetworkCallback(request, boundNetworkCallback!!)
+
+                if (needsRestart) {
+                    player.prepare()
+                    player.play()
+                }
+            }
+            // Fortsetzen wenn nötig (z.B. nach Netzwerk-Wiederherstellung)
+            if (resumeOnNetwork && !player.isPlaying) {
+                resumeOnNetwork = false
+                player.prepare()
+                player.play()
+            }
+        } else {
+            // Gewünschtes Netzwerk nicht verfügbar - wie offline behandeln
+            unregisterBoundNetworkCallback()
+            if (boundNetwork != null) {
+                connectivityManager.bindProcessToNetwork(null)
+                boundNetwork = null
+            }
+            if (wasPlaying || player.playbackState == Player.STATE_READY) {
+                resumeOnNetwork = true
+                player.stop()
+                Log.d("StreamingService", "🌐 Netzwerk ${networkType.name} nicht verfügbar - gestoppt")
+            }
+        }
+    }
+
+    private fun findNetworkByType(networkType: NetworkType): Network? {
+        val allNetworks = connectivityManager.allNetworks
+        for (network in allNetworks) {
+            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: continue
+            if (!capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) continue
+            if (!capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) continue
+
+            val isMatch = when (networkType) {
+                NetworkType.WIFI_ONLY -> capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                NetworkType.MOBILE_ONLY -> capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                NetworkType.ALL -> true
+            }
+            if (isMatch) return network
+        }
+        return null
+    }
+
+    private fun hasAnyNetwork(): Boolean {
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+               capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    }
+
+    private fun isAllowedNetwork(): Boolean {
+        val networkType = NetworkType.fromName(prefs.getString(Keys.PREF_NETWORK_TYPE, NetworkType.ALL.name))
+        if (networkType == NetworkType.ALL) return hasAnyNetwork()
+        return findNetworkByType(networkType) != null
     }
 
     private lateinit var audioManager: AudioManager
@@ -115,6 +263,9 @@ class StreamingService : MediaSessionService() {
             if (audioFocusMode.name != value) {
                 shared.edit().putString(Keys.PREF_AUDIO_FOCUS_MODE, audioFocusMode.name).apply()
             }
+        } else if (key == Keys.PREF_NETWORK_TYPE) {
+            // Bei Änderung der Netzwerkeinstellung Bindung aktualisieren
+            updateNetworkBinding()
         }
     }
 
@@ -218,7 +369,7 @@ class StreamingService : MediaSessionService() {
         ProcessLifecycleOwner.get().lifecycle.addObserver(lifecycleObserver)
 
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        connectivityManager.registerDefaultNetworkCallback(networkCallback)
+        connectivityManager.registerDefaultNetworkCallback(defaultNetworkCallback)
 
         // ⚠️ ZUERST player initialisieren!
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
@@ -290,6 +441,14 @@ class StreamingService : MediaSessionService() {
                         }
                     }
 
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        // Wenn Player versucht zu buffern aber Netzwerk nicht erlaubt -> stoppen
+                        if (playbackState == Player.STATE_BUFFERING && !isAllowedNetwork()) {
+                            resumeOnNetwork = true
+                            player.stop()
+                        }
+                    }
+
                 })
 
 
@@ -318,6 +477,9 @@ class StreamingService : MediaSessionService() {
             .setSmallIcon(R.drawable.ic_radio)
             .build()
         startForeground(1, notification)
+
+        // Netzwerkbindung initialisieren bevor Playlist geladen wird
+        updateNetworkBinding()
 
         setupPlaylist()
 
@@ -364,8 +526,14 @@ class StreamingService : MediaSessionService() {
 
         player.setMediaItems(mediaItems, currentIndex, 0L)
         currentStationUuid = mediaItems[currentIndex].mediaMetadata.extras?.getString("EXTRA_UUID")
-        player.prepare()
-        maybeAutoplay()
+
+        // Nur vorbereiten wenn Netzwerk erlaubt ist
+        if (isAllowedNetwork()) {
+            player.prepare()
+            maybeAutoplay()
+        } else {
+            resumeOnNetwork = true
+        }
     }
 
     private fun refreshPlaylist() {
@@ -404,10 +572,15 @@ class StreamingService : MediaSessionService() {
 
         player.setMediaItems(mediaItems, currentIndex, 0L)
         currentStationUuid = mediaItems[currentIndex].mediaMetadata.extras?.getString("EXTRA_UUID")
-        player.prepare()
-        maybeAutoplay(wasPlaying)
 
-        if (wasPlaying) player.play()
+        // Nur vorbereiten wenn Netzwerk erlaubt ist
+        if (isAllowedNetwork()) {
+            player.prepare()
+            maybeAutoplay(wasPlaying)
+            if (wasPlaying) player.play()
+        } else {
+            resumeOnNetwork = wasPlaying || resumeOnNetwork
+        }
     }
 
     private fun maybeAutoplay(ignoreIfWasPlaying: Boolean = false) {
@@ -415,6 +588,12 @@ class StreamingService : MediaSessionService() {
         val autoplay = prefs.getBoolean("autoplay_enabled", false)
         if (!autoplay) return
         if (ignoreIfWasPlaying) return
+
+        // Netzwerkprüfung - nicht starten wenn Netzwerk nicht erlaubt
+        if (!isAllowedNetwork()) {
+            resumeOnNetwork = true
+            return
+        }
 
         val delay = try {
             prefs.getInt("autoplay_delay", 0)
@@ -460,7 +639,9 @@ class StreamingService : MediaSessionService() {
     override fun onDestroy() {
         serviceJob.cancel() // Alle Coroutines beenden
         ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
-        connectivityManager.unregisterNetworkCallback(networkCallback)
+        connectivityManager.unregisterNetworkCallback(defaultNetworkCallback)
+        unregisterBoundNetworkCallback()
+        connectivityManager.bindProcessToNetwork(null) // Netzwerkbindung aufheben
         prefs.unregisterOnSharedPreferenceChangeListener(prefListener)
         abandonAudioFocus()
         mediaSession.release()

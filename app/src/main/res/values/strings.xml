@@ -184,6 +184,10 @@
     <string name="settings_audiofocus_hold">Hold Audiofocus</string>
     <string name="settings_audiofocus_lower">Lower Audio</string>
     <string name="settings_resume_live_after_pause">Resume Live After Pause</string>
+    <string name="settings_network_type">Datenverbindung</string>
+    <string name="network_type_all">Alle (WiFi + Mobile)</string>
+    <string name="network_type_wifi_only">Nur WIFI</string>
+    <string name="network_type_mobile_only">Nur Mobile Daten</string>
 
     <!-- StreamPlay API Sync -->
     <string name="settings_category_api_sync">StreamPlay API</string>

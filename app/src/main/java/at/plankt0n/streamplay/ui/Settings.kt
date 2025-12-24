@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.*
 import at.plankt0n.streamplay.AudioFocusMode
 import at.plankt0n.streamplay.Keys
+import at.plankt0n.streamplay.NetworkType
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.ScreenOrientationMode
 import at.plankt0n.streamplay.data.CoverAnimationStyle
@@ -228,6 +229,25 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         setDefaultValue(AudioFocusMode.STOP.name)
         category = SettingsCategory.PLAYER
         icon = context.getDrawable(R.drawable.ic_button_play)
+        summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
+    }
+
+    val networkTypePref = ListPreference(context).apply {
+        key = Keys.PREF_NETWORK_TYPE
+        title = getString(R.string.settings_network_type)
+        entries = arrayOf(
+            getString(R.string.network_type_all),
+            getString(R.string.network_type_wifi_only),
+            getString(R.string.network_type_mobile_only)
+        )
+        entryValues = arrayOf(
+            NetworkType.ALL.name,
+            NetworkType.WIFI_ONLY.name,
+            NetworkType.MOBILE_ONLY.name
+        )
+        setDefaultValue(NetworkType.ALL.name)
+        category = SettingsCategory.PLAYER
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
         summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
     }
 
@@ -663,6 +683,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
 
     val preferences = listOf(
         audioFocusPref,
+        networkTypePref,
         autoplaySwitch,
         minimizeSwitch,
         delayPreference,
