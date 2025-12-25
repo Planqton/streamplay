@@ -376,7 +376,7 @@ class StreamingService : MediaLibraryService() {
                     Futures.immediateFuture(LibraryResult.ofItemList(children, params))
                 }
                 MEDIA_MY_STATIONS_ID -> {
-                    // Meine Sender: Liste der User-Stationen
+                    // Meine Sender: Alle Sender anzeigen
                     val stations = PreferencesHelper.getStations(this@StreamingService)
                     val mediaItems = stations.map { station ->
                         createPlayableMediaItem(station)
