@@ -304,15 +304,6 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }
 
-    val autoStartActivitySwitch = SwitchPreferenceCompat(context).apply {
-        key = Keys.PREF_AUTO_START_ACTIVITY
-        title = getString(R.string.settings_auto_start_activity)
-        summary = getString(R.string.settings_auto_start_activity_summary)
-        setDefaultValue(false)
-        category = SettingsCategory.ANDROID_AUTO
-        icon = context.getDrawable(R.drawable.ic_autoplay)
-    }
-
     val minimizeSwitch = SwitchPreferenceCompat(context).apply {
         key = "minimize_after_autoplay"
         title = getString(R.string.settings_minimize)
@@ -765,7 +756,6 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         networkTypePref,
         autoAutoplaySwitch,
         autoStopSwitch,
-        autoStartActivitySwitch,
         autoplaySwitch,
         minimizeSwitch,
         delayPreference,

@@ -227,6 +227,4 @@
     <string name="settings_auto_autoplay_summary">Startet automatisch den letzten Sender wenn Android Auto verbunden wird</string>
     <string name="settings_auto_stop">Stop bei Android Auto Trennung</string>
     <string name="settings_auto_stop_summary">Stoppt die Wiedergabe wenn Android Auto getrennt wird</string>
-    <string name="settings_auto_start_activity">Activity automatisch starten</string>
-    <string name="settings_auto_start_activity_summary">Startet die App-Activity im Hintergrund wenn Android Auto verbunden wird</string>
 </resources>
