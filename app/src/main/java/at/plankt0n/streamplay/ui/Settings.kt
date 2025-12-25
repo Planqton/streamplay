@@ -35,6 +35,28 @@ import kotlinx.coroutines.withContext
 /** Possible categories a preference can belong to. */
 enum class SettingsCategory { PLAYER, PLAYBACK, UI, METAINFO, SPOTIFY_META, API_SYNC, ABOUT }
 
+/** Get the accent color for this category. */
+fun SettingsCategory.getAccentColor(context: Context): Int = when (this) {
+    SettingsCategory.PLAYER -> context.getColor(R.color.category_player)
+    SettingsCategory.PLAYBACK -> context.getColor(R.color.category_playback)
+    SettingsCategory.UI -> context.getColor(R.color.category_ui)
+    SettingsCategory.METAINFO -> context.getColor(R.color.category_metainfo)
+    SettingsCategory.SPOTIFY_META -> context.getColor(R.color.category_spotify)
+    SettingsCategory.API_SYNC -> context.getColor(R.color.category_api)
+    SettingsCategory.ABOUT -> context.getColor(R.color.category_about)
+}
+
+/** Get the icon resource for this category. */
+fun SettingsCategory.getIconResource(): Int = when (this) {
+    SettingsCategory.PLAYER -> R.drawable.ic_category_player
+    SettingsCategory.PLAYBACK -> R.drawable.ic_category_playback
+    SettingsCategory.UI -> R.drawable.ic_category_ui
+    SettingsCategory.METAINFO -> R.drawable.ic_category_metainfo
+    SettingsCategory.SPOTIFY_META -> R.drawable.ic_category_spotify
+    SettingsCategory.API_SYNC -> R.drawable.ic_category_api
+    SettingsCategory.ABOUT -> R.drawable.ic_category_about
+}
+
 /** Preference that requires long press (hold) to activate */
 @SuppressLint("ClickableViewAccessibility")
 class LongPressPreference(context: Context) : Preference(context) {
@@ -193,15 +215,11 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 SettingsCategory.API_SYNC -> getString(R.string.settings_category_api_sync)
                 SettingsCategory.ABOUT -> getString(R.string.settings_category_about)
             }
-            icon = when (cat) {
-                SettingsCategory.PLAYER -> context.getDrawable(R.drawable.ic_button_play)
-                SettingsCategory.PLAYBACK -> context.getDrawable(R.drawable.ic_button_play)
-                SettingsCategory.UI -> context.getDrawable(R.drawable.ic_sheet_settings)
-                SettingsCategory.METAINFO -> context.getDrawable(R.drawable.ic_sheet_discover)
-                SettingsCategory.SPOTIFY_META -> context.getDrawable(R.drawable.ic_sheet_settings)
-                SettingsCategory.API_SYNC -> context.getDrawable(R.drawable.ic_sheet_settings)
-                SettingsCategory.ABOUT -> context.getDrawable(R.mipmap.ic_launcher)
+            // Kategorie-Icon mit Akzentfarbe
+            icon = context.getDrawable(cat.getIconResource())?.mutate()?.apply {
+                setTint(cat.getAccentColor(context))
             }
+            isIconSpaceReserved = true
         }
     }
 
@@ -729,6 +747,15 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         settingsTransferPref,
         factoryResetPref
     )
+
+    // Icons der Preferences mit Kategorie-Farbe tinting
+    preferences.forEach { pref ->
+        pref.category?.let { cat ->
+            pref.icon = pref.icon?.mutate()?.apply {
+                setTint(cat.getAccentColor(context))
+            }
+        }
+    }
 
     SettingsCategory.values().forEach { cat ->
         val catPref = categoryMap[cat]!!

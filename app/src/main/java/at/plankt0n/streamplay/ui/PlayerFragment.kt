@@ -238,6 +238,9 @@ class PlayerFragment : Fragment() {
         } else 0
         requireContext().registerReceiver(autoplayReceiver, filter, flags)
 
+        // ViewModel VOR MediaServiceController initialisieren (für onConnected Callback)
+        spotifyTrackViewModel = ViewModelProvider(requireActivity())[UITrackViewModel::class.java]
+
         mediaServiceController = MediaServiceController(requireContext())
         mediaServiceController.initializeAndConnect(
             onConnected = { controller ->
@@ -280,6 +283,14 @@ class PlayerFragment : Fragment() {
                         updateOverlayColors(color)
                     }
                 }
+
+                // Meta-Cover setzen BEVOR Adapter zugewiesen wird
+                val currentIndex = controller.currentMediaItemIndex
+                val currentTrackInfo = spotifyTrackViewModel.trackInfo.value
+                if (currentTrackInfo != null && coverMode == CoverMode.META && !currentTrackInfo.bestCoverUrl.isNullOrBlank()) {
+                    coverPageAdapter?.setCoverUrlForPosition(currentIndex, currentTrackInfo.bestCoverUrl!!)
+                }
+
                 viewPager.adapter = coverPageAdapter
 
                 coverPageAdapter?.mediaItems?.forEach { item ->
@@ -288,11 +299,10 @@ class PlayerFragment : Fragment() {
                         .preload()
                 }
 
-                val currentIndex = controller.currentMediaItemIndex
                 viewPager.setCurrentItem(currentIndex, false)
                 updateOverlayUI(currentIndex)
                 updatePlayPauseIcon(controller.isPlaying)
-                updateManualLogButtonState(spotifyTrackViewModel.trackInfo.value)
+                updateManualLogButtonState(currentTrackInfo)
 
                 requireContext().startService(
                     Intent(requireContext(), StreamingService::class.java).apply {
@@ -340,7 +350,6 @@ class PlayerFragment : Fragment() {
             }
         )
 
-        spotifyTrackViewModel = ViewModelProvider(requireActivity())[UITrackViewModel::class.java]
         observeSpotifyTrackInfo()
 
         buttonSpotify.setOnClickListener {
@@ -469,7 +478,24 @@ class PlayerFragment : Fragment() {
                 val holder = recyclerView?.findViewHolderForAdapterPosition(currentPosition)
                         as? CoverPageAdapter.CoverViewHolder
                 if (holder != null && coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
+                    // Lade Meta-Cover direkt falls noch nicht geladen
+                    LiveCoverHelper.loadCoverWithBackground(
+                        context = requireContext(),
+                        imageUrl = trackInfo.bestCoverUrl!!,
+                        imageView = holder.coverImage,
+                        backgroundTarget = holder.itemView,
+                        defaultColor = requireContext().getColor(R.color.default_background),
+                        lastColor = holder.lastColor,
+                        lastEffect = holder.lastEffect,
+                        effect = backgroundEffect,
+                        onNewColor = {
+                            holder.lastColor = it
+                            updateOverlayColors(it)
+                        },
+                        onNewEffect = { holder.lastEffect = it }
+                    )
                     showingMetaCover = true
+
                     holder.coverImage.setOnClickListener { view ->
                         val targetUrl = if (showingMetaCover) {
                             defaultIconUrl.takeIf { it.isNotBlank() }

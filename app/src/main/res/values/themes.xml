@@ -40,4 +40,42 @@
         <item name="cornerSize">8dp</item>
     </style>
 
+    <!-- Settings Preference Styles -->
+    <style name="PreferenceCategory.Settings" parent="Preference.Category">
+        <item name="android:textColor">@color/textSecondary</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:paddingTop">24dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="allowDividerAbove">false</item>
+        <item name="allowDividerBelow">false</item>
+        <item name="iconSpaceReserved">true</item>
+    </style>
+
+    <style name="Preference.Settings" parent="Preference.Material">
+        <item name="android:textColor">@color/textPrimary</item>
+        <item name="iconSpaceReserved">true</item>
+        <item name="allowDividerAbove">false</item>
+        <item name="allowDividerBelow">false</item>
+    </style>
+
+    <style name="TextAppearance.Settings.Title" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textColor">@color/textPrimary</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="TextAppearance.Settings.Summary" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:textColor">@color/textSecondary</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <style name="TextAppearance.Settings.CategoryTitle" parent="TextAppearance.MaterialComponents.Overline">
+        <item name="android:textColor">@color/textSecondary</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+
 </resources>
