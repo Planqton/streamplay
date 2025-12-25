@@ -42,7 +42,13 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.metadata.icy.IcyInfo
 import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSessionService
+import androidx.media3.session.MediaLibraryService
+import androidx.media3.session.MediaLibraryService.MediaLibrarySession
+import androidx.media3.session.LibraryResult
+import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import android.content.ContentResolver
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.IcyStreamReader
 import at.plankt0n.streamplay.helper.PreferencesHelper
@@ -61,11 +67,11 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 @androidx.media3.common.util.UnstableApi
-class StreamingService : MediaSessionService() {
+class StreamingService : MediaLibraryService() {
 
     private var icyStreamReader: IcyStreamReader? = null //alt
     private lateinit var player: ExoPlayer
-    private lateinit var mediaSession: MediaSession
+    private lateinit var mediaLibrarySession: MediaLibrarySession
 
     // Service-eigener CoroutineScope für Lifecycle-gebundene Coroutines
     private val serviceJob = Job()
@@ -325,6 +331,180 @@ class StreamingService : MediaSessionService() {
 
     companion object {
         const val CHANNEL_ID = "stream_service_channel"
+
+        // Media Browser hierarchy IDs for Android Auto
+        const val MEDIA_ROOT_ID = "root"
+        const val MEDIA_MY_STATIONS_ID = "my_stations"
+    }
+
+    // ===== Android Auto: MediaLibrarySession.Callback =====
+    private inner class MediaLibrarySessionCallback : MediaLibrarySession.Callback {
+
+        override fun onGetLibraryRoot(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            params: MediaLibraryService.LibraryParams?
+        ): ListenableFuture<LibraryResult<MediaItem>> {
+            val rootItem = MediaItem.Builder()
+                .setMediaId(MEDIA_ROOT_ID)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle("StreamPlay")
+                        .setIsPlayable(false)
+                        .setIsBrowsable(true)
+                        .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+                        .build()
+                )
+                .build()
+            return Futures.immediateFuture(LibraryResult.ofItem(rootItem, params))
+        }
+
+        override fun onGetChildren(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            parentId: String,
+            page: Int,
+            pageSize: Int,
+            params: MediaLibraryService.LibraryParams?
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
+            return when (parentId) {
+                MEDIA_ROOT_ID -> {
+                    // Root: Zeige "Meine Sender" Kategorie
+                    val children = listOf(
+                        createBrowsableMediaItem(MEDIA_MY_STATIONS_ID, getString(R.string.auto_my_stations))
+                    )
+                    Futures.immediateFuture(LibraryResult.ofItemList(children, params))
+                }
+                MEDIA_MY_STATIONS_ID -> {
+                    // Meine Sender: Liste der User-Stationen
+                    val stations = PreferencesHelper.getStations(this@StreamingService)
+                    val mediaItems = stations.map { station ->
+                        createPlayableMediaItem(station)
+                    }
+                    Futures.immediateFuture(LibraryResult.ofItemList(mediaItems, params))
+                }
+                else -> Futures.immediateFuture(
+                    LibraryResult.ofError(LibraryResult.RESULT_ERROR_BAD_VALUE)
+                )
+            }
+        }
+
+        override fun onGetItem(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            mediaId: String
+        ): ListenableFuture<LibraryResult<MediaItem>> {
+            val stations = PreferencesHelper.getStations(this@StreamingService)
+            val station = stations.find { it.uuid == mediaId }
+            return if (station != null) {
+                Futures.immediateFuture(LibraryResult.ofItem(createPlayableMediaItem(station), null))
+            } else {
+                Futures.immediateFuture(LibraryResult.ofError(LibraryResult.RESULT_ERROR_BAD_VALUE))
+            }
+        }
+
+        override fun onAddMediaItems(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            mediaItems: MutableList<MediaItem>
+        ): ListenableFuture<MutableList<MediaItem>> {
+            // Resolve media items for playback
+            val resolvedItems = mediaItems.map { item ->
+                resolveMediaItem(item)
+            }.toMutableList()
+            return Futures.immediateFuture(resolvedItems)
+        }
+
+        override fun onConnect(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo
+        ): MediaSession.ConnectionResult {
+            // Prüfen ob Android Auto verbunden ist
+            if (isAndroidAutoController(controller)) {
+                Log.d("StreamingService", "🚗 Android Auto verbunden: ${controller.packageName}")
+                val autoplay = prefs.getBoolean(Keys.PREF_AUTO_AUTOPLAY, false)
+                if (autoplay && !player.isPlaying) {
+                    Log.d("StreamingService", "🚗 Auto-Autoplay aktiviert - starte Wiedergabe")
+                    player.prepare()
+                    player.play()
+                }
+            }
+            return super.onConnect(session, controller)
+        }
+    }
+
+    private fun isAndroidAutoController(controller: MediaSession.ControllerInfo): Boolean {
+        val pkg = controller.packageName
+        return pkg.contains("com.google.android.projection") ||
+               pkg.contains("com.google.android.gms.car") ||
+               pkg == "com.google.android.carassistant"
+    }
+
+    // ===== Android Auto: Helper Methods =====
+    private fun createBrowsableMediaItem(id: String, title: String): MediaItem {
+        val iconUri = Uri.Builder()
+            .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+            .authority(packageName)
+            .path(R.drawable.ic_radio.toString())
+            .build()
+
+        return MediaItem.Builder()
+            .setMediaId(id)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(title)
+                    .setArtworkUri(iconUri)
+                    .setIsPlayable(false)
+                    .setIsBrowsable(true)
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_RADIO_STATIONS)
+                    .build()
+            )
+            .build()
+    }
+
+    private fun createPlayableMediaItem(station: StationItem): MediaItem {
+        val artworkUri = if (station.iconURL.isNotBlank()) {
+            Uri.parse(station.iconURL)
+        } else null
+
+        val extras = Bundle().apply {
+            putString("EXTRA_ICON_URL", station.iconURL)
+            putString("EXTRA_UUID", station.uuid)
+            putString("EXTRA_STATION_NAME", station.stationName)
+        }
+
+        return MediaItem.Builder()
+            .setMediaId(station.uuid)
+            .setUri(station.streamURL)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(station.stationName)
+                    .setArtworkUri(artworkUri)
+                    .setIsPlayable(true)
+                    .setIsBrowsable(false)
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_RADIO_STATION)
+                    .setExtras(extras)
+                    .build()
+            )
+            .build()
+    }
+
+    private fun resolveMediaItem(item: MediaItem): MediaItem {
+        // If item already has a URI, return as is
+        if (item.localConfiguration?.uri != null) {
+            return item
+        }
+
+        // Look up the station by mediaId
+        val mediaId = item.mediaId
+        val stations = PreferencesHelper.getStations(this)
+        val station = stations.find { it.uuid == mediaId }
+
+        return if (station != null) {
+            createPlayableMediaItem(station)
+        } else {
+            item // Return original if not found
+        }
     }
 
     private var hasSeenForeground = false
@@ -349,8 +529,32 @@ class StreamingService : MediaSessionService() {
         when (intent?.action) {
             "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST" -> refreshPlaylist()
             Keys.ACTION_REFRESH_METADATA -> refreshMediaItemMetadata()
+            Keys.ACTION_AUTO_PLAY -> {
+                Log.d("StreamingService", "🚗 ACTION_AUTO_PLAY empfangen")
+                if (!player.isPlaying) {
+                    player.prepare()
+                    player.play()
+                }
+            }
+            Keys.ACTION_AUTO_STOP -> {
+                Log.d("StreamingService", "🚗 ACTION_AUTO_STOP empfangen")
+                if (player.isPlaying) {
+                    player.pause()
+                }
+            }
+            Keys.ACTION_NOTIFY_STATIONS_CHANGED -> {
+                Log.d("StreamingService", "📻 Sender-Liste geändert - benachrichtige Android Auto")
+                notifyStationsChanged()
+            }
         }
         return super.onStartCommand(intent, flags, startId)
+    }
+
+    // Benachrichtigt Android Auto über Änderungen der Sender-Liste
+    private fun notifyStationsChanged() {
+        if (::mediaLibrarySession.isInitialized) {
+            mediaLibrarySession.notifyChildrenChanged(MEDIA_MY_STATIONS_ID, 0, null)
+        }
     }
 
 
@@ -488,7 +692,7 @@ class StreamingService : MediaSessionService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        mediaSession = MediaSession.Builder(this, player)
+        mediaLibrarySession = MediaLibrarySession.Builder(this, player, MediaLibrarySessionCallback())
             .setSessionActivity(sessionIntent)
             .build()
     }
@@ -632,8 +836,8 @@ class StreamingService : MediaSessionService() {
         startActivity(intent)
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession {
-        return mediaSession
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession {
+        return mediaLibrarySession
     }
 
     override fun onDestroy() {
@@ -644,7 +848,7 @@ class StreamingService : MediaSessionService() {
         connectivityManager.bindProcessToNetwork(null) // Netzwerkbindung aufheben
         prefs.unregisterOnSharedPreferenceChangeListener(prefListener)
         abandonAudioFocus()
-        mediaSession.release()
+        mediaLibrarySession.release()
         player.release()
         super.onDestroy()
     }

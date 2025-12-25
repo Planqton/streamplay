@@ -22,6 +22,9 @@ class CoverPageAdapter(
     // Speichert die aktuell angezeigte Cover-URL pro Position (Metadata oder Station)
     private val currentCoverUrls = mutableMapOf<Int, String>()
 
+    // Callback für Farbänderungen (für Overlay-Anpassung)
+    var onColorChanged: ((Int, Int) -> Unit)? = null  // (position, color)
+
     fun updateMediaItems() {
         mediaItems = mediaServiceController.getCurrentPlaylist()
         currentCoverUrls.clear()
@@ -75,7 +78,10 @@ class CoverPageAdapter(
             lastColor = holder.lastColor,
             lastEffect = holder.lastEffect,
             effect = backgroundEffect,
-            onNewColor = { holder.lastColor = it },
+            onNewColor = { color ->
+                holder.lastColor = color
+                onColorChanged?.invoke(holder.bindingAdapterPosition, color)
+            },
             onNewEffect = { holder.lastEffect = it }
         )
     }

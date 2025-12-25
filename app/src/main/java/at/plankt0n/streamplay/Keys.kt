@@ -25,6 +25,13 @@ object Keys {
     const val PREF_NETWORK_TYPE = "network_type"
     const val PREF_ONBOARDING_DONE = "onboarding_done"
 
+    // Android Auto
+    const val PREF_AUTO_AUTOPLAY = "auto_autoplay_enabled"
+    const val PREF_AUTO_STOP_ON_EXIT = "auto_stop_on_exit"
+    const val ACTION_AUTO_PLAY = "at.plankt0n.streamplay.ACTION_AUTO_PLAY"
+    const val ACTION_AUTO_STOP = "at.plankt0n.streamplay.ACTION_AUTO_STOP"
+    const val ACTION_NOTIFY_STATIONS_CHANGED = "at.plankt0n.streamplay.ACTION_NOTIFY_STATIONS_CHANGED"
+
     // StreamPlay API Settings
     const val PREF_API_ENDPOINT = "api_endpoint"
     const val DEFAULT_API_ENDPOINT = "https://streamplayapi.printspace.at"

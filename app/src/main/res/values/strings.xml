@@ -213,4 +213,11 @@
     <string name="settings_factory_reset_hold">Halten… %1$d</string>
     <string name="settings_factory_reset_confirm_title">Wirklich zurücksetzen?</string>
     <string name="settings_factory_reset_confirm_message">Alle Einstellungen, Stationen und Cache werden gelöscht. Die App wird neu gestartet.</string>
+
+    <!-- Android Auto -->
+    <string name="auto_my_stations">Meine Sender</string>
+    <string name="settings_auto_autoplay">Autoplay bei Android Auto</string>
+    <string name="settings_auto_autoplay_summary">Startet automatisch den letzten Sender wenn Android Auto verbunden wird</string>
+    <string name="settings_auto_stop">Stop bei Android Auto Trennung</string>
+    <string name="settings_auto_stop_summary">Stoppt die Wiedergabe wenn Android Auto getrennt wird</string>
 </resources>

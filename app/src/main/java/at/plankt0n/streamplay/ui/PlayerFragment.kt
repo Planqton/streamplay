@@ -275,6 +275,11 @@ class PlayerFragment : Fragment() {
                 }
 
                 coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
+                coverPageAdapter?.onColorChanged = { position, color ->
+                    if (position == viewPager.currentItem) {
+                        updateOverlayColors(color)
+                    }
+                }
                 viewPager.adapter = coverPageAdapter
 
                 coverPageAdapter?.mediaItems?.forEach { item ->
@@ -453,55 +458,9 @@ class PlayerFragment : Fragment() {
                 defaultIconUrl.takeIf { it.isNotBlank() }
             }
 
-            // Cover-URL im Adapter speichern für späteres Rebinding
+            // Cover über Adapter aktualisieren (zuverlässiger als manuelles ViewHolder-Suchen)
             val currentPosition = viewPager.currentItem
-            if (coverUrlToUse != null) {
-                coverPageAdapter?.setCoverUrlForPosition(currentPosition, coverUrlToUse)
-            }
-
-            // Funktion zum direkten Aktualisieren des Covers
-            val updateCoverImage: () -> Unit = {
-                val recyclerView = viewPager.getChildAt(0) as? RecyclerView
-                val holder = recyclerView?.findViewHolderForAdapterPosition(currentPosition)
-                        as? CoverPageAdapter.CoverViewHolder
-                if (holder != null) {
-                    // Bei leerer URL direkt Placeholder setzen
-                    if (coverUrlToUse.isNullOrBlank()) {
-                        holder.coverImage.setImageResource(R.drawable.ic_placeholder_logo)
-                        holder.itemView.setBackgroundColor(requireContext().getColor(R.color.default_background))
-                    } else {
-                        // Cover mit URL laden
-                        Glide.with(requireContext())
-                            .load(coverUrlToUse)
-                            .placeholder(R.drawable.ic_placeholder_logo)
-                            .error(R.drawable.ic_stationcover_placeholder)
-                            .into(holder.coverImage)
-
-                        // Hintergrund-Effekt
-                        LiveCoverHelper.loadCoverWithBackground(
-                            context = requireContext(),
-                            imageUrl = coverUrlToUse,
-                            imageView = holder.coverImage,
-                            backgroundTarget = holder.itemView,
-                            defaultColor = requireContext().getColor(R.color.default_background),
-                            lastColor = holder.lastColor,
-                            lastEffect = holder.lastEffect,
-                            effect = backgroundEffect,
-                            onNewColor = {
-                                holder.lastColor = it
-                                updateOverlayColors(it)
-                            },
-                            onNewEffect = { holder.lastEffect = it }
-                        )
-                    }
-                }
-            }
-
-            // Mehrfach versuchen mit verschiedenen Delays (lifecycle-safe)
-            updateCoverImage()
-            viewPager.post { if (isAdded && view != null) updateCoverImage() }
-            viewPager.postDelayed({ if (isAdded && view != null) updateCoverImage() }, 100)
-            viewPager.postDelayed({ if (isAdded && view != null) updateCoverImage() }, 500)
+            coverPageAdapter?.updateCoverUrl(currentPosition, coverUrlToUse ?: "")
 
             // Click-Listener für Flip zwischen Metadata und Station-Cover
             viewPager.post {
@@ -775,6 +734,11 @@ class PlayerFragment : Fragment() {
         } ?: run {
             // Fallback: neuen Adapter erstellen falls noch keiner existiert
             coverPageAdapter = CoverPageAdapter(mediaServiceController, backgroundEffect)
+            coverPageAdapter?.onColorChanged = { position, color ->
+                if (position == viewPager.currentItem) {
+                    updateOverlayColors(color)
+                }
+            }
             viewPager.adapter = coverPageAdapter
             coverPageAdapter?.mediaItems?.forEach { item ->
                 Glide.with(requireContext()).load(item.iconURL).preload()

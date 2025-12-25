@@ -251,6 +251,24 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
     }
 
+    val autoAutoplaySwitch = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_AUTO_AUTOPLAY
+        title = getString(R.string.settings_auto_autoplay)
+        summary = getString(R.string.settings_auto_autoplay_summary)
+        setDefaultValue(false)
+        category = SettingsCategory.PLAYER
+        icon = context.getDrawable(R.drawable.ic_autoplay)
+    }
+
+    val autoStopSwitch = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_AUTO_STOP_ON_EXIT
+        title = getString(R.string.settings_auto_stop)
+        summary = getString(R.string.settings_auto_stop_summary)
+        setDefaultValue(false)
+        category = SettingsCategory.PLAYER
+        icon = context.getDrawable(R.drawable.ic_autoplay)
+    }
+
     val minimizeSwitch = SwitchPreferenceCompat(context).apply {
         key = "minimize_after_autoplay"
         title = getString(R.string.settings_minimize)
@@ -684,6 +702,8 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     val preferences = listOf(
         audioFocusPref,
         networkTypePref,
+        autoAutoplaySwitch,
+        autoStopSwitch,
         autoplaySwitch,
         minimizeSwitch,
         delayPreference,
