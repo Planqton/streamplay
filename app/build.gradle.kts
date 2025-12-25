@@ -1,7 +1,32 @@
+import java.util.Calendar
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("kotlin-parcelize")
+}
+
+// Git Commit Hash für Build-Identifikation
+fun getGitHash(): String {
+    return try {
+        val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+            .redirectErrorStream(true)
+            .start()
+        process.inputStream.bufferedReader().readText().trim()
+    } catch (e: Exception) {
+        "unknown"
+    }
+}
+
+// Build Timestamp (ändert sich bei jedem Build)
+fun getBuildTimestamp(): String {
+    val cal = Calendar.getInstance()
+    val year = (cal.get(Calendar.YEAR) % 100).toString().padStart(2, '0')
+    val month = (cal.get(Calendar.MONTH) + 1).toString().padStart(2, '0')
+    val day = cal.get(Calendar.DAY_OF_MONTH).toString().padStart(2, '0')
+    val hour = cal.get(Calendar.HOUR_OF_DAY).toString().padStart(2, '0')
+    val min = cal.get(Calendar.MINUTE).toString().padStart(2, '0')
+    return "$year$month$day-$hour$min"
 }
 
 android {
@@ -15,7 +40,15 @@ android {
         versionCode = 2
         versionName = "1.2.3"
 
+        // Build Hash und Timestamp in BuildConfig verfügbar machen
+        buildConfigField("String", "GIT_HASH", "\"${getGitHash()}\"")
+        buildConfigField("String", "BUILD_TIME", "\"${getBuildTimestamp()}\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {

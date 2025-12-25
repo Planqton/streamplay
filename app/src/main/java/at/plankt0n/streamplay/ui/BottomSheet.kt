@@ -6,8 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.ImageView
+import androidx.cardview.widget.CardView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.ui.DiscoverFragment
@@ -29,28 +28,27 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.bottom_sheet, container, false)
+
         // Station Setup
-        view.findViewById<LinearLayout>(R.id.option_stations).setOnClickListener {
-            dismiss()
-            openStationsFragment()
-        }
-        view.findViewById<ImageView>(R.id.icon_stations).setOnClickListener {
+        view.findViewById<CardView>(R.id.option_stations).setOnClickListener {
             dismiss()
             openStationsFragment()
         }
 
         // Discover Stations
-        view.findViewById<LinearLayout>(R.id.option_discover).setOnClickListener {
+        view.findViewById<CardView>(R.id.option_discover).setOnClickListener {
             dismiss()
             openDiscoverFragment()
         }
 
-        view.findViewById<LinearLayout>(R.id.option_logs).setOnClickListener {
+        // Logs
+        view.findViewById<CardView>(R.id.option_logs).setOnClickListener {
             dismiss()
             openMetaLogFragment()
         }
 
-        view.findViewById<LinearLayout>(R.id.option_settings).setOnClickListener {
+        // Settings
+        view.findViewById<CardView>(R.id.option_settings).setOnClickListener {
             dismiss()
             openSettingsFragment()
         }

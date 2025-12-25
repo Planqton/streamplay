@@ -3,6 +3,7 @@ package at.plankt0n.streamplay.ui
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.text.SpannableString
@@ -33,7 +34,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Possible categories a preference can belong to. */
-enum class SettingsCategory { PLAYER, PLAYBACK, UI, METAINFO, SPOTIFY_META, API_SYNC, ABOUT }
+enum class SettingsCategory { PLAYER, PLAYBACK, UI, METAINFO, SPOTIFY_META, API_SYNC, ANDROID_AUTO, ABOUT }
 
 /** Get the accent color for this category. */
 fun SettingsCategory.getAccentColor(context: Context): Int = when (this) {
@@ -43,6 +44,7 @@ fun SettingsCategory.getAccentColor(context: Context): Int = when (this) {
     SettingsCategory.METAINFO -> context.getColor(R.color.category_metainfo)
     SettingsCategory.SPOTIFY_META -> context.getColor(R.color.category_spotify)
     SettingsCategory.API_SYNC -> context.getColor(R.color.category_api)
+    SettingsCategory.ANDROID_AUTO -> context.getColor(R.color.category_android_auto)
     SettingsCategory.ABOUT -> context.getColor(R.color.category_about)
 }
 
@@ -54,20 +56,23 @@ fun SettingsCategory.getIconResource(): Int = when (this) {
     SettingsCategory.METAINFO -> R.drawable.ic_category_metainfo
     SettingsCategory.SPOTIFY_META -> R.drawable.ic_category_spotify
     SettingsCategory.API_SYNC -> R.drawable.ic_category_api
+    SettingsCategory.ANDROID_AUTO -> R.drawable.ic_category_android_auto
     SettingsCategory.ABOUT -> R.drawable.ic_category_about
 }
 
-/** Preference that requires long press (hold) to activate */
+/** Preference that requires long press (hold) to activate, but also supports normal tap */
 @SuppressLint("ClickableViewAccessibility")
 class LongPressPreference(context: Context) : Preference(context) {
     var holdDurationSeconds = 5
     var holdTextFormat = "Halten… %1\$d"
     var defaultSummary = ""
     var onLongPressComplete: (() -> Unit)? = null
+    var onNormalClick: (() -> Unit)? = null
 
     private val handler = Handler(Looper.getMainLooper())
     private var counter = 0
     private var runnable: Runnable? = null
+    private var longPressTriggered = false
 
     override fun onBindViewHolder(holder: PreferenceViewHolder) {
         super.onBindViewHolder(holder)
@@ -75,6 +80,7 @@ class LongPressPreference(context: Context) : Preference(context) {
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     counter = holdDurationSeconds
+                    longPressTriggered = false
                     summary = String.format(holdTextFormat, counter)
                     runnable = object : Runnable {
                         override fun run() {
@@ -84,6 +90,7 @@ class LongPressPreference(context: Context) : Preference(context) {
                                 handler.postDelayed(this, 1000)
                             } else {
                                 summary = defaultSummary
+                                longPressTriggered = true
                                 onLongPressComplete?.invoke()
                             }
                         }
@@ -91,7 +98,16 @@ class LongPressPreference(context: Context) : Preference(context) {
                     handler.postDelayed(runnable!!, 1000)
                     true
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                MotionEvent.ACTION_UP -> {
+                    runnable?.let { handler.removeCallbacks(it) }
+                    summary = defaultSummary
+                    // Wenn Long-Press nicht ausgelöst wurde, normalen Klick triggern
+                    if (!longPressTriggered) {
+                        onNormalClick?.invoke()
+                    }
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
                     runnable?.let { handler.removeCallbacks(it) }
                     summary = defaultSummary
                     true
@@ -213,6 +229,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 SettingsCategory.METAINFO -> getString(R.string.settings_category_metainfo)
                 SettingsCategory.SPOTIFY_META -> getString(R.string.settings_category_spotify_meta)
                 SettingsCategory.API_SYNC -> getString(R.string.settings_category_api_sync)
+                SettingsCategory.ANDROID_AUTO -> getString(R.string.settings_category_android_auto)
                 SettingsCategory.ABOUT -> getString(R.string.settings_category_about)
             }
             // Kategorie-Icon mit Akzentfarbe
@@ -274,7 +291,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         title = getString(R.string.settings_auto_autoplay)
         summary = getString(R.string.settings_auto_autoplay_summary)
         setDefaultValue(false)
-        category = SettingsCategory.PLAYER
+        category = SettingsCategory.ANDROID_AUTO
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }
 
@@ -283,7 +300,16 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         title = getString(R.string.settings_auto_stop)
         summary = getString(R.string.settings_auto_stop_summary)
         setDefaultValue(false)
-        category = SettingsCategory.PLAYER
+        category = SettingsCategory.ANDROID_AUTO
+        icon = context.getDrawable(R.drawable.ic_autoplay)
+    }
+
+    val autoStartActivitySwitch = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_AUTO_START_ACTIVITY
+        title = getString(R.string.settings_auto_start_activity)
+        summary = getString(R.string.settings_auto_start_activity_summary)
+        setDefaultValue(false)
+        category = SettingsCategory.ANDROID_AUTO
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }
 
@@ -610,20 +636,34 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
     }
 
-    val versionPref = Preference(context).apply {
+    val versionPref = LongPressPreference(context).apply {
         key = "app_version"
         title = getString(R.string.settings_app_version)
         val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        summary = pkgInfo.versionName
+        val gitHash = at.plankt0n.streamplay.BuildConfig.GIT_HASH
+        val buildTime = at.plankt0n.streamplay.BuildConfig.BUILD_TIME
+        defaultSummary = "${pkgInfo.versionName} - $gitHash ($buildTime)"
+        summary = defaultSummary
         category = SettingsCategory.ABOUT
+        // App-Icon NICHT tinten - wird später ausgeschlossen
         icon = context.getDrawable(R.mipmap.ic_launcher)
+        holdDurationSeconds = 5
+        holdTextFormat = "GitHub öffnen in %1\$d…"
+        onLongPressComplete = {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Planqton/streamplay"))
+            context.startActivity(intent)
+        }
     }
 
-    val updatePref = Preference(context).apply {
+    val updatePref = LongPressPreference(context).apply {
         key = "check_updates"
         title = getString(R.string.settings_check_updates)
         val updateAvailable = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
             .getBoolean(Keys.PREF_UPDATE_AVAILABLE, false)
+        val baseSummary = if (updateAvailable) {
+            context.getString(R.string.update_available_title)
+        } else ""
+        defaultSummary = baseSummary
         summary = if (updateAvailable) {
             val text = context.getString(R.string.update_available_title)
             val color = context.getColor(R.color.update_available_orange)
@@ -638,6 +678,9 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         } else null
         category = SettingsCategory.ABOUT
         icon = context.getDrawable(R.drawable.ic_autoplay)
+        holdDurationSeconds = 5
+        holdTextFormat = "Force Update in %1\$d…"
+        // onNormalClick und onLongPressComplete werden in SettingsFragment gesetzt
     }
 
     val addTestPref = Preference(context).apply {
@@ -722,6 +765,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         networkTypePref,
         autoAutoplaySwitch,
         autoStopSwitch,
+        autoStartActivitySwitch,
         autoplaySwitch,
         minimizeSwitch,
         delayPreference,
@@ -748,11 +792,13 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         factoryResetPref
     )
 
-    // Icons der Preferences mit Kategorie-Farbe tinting
+    // Icons der Preferences mit Kategorie-Farbe tinting (außer App-Icon)
     preferences.forEach { pref ->
-        pref.category?.let { cat ->
-            pref.icon = pref.icon?.mutate()?.apply {
-                setTint(cat.getAccentColor(context))
+        if (pref.key != "app_version") {
+            pref.category?.let { cat ->
+                pref.icon = pref.icon?.mutate()?.apply {
+                    setTint(cat.getAccentColor(context))
+                }
             }
         }
     }

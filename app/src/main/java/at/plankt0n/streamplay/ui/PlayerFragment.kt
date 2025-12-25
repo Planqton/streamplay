@@ -472,31 +472,115 @@ class PlayerFragment : Fragment() {
             coverPageAdapter?.updateCoverUrl(currentPosition, coverUrlToUse ?: "")
 
             // Click-Listener für Flip zwischen Metadata und Station-Cover
-            viewPager.post {
-                if (!isAdded || view == null) return@post
-                val recyclerView = viewPager.getChildAt(0) as? RecyclerView
-                val holder = recyclerView?.findViewHolderForAdapterPosition(currentPosition)
-                        as? CoverPageAdapter.CoverViewHolder
-                if (holder != null && coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
-                    // Lade Meta-Cover direkt falls noch nicht geladen
-                    LiveCoverHelper.loadCoverWithBackground(
-                        context = requireContext(),
-                        imageUrl = trackInfo.bestCoverUrl!!,
-                        imageView = holder.coverImage,
-                        backgroundTarget = holder.itemView,
-                        defaultColor = requireContext().getColor(R.color.default_background),
-                        lastColor = holder.lastColor,
-                        lastEffect = holder.lastEffect,
-                        effect = backgroundEffect,
-                        onNewColor = {
-                            holder.lastColor = it
-                            updateOverlayColors(it)
-                        },
-                        onNewEffect = { holder.lastEffect = it }
-                    )
+            val isViewPagerVisible = viewPager.visibility == android.view.View.VISIBLE
+
+            if (isViewPagerVisible) {
+                // Standard-Modus: ViewPager ist sichtbar, Flip auf ViewPager-Cover
+                viewPager.post {
+                    if (!isAdded || view == null) return@post
+                    val recyclerView = viewPager.getChildAt(0) as? RecyclerView
+                    val holder = recyclerView?.findViewHolderForAdapterPosition(currentPosition)
+                            as? CoverPageAdapter.CoverViewHolder
+                    if (holder != null && coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
+                        // Lade Meta-Cover direkt falls noch nicht geladen
+                        LiveCoverHelper.loadCoverWithBackground(
+                            context = requireContext(),
+                            imageUrl = trackInfo.bestCoverUrl!!,
+                            imageView = holder.coverImage,
+                            backgroundTarget = holder.itemView,
+                            defaultColor = requireContext().getColor(R.color.default_background),
+                            lastColor = holder.lastColor,
+                            lastEffect = holder.lastEffect,
+                            effect = backgroundEffect,
+                            onNewColor = {
+                                holder.lastColor = it
+                                updateOverlayColors(it)
+                            },
+                            onNewEffect = { holder.lastEffect = it }
+                        )
+                        showingMetaCover = true
+
+                        holder.coverImage.setOnClickListener { view ->
+                            val targetUrl = if (showingMetaCover) {
+                                defaultIconUrl.takeIf { it.isNotBlank() }
+                            } else {
+                                trackInfo.bestCoverUrl?.takeIf { it.isNotBlank() }
+                                    ?: defaultIconUrl.takeIf { it.isNotBlank() }
+                            }
+
+                            val loadNewCoverWithBackground = {
+                                if (targetUrl.isNullOrBlank()) {
+                                    holder.coverImage.setImageResource(R.drawable.ic_placeholder_logo)
+                                    holder.itemView.setBackgroundColor(requireContext().getColor(R.color.default_background))
+                                } else {
+                                    LiveCoverHelper.loadCoverWithBackground(
+                                        context = requireContext(),
+                                        imageUrl = targetUrl,
+                                        imageView = holder.coverImage,
+                                        backgroundTarget = holder.itemView,
+                                        defaultColor = requireContext().getColor(R.color.default_background),
+                                        lastColor = holder.lastColor,
+                                        lastEffect = holder.lastEffect,
+                                        effect = backgroundEffect,
+                                        onNewColor = {
+                                            holder.lastColor = it
+                                            updateOverlayColors(it)
+                                        },
+                                        onNewEffect = { holder.lastEffect = it }
+                                    )
+                                }
+                            }
+
+                            val animStyle = if (coverAnimationStyle == CoverAnimationStyle.NONE) {
+                                CoverAnimationStyle.FLIP
+                            } else {
+                                coverAnimationStyle
+                            }
+
+                            when (animStyle) {
+                                CoverAnimationStyle.FLIP -> {
+                                    view.animate()
+                                        .rotationY(90f)
+                                        .setDuration(150)
+                                        .withEndAction {
+                                            loadNewCoverWithBackground()
+                                            holder.coverImage.rotationY = -90f
+                                            holder.coverImage.animate().rotationY(0f).setDuration(150).start()
+                                        }
+                                        .start()
+                                }
+                                CoverAnimationStyle.FADE -> {
+                                    view.animate()
+                                        .alpha(0f)
+                                        .setDuration(150)
+                                        .withEndAction {
+                                            loadNewCoverWithBackground()
+                                            holder.coverImage.alpha = 0f
+                                            holder.coverImage.animate().alpha(1f).setDuration(150).start()
+                                        }
+                                        .start()
+                                }
+                                CoverAnimationStyle.NONE -> loadNewCoverWithBackground()
+                            }
+
+                            showingMetaCover = !showingMetaCover
+                        }
+                    } else {
+                        holder?.coverImage?.setOnClickListener(null)
+                    }
+                }
+            } else {
+                // Kleines Gerät im Querformat: ViewPager versteckt, meta_cover_image ist flipable
+                if (stationIconView != null && coverMode == CoverMode.META && !trackInfo.bestCoverUrl.isNullOrBlank()) {
+                    // Lade Meta-Cover ins große meta_cover_image
+                    Glide.with(requireContext())
+                        .load(trackInfo.bestCoverUrl)
+                        .placeholder(R.drawable.ic_placeholder_logo)
+                        .error(R.drawable.ic_placeholder_logo)
+                        .into(stationIconView)
                     showingMetaCover = true
 
-                    holder.coverImage.setOnClickListener { view ->
+                    stationIconView.setOnClickListener { imgView ->
                         val targetUrl = if (showingMetaCover) {
                             defaultIconUrl.takeIf { it.isNotBlank() }
                         } else {
@@ -504,32 +588,18 @@ class PlayerFragment : Fragment() {
                                 ?: defaultIconUrl.takeIf { it.isNotBlank() }
                         }
 
-                        val loadNewCoverWithBackground = {
-                            // Bei leerer URL Placeholder setzen
+                        val loadNewCover = {
                             if (targetUrl.isNullOrBlank()) {
-                                holder.coverImage.setImageResource(R.drawable.ic_placeholder_logo)
-                                holder.itemView.setBackgroundColor(requireContext().getColor(R.color.default_background))
+                                (imgView as? ShapeableImageView)?.setImageResource(R.drawable.ic_placeholder_logo)
                             } else {
-                                // Cover UND Hintergrund aktualisieren
-                                LiveCoverHelper.loadCoverWithBackground(
-                                    context = requireContext(),
-                                    imageUrl = targetUrl,
-                                    imageView = holder.coverImage,
-                                    backgroundTarget = holder.itemView,
-                                    defaultColor = requireContext().getColor(R.color.default_background),
-                                    lastColor = holder.lastColor,
-                                    lastEffect = holder.lastEffect,
-                                    effect = backgroundEffect,
-                                    onNewColor = {
-                                        holder.lastColor = it
-                                        updateOverlayColors(it)
-                                    },
-                                    onNewEffect = { holder.lastEffect = it }
-                                )
+                                Glide.with(requireContext())
+                                    .load(targetUrl)
+                                    .placeholder(R.drawable.ic_placeholder_logo)
+                                    .error(R.drawable.ic_placeholder_logo)
+                                    .into(imgView as ShapeableImageView)
                             }
                         }
 
-                        // Animation basierend auf Einstellung (NONE verwendet FLIP als Fallback)
                         val animStyle = if (coverAnimationStyle == CoverAnimationStyle.NONE) {
                             CoverAnimationStyle.FLIP
                         } else {
@@ -538,34 +608,34 @@ class PlayerFragment : Fragment() {
 
                         when (animStyle) {
                             CoverAnimationStyle.FLIP -> {
-                                view.animate()
+                                imgView.animate()
                                     .rotationY(90f)
                                     .setDuration(150)
                                     .withEndAction {
-                                        loadNewCoverWithBackground()
-                                        holder.coverImage.rotationY = -90f
-                                        holder.coverImage.animate().rotationY(0f).setDuration(150).start()
+                                        loadNewCover()
+                                        imgView.rotationY = -90f
+                                        imgView.animate().rotationY(0f).setDuration(150).start()
                                     }
                                     .start()
                             }
                             CoverAnimationStyle.FADE -> {
-                                view.animate()
+                                imgView.animate()
                                     .alpha(0f)
                                     .setDuration(150)
                                     .withEndAction {
-                                        loadNewCoverWithBackground()
-                                        holder.coverImage.alpha = 0f
-                                        holder.coverImage.animate().alpha(1f).setDuration(150).start()
+                                        loadNewCover()
+                                        imgView.alpha = 0f
+                                        imgView.animate().alpha(1f).setDuration(150).start()
                                     }
                                     .start()
                             }
-                            CoverAnimationStyle.NONE -> loadNewCoverWithBackground()
+                            CoverAnimationStyle.NONE -> loadNewCover()
                         }
 
                         showingMetaCover = !showingMetaCover
                     }
                 } else {
-                    holder?.coverImage?.setOnClickListener(null)
+                    stationIconView?.setOnClickListener(null)
                 }
             }
 

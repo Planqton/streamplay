@@ -79,16 +79,22 @@
 
     <!-- Sheet Menu -->
     <!-- Bottom Sheet -->
-    <string name="bottom_sheet_title">Aktionen</string>
+    <string name="bottom_sheet_title">Menü</string>
     <!-- Option 1: Station Setup -->
-    <string name="bottom_sheet_station_text">Stations öffnen</string>
-    <string name="bottom_sheet_station_content_desc">Zur Playlist hinzufügen</string>
+    <string name="bottom_sheet_station_text">Meine Stationen</string>
+    <string name="bottom_sheet_station_desc">Sender verwalten und bearbeiten</string>
+    <string name="bottom_sheet_station_content_desc">Stationen öffnen</string>
     <!-- Option Discover -->
-    <string name="bottom_sheet_discover_text">Discover Stations</string>
+    <string name="bottom_sheet_discover_text">Entdecken</string>
+    <string name="bottom_sheet_discover_desc">Neue Radiosender finden</string>
     <string name="bottom_sheet_discover_content_desc">Browse online stations</string>
-    <string name="bottom_sheet_logs_text">Show Logs</string>
+    <!-- Option Logs -->
+    <string name="bottom_sheet_logs_text">Song-Verlauf</string>
+    <string name="bottom_sheet_logs_desc">Gespielte Titel anzeigen</string>
     <string name="bottom_sheet_logs_content_desc">View metadata log</string>
-    <string name="bottom_sheet_settings_text">Settings</string>
+    <!-- Option Settings -->
+    <string name="bottom_sheet_settings_text">Einstellungen</string>
+    <string name="bottom_sheet_settings_desc">App konfigurieren</string>
     <string name="bottom_sheet_settings_content_desc">Open settings</string>
 
     <!-- Meta log -->
@@ -216,8 +222,11 @@
 
     <!-- Android Auto -->
     <string name="auto_my_stations">Meine Sender</string>
+    <string name="settings_category_android_auto">Android Auto</string>
     <string name="settings_auto_autoplay">Autoplay bei Android Auto</string>
     <string name="settings_auto_autoplay_summary">Startet automatisch den letzten Sender wenn Android Auto verbunden wird</string>
     <string name="settings_auto_stop">Stop bei Android Auto Trennung</string>
     <string name="settings_auto_stop_summary">Stoppt die Wiedergabe wenn Android Auto getrennt wird</string>
+    <string name="settings_auto_start_activity">Activity automatisch starten</string>
+    <string name="settings_auto_start_activity_summary">Startet die App-Activity im Hintergrund wenn Android Auto verbunden wird</string>
 </resources>

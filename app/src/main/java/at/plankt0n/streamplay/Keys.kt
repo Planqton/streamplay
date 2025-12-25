@@ -28,6 +28,7 @@ object Keys {
     // Android Auto
     const val PREF_AUTO_AUTOPLAY = "auto_autoplay_enabled"
     const val PREF_AUTO_STOP_ON_EXIT = "auto_stop_on_exit"
+    const val PREF_AUTO_START_ACTIVITY = "auto_start_activity"
     const val ACTION_AUTO_PLAY = "at.plankt0n.streamplay.ACTION_AUTO_PLAY"
     const val ACTION_AUTO_STOP = "at.plankt0n.streamplay.ACTION_AUTO_STOP"
     const val ACTION_NOTIFY_STATIONS_CHANGED = "at.plankt0n.streamplay.ACTION_NOTIFY_STATIONS_CHANGED"

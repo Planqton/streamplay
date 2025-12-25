@@ -7,9 +7,12 @@
         <item name="colorOnPrimary">@color/textPrimary</item>
 
         <!-- Akzentfarbe für Buttons, Highlights etc. -->
-        <item name="colorSecondary">@color/colorAccent</item>
-        <item name="colorSecondaryVariant">@color/colorAccent</item>
+        <item name="colorSecondary">@color/category_player</item>
+        <item name="colorSecondaryVariant">@color/category_player</item>
         <item name="colorOnSecondary">@color/textPrimary</item>
+
+        <!-- SeekBar mit besserem Kontrast -->
+        <item name="seekBarStyle">@style/SeekBar.StreamPlay</item>
 
         <!-- Hintergrund für alle Activities/Fragments -->
         <item name="android:windowBackground">@color/backgroundDark</item>
@@ -76,6 +79,13 @@
         <item name="android:textSize">12sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">0.08</item>
+    </style>
+
+    <!-- SeekBar Style mit besserem Kontrast -->
+    <style name="SeekBar.StreamPlay" parent="Widget.AppCompat.SeekBar">
+        <item name="android:progressTint">@color/category_player</item>
+        <item name="android:progressBackgroundTint">@color/textSecondary</item>
+        <item name="android:thumbTint">@color/category_player</item>
     </style>
 
 </resources>

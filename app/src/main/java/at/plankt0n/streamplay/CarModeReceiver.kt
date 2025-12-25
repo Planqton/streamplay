@@ -17,6 +17,7 @@ class CarModeReceiver : BroadcastReceiver() {
                 Log.d("CarModeReceiver", "🚗 Car Mode aktiviert")
 
                 val autoplay = prefs.getBoolean(Keys.PREF_AUTO_AUTOPLAY, false)
+                val startActivity = prefs.getBoolean(Keys.PREF_AUTO_START_ACTIVITY, false)
 
                 if (autoplay) {
                     Log.d("CarModeReceiver", "🚗 Auto-Autoplay aktiviert - starte Service")
@@ -32,6 +33,15 @@ class CarModeReceiver : BroadcastReceiver() {
                     }
                 } else {
                     Log.d("CarModeReceiver", "🚗 Auto-Autoplay deaktiviert - keine Aktion")
+                }
+
+                if (startActivity) {
+                    Log.d("CarModeReceiver", "🚗 Activity starten aktiviert - starte MainActivity")
+
+                    val activityIntent = Intent(context, MainActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(activityIntent)
                 }
             }
 

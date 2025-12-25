@@ -37,24 +37,18 @@ class SettingsFragment : PreferenceFragmentCompat() {
         preferenceManager.sharedPreferences?.registerOnSharedPreferenceChangeListener(prefListener)
         initSettingsScreen()
 
-        findPreference<Preference>("check_updates")?.setOnPreferenceClickListener {
-            lifecycleScope.launch {
-                GitHubUpdateChecker(requireContext()).checkForUpdate()
-            }
-            true
-        }
-
-        findPreference<Preference>("app_version")?.let { pref ->
-            var tapCount = 0
-            pref.setOnPreferenceClickListener {
-                tapCount++
-                if (tapCount >= Keys.UPDATE_FORCE_TAP_COUNT) {
-                    tapCount = 0
-                    lifecycleScope.launch {
-                        GitHubUpdateChecker(requireContext()).forceUpdate()
-                    }
+        // check_updates: Normal Click handled by LongPressPreference's onNormalClick
+        // Long hold (5s) triggers forceUpdate via onLongPressComplete
+        (findPreference<Preference>("check_updates") as? LongPressPreference)?.apply {
+            onNormalClick = {
+                lifecycleScope.launch {
+                    GitHubUpdateChecker(requireContext()).checkForUpdate()
                 }
-                true
+            }
+            onLongPressComplete = {
+                lifecycleScope.launch {
+                    GitHubUpdateChecker(requireContext()).forceUpdate()
+                }
             }
         }
     }
