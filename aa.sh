@@ -16,18 +16,21 @@ if [ ! -f "$DHU_PATH" ]; then
     exit 1
 fi
 
-# Starte Head Unit Server auf dem Gerät
-echo "Starte Head Unit Server auf dem Gerät..."
-adb shell am start-foreground-service com.google.android.projection.gearhead/.companion.HeadUnitServerService 2>/dev/null || \
-adb shell am startservice com.google.android.projection.gearhead/.companion.HeadUnitServerService 2>/dev/null
+# Prüfe ob Gerät verbunden ist
+if ! adb devices | grep -qE "device\+?$"; then
+    echo "Fehler: Kein Android-Gerät verbunden oder nicht autorisiert"
+    echo "  Prüfe USB-Verbindung und USB-Debugging"
+    exit 1
+fi
 
-# Kurz warten bis Server bereit ist
-sleep 2
+# Entferne eventuell vorhandenes Port-Forwarding (verhindert Konflikte)
+adb forward --remove tcp:5277 2>/dev/null
 
-# Starte ADB Port-Forwarding für Android Auto
-echo "Starte ADB Port-Forwarding..."
-adb forward tcp:5277 tcp:5277
+# Force-Stop Android Auto um leaked connections zu vermeiden
+echo "Stoppe Android Auto auf dem Gerät..."
+adb shell am force-stop com.google.android.projection.gearhead
+sleep 1
 
-# Starte DHU
-echo "Starte Android Auto Desktop Head Unit..."
+# Starte DHU im USB-Modus (stabiler als TCP)
+echo "Starte Android Auto Desktop Head Unit (USB-Modus)..."
 "$DHU_PATH" -u

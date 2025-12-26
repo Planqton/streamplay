@@ -261,6 +261,7 @@ class StreamingService : MediaLibraryService() {
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
     private var audioFocusMode = AudioFocusMode.STOP
+    private var pausedByFocusLoss = false
     private lateinit var prefs: SharedPreferences
     private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
         if (key == Keys.PREF_AUDIO_FOCUS_MODE) {
@@ -283,18 +284,36 @@ class StreamingService : MediaLibraryService() {
             return@OnAudioFocusChangeListener
         }
 
+        // Duck-Level aus Preferences (Default 20%)
+        val duckLevel = prefs.getInt(Keys.PREF_DUCK_VOLUME_LEVEL, 20) / 100f
+
         when (focusChange) {
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK,
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
-            AudioManager.AUDIOFOCUS_LOSS -> {
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                // Ducking erlaubt - immer nur Lautstärke senken, nie pausieren
+                player.volume = duckLevel
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                // Temporärer Verlust - je nach Modus ducken oder pausieren
                 if (audioFocusMode == AudioFocusMode.LOWER) {
-                    player.volume = 0.2f
+                    player.volume = duckLevel
                 } else {
+                    pausedByFocusLoss = player.isPlaying
                     player.pause()
                 }
             }
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                // Permanenter Verlust - immer pausieren
+                pausedByFocusLoss = player.isPlaying
+                player.pause()
+            }
             AudioManager.AUDIOFOCUS_GAIN -> {
+                // Focus zurück - Lautstärke wiederherstellen
                 player.volume = 1f
+                // Wiedergabe fortsetzen wenn wir wegen Focus-Verlust pausiert haben
+                if (pausedByFocusLoss) {
+                    player.play()
+                    pausedByFocusLoss = false
+                }
             }
         }
     }

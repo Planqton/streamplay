@@ -267,6 +267,37 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
     }
 
+    // Migration: duck_volume_level von Float zu Int
+    try {
+        val duckPrefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        val floatValue = duckPrefs.getFloat(Keys.PREF_DUCK_VOLUME_LEVEL, -1f)
+        if (floatValue >= 0f) {
+            duckPrefs.edit().remove(Keys.PREF_DUCK_VOLUME_LEVEL).putInt(Keys.PREF_DUCK_VOLUME_LEVEL, floatValue.toInt()).commit()
+        }
+    } catch (_: ClassCastException) {
+        // Already an Int - no migration needed
+    }
+
+    val duckVolumePref = SeekBarPreference(context).apply {
+        key = Keys.PREF_DUCK_VOLUME_LEVEL
+        title = getString(R.string.settings_duck_volume_level)
+        min = 5
+        max = 50
+        setDefaultValue(20)
+        showSeekBarValue = true
+        category = SettingsCategory.PLAYER
+        icon = context.getDrawable(R.drawable.ic_button_unmuted)
+        // Nur aktiviert wenn LOWER Modus ausgewählt
+        isEnabled = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.STOP.name) == AudioFocusMode.LOWER.name
+    }
+
+    // Aktiviere/Deaktiviere Slider bei Modus-Wechsel
+    audioFocusPref.setOnPreferenceChangeListener { _, newValue ->
+        duckVolumePref.isEnabled = (newValue as String) == AudioFocusMode.LOWER.name
+        true
+    }
+
     val networkTypePref = ListPreference(context).apply {
         key = Keys.PREF_NETWORK_TYPE
         title = getString(R.string.settings_network_type)
@@ -753,6 +784,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
 
     val preferences = listOf(
         audioFocusPref,
+        duckVolumePref,
         networkTypePref,
         autoAutoplaySwitch,
         autoStopSwitch,

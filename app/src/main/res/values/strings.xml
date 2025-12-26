@@ -189,6 +189,7 @@
     <string name="settings_audiofocus_stop">Stop Playing</string>
     <string name="settings_audiofocus_hold">Hold Audiofocus</string>
     <string name="settings_audiofocus_lower">Lower Audio</string>
+    <string name="settings_duck_volume_level">Duck Lautstärke (%)</string>
     <string name="settings_resume_live_after_pause">Resume Live After Pause</string>
     <string name="settings_network_type">Datenverbindung</string>
     <string name="network_type_all">Alle (WiFi + Mobile)</string>
