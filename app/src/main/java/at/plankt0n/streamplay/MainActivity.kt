@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -20,6 +21,7 @@ import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.helper.StreamplayApiHelper
+import at.plankt0n.streamplay.helper.LayoutLogger
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.ScreenOrientationMode
@@ -42,6 +44,9 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         applyOrientationPreference()
 
         setContentView(R.layout.activity_main)
+
+        // Log initial layout
+        logCurrentLayout()
 
         apiSyncIfEnabled()
 
@@ -320,6 +325,48 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             lifecycleScope.launch {
                 StreamplayApiHelper.pushIfSyncEnabled(this@MainActivity)
             }
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        logCurrentLayout()
+    }
+
+    private var lastLoggedConfig: String? = null
+
+    private fun logCurrentLayout() {
+        val config = resources.configuration
+        val orientationStr = when (config.orientation) {
+            Configuration.ORIENTATION_LANDSCAPE -> "LANDSCAPE"
+            Configuration.ORIENTATION_PORTRAIT -> "PORTRAIT"
+            else -> "UNDEFINED"
+        }
+
+        val sw = config.smallestScreenWidthDp
+        val layoutFolder = when {
+            config.orientation == Configuration.ORIENTATION_LANDSCAPE && sw >= 800 -> "layout-sw800dp-land"
+            config.orientation == Configuration.ORIENTATION_LANDSCAPE && sw >= 600 -> "layout-sw600dp-land"
+            config.orientation == Configuration.ORIENTATION_LANDSCAPE && sw >= 384 -> "layout-sw384dp-land"
+            config.orientation == Configuration.ORIENTATION_LANDSCAPE -> "layout-land"
+            else -> "layout"
+        }
+
+        val currentConfig = "$orientationStr|$sw|${config.screenWidthDp}x${config.screenHeightDp}"
+
+        // Only log when config actually changed
+        if (currentConfig != lastLoggedConfig) {
+            lastLoggedConfig = currentConfig
+            Log.i("LayoutLogger", "")
+            Log.i("LayoutLogger", "╔══════════════════════════════════════════╗")
+            Log.i("LayoutLogger", "║         📐 LAYOUT WECHSEL                ║")
+            Log.i("LayoutLogger", "╠══════════════════════════════════════════╣")
+            Log.i("LayoutLogger", "║  Folder:      $layoutFolder")
+            Log.i("LayoutLogger", "║  Orientation: $orientationStr")
+            Log.i("LayoutLogger", "║  SW:          ${sw}dp")
+            Log.i("LayoutLogger", "║  Screen:      ${config.screenWidthDp}dp x ${config.screenHeightDp}dp")
+            Log.i("LayoutLogger", "╚══════════════════════════════════════════╝")
+            Log.i("LayoutLogger", "")
         }
     }
 }

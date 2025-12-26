@@ -63,4 +63,72 @@ object PreferencesHelper {
             .putInt(Keys.PREF_LAST_PLAYED_STREAM_INDEX, index)
             .apply()
     }
+
+    // Dev Items for Android Auto "Für mich" section
+    fun getDevForYouItems(context: Context): MutableList<StationItem> {
+        val json = getPrefs(context).getString(Keys.KEY_DEV_FOR_YOU_ITEMS, null)
+        return if (json != null) {
+            try {
+                val type = object : TypeToken<MutableList<StationItem>>() {}.type
+                Gson().fromJson(json, type) ?: mutableListOf()
+            } catch (e: Exception) {
+                mutableListOf()
+            }
+        } else {
+            mutableListOf()
+        }
+    }
+
+    fun saveDevForYouItems(context: Context, items: List<StationItem>) {
+        val json = Gson().toJson(items)
+        getPrefs(context).edit().putString(Keys.KEY_DEV_FOR_YOU_ITEMS, json).apply()
+    }
+
+    // Dev Items for Android Auto "Was möchtest du hören?" section
+    fun getDevWhatToListenItems(context: Context): MutableList<StationItem> {
+        val json = getPrefs(context).getString(Keys.KEY_DEV_WHAT_TO_LISTEN_ITEMS, null)
+        return if (json != null) {
+            try {
+                val type = object : TypeToken<MutableList<StationItem>>() {}.type
+                Gson().fromJson(json, type) ?: mutableListOf()
+            } catch (e: Exception) {
+                mutableListOf()
+            }
+        } else {
+            mutableListOf()
+        }
+    }
+
+    fun saveDevWhatToListenItems(context: Context, items: List<StationItem>) {
+        val json = Gson().toJson(items)
+        getPrefs(context).edit().putString(Keys.KEY_DEV_WHAT_TO_LISTEN_ITEMS, json).apply()
+    }
+
+    fun clearDevItems(context: Context) {
+        getPrefs(context).edit()
+            .remove(Keys.KEY_DEV_FOR_YOU_ITEMS)
+            .remove(Keys.KEY_DEV_WHAT_TO_LISTEN_ITEMS)
+            .apply()
+    }
+
+    // Generate random dev items
+    fun generateRandomDevItems(): List<StationItem> {
+        val genres = listOf("Rock", "Pop", "Jazz", "Classical", "Electronic", "Hip-Hop", "Country", "Blues", "Metal", "Indie", "R&B", "Reggae", "Folk", "Punk", "Soul")
+        val moods = listOf("Chill", "Energetic", "Relaxing", "Party", "Focus", "Workout", "Sleep", "Morning", "Evening", "Road Trip")
+        val adjectives = listOf("Best", "Top", "Hot", "New", "Fresh", "Classic", "Ultimate", "Pure", "True", "Real")
+
+        return (1..15).map { _ ->
+            val genre = genres.random()
+            val mood = moods.random()
+            val adjective = adjectives.random()
+            val uuid = java.util.UUID.randomUUID().toString()
+
+            StationItem(
+                uuid = uuid,
+                stationName = "$adjective $genre $mood",
+                streamURL = "https://example.com/stream/$uuid",
+                iconURL = "https://picsum.photos/seed/$uuid/300/300"
+            )
+        }
+    }
 }

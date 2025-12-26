@@ -45,6 +45,10 @@ object Keys {
     const val ACTION_AUTO_STOP = "at.plankt0n.streamplay.ACTION_AUTO_STOP"
     const val ACTION_NOTIFY_STATIONS_CHANGED = "at.plankt0n.streamplay.ACTION_NOTIFY_STATIONS_CHANGED"
 
+    // Dev Items for Android Auto
+    const val KEY_DEV_FOR_YOU_ITEMS = "dev_for_you_items"
+    const val KEY_DEV_WHAT_TO_LISTEN_ITEMS = "dev_what_to_listen_items"
+
     // StreamPlay API Settings
     const val PREF_API_ENDPOINT = "api_endpoint"
     const val DEFAULT_API_ENDPOINT = "https://streamplayapi.printspace.at"

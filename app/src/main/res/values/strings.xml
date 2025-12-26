@@ -110,10 +110,29 @@
     <string name="eq_not_available">Equalizer nicht verfügbar - starte zuerst einen Stream</string>
 
     <!-- Meta log -->
-    <string name="search_logs_hint">Search logs</string>
-    <string name="clear_logs">Clear Logs</string>
+    <string name="search_logs_hint">Suchen…</string>
+    <string name="clear_logs">Verlauf löschen</string>
     <string name="filter_manual_logs">Show only manual logs</string>
-    <string name="manual_log_saved">Manual log saved</string>
+    <string name="manual_log_saved">Gespeichert</string>
+    <string name="meta_log_filter_all">Alle</string>
+    <string name="meta_log_filter_saved">Gespeichert</string>
+    <string name="meta_log_empty_title">Noch keine Songs</string>
+    <string name="meta_log_empty_subtitle">Gehörte Songs erscheinen hier automatisch</string>
+    <string name="meta_log_open_spotify">Auf Spotify öffnen</string>
+    <string name="meta_log_date_today">Heute</string>
+    <string name="meta_log_date_yesterday">Gestern</string>
+    <string name="meta_log_time_all">Alle</string>
+    <string name="meta_log_time_last_hour">Letzte Stunde</string>
+    <string name="meta_log_time_today">Heute</string>
+    <string name="meta_log_time_yesterday">Gestern</string>
+    <string name="meta_log_time_week">Diese Woche</string>
+    <string name="meta_log_time_month">Diesen Monat</string>
+    <string name="meta_log_time_custom">Zeitraum</string>
+    <string name="meta_log_time_from">Von</string>
+    <string name="meta_log_time_to">Bis</string>
+    <string name="meta_log_confirm_clear_title">Verlauf löschen?</string>
+    <string name="meta_log_confirm_clear_message">Der gesamte Song-Verlauf wird unwiderruflich gelöscht.</string>
+    <string name="meta_log_cleared">Verlauf gelöscht</string>
 
     <string name="drag_handle_desc">Move station</string>
 
@@ -250,6 +269,8 @@
 
     <!-- Android Auto -->
     <string name="auto_my_stations">Meine Sender</string>
+    <string name="auto_for_you">Für mich</string>
+    <string name="auto_what_to_listen">Was möchtest du hören?</string>
     <string name="settings_category_android_auto">Android Auto</string>
     <string name="settings_auto_autoplay">Autoplay bei Android Auto</string>
     <string name="settings_auto_autoplay_summary">Startet automatisch den letzten Sender wenn Android Auto verbunden wird</string>

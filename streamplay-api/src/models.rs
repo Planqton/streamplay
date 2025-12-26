@@ -59,3 +59,8 @@ pub struct UpdateJsonRequest {
 pub struct MessageResponse {
     pub message: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateStationsRequest {
+    pub stations: Vec<serde_json::Value>,
+}

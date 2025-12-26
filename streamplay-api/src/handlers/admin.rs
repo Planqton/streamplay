@@ -2,7 +2,7 @@ use axum::{extract::State, http::StatusCode, Json};
 
 use crate::{
     auth::{create_token, AdminUser, Claims},
-    models::{CreateUserRequest, JsonDataResponse, LoginRequest, LoginResponse, MessageResponse, UpdateJsonRequest, User, UserResponse},
+    models::{CreateUserRequest, JsonDataResponse, LoginRequest, LoginResponse, MessageResponse, UpdateJsonRequest, UpdateStationsRequest, User, UserResponse},
     AppState,
 };
 
@@ -196,4 +196,38 @@ pub async fn update_user_json(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(JsonDataResponse { data: payload.data }))
+}
+
+pub async fn update_user_stations(
+    _admin: AdminUser,
+    State(state): State<AppState>,
+    axum::extract::Path(user_id): axum::extract::Path<i64>,
+    Json(payload): Json<UpdateStationsRequest>,
+) -> Result<Json<JsonDataResponse>, (StatusCode, String)> {
+    // Get current user data
+    let user: User = sqlx::query_as("SELECT * FROM users WHERE id = ?")
+        .bind(user_id)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "User not found".to_string()))?;
+
+    // Parse existing JSON data
+    let mut data: serde_json::Value =
+        serde_json::from_str(&user.json_data).unwrap_or(serde_json::json!({}));
+
+    // Only update stations, keep settings intact
+    data["stations"] = serde_json::json!(payload.stations);
+
+    let json_string = serde_json::to_string(&data)
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+    sqlx::query("UPDATE users SET json_data = ? WHERE id = ?")
+        .bind(&json_string)
+        .bind(user_id)
+        .execute(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(JsonDataResponse { data }))
 }

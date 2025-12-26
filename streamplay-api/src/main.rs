@@ -57,6 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/admin/users/:id", delete(handlers::admin::delete_user))
         .route("/api/admin/users/:id/data", get(handlers::admin::get_user_json))
         .route("/api/admin/users/:id/data", put(handlers::admin::update_user_json))
+        .route("/api/admin/users/:id/stations", put(handlers::admin::update_user_stations))
         // User routes
         .route("/api/user/login", post(handlers::user::user_login))
         .route("/api/user/data", get(handlers::user::get_json))

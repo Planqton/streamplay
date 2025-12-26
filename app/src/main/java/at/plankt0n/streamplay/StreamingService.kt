@@ -366,6 +366,8 @@ class StreamingService : MediaLibraryService() {
         // Media Browser hierarchy IDs for Android Auto
         const val MEDIA_ROOT_ID = "root"
         const val MEDIA_MY_STATIONS_ID = "my_stations"
+        const val MEDIA_FOR_YOU_ID = "for_you"
+        const val MEDIA_WHAT_TO_LISTEN_ID = "what_to_listen"
     }
 
     // ===== Android Auto: MediaLibrarySession.Callback =====
@@ -400,16 +402,46 @@ class StreamingService : MediaLibraryService() {
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
             return when (parentId) {
                 MEDIA_ROOT_ID -> {
-                    // Root: Zeige "Meine Sender" Kategorie
-                    val children = listOf(
-                        createBrowsableMediaItem(MEDIA_MY_STATIONS_ID, getString(R.string.auto_my_stations))
-                    )
+                    // Root: Zeige alle verfügbaren Kategorien
+                    val children = mutableListOf<MediaItem>()
+
+                    // Immer "Meine Sender" anzeigen
+                    children.add(createBrowsableMediaItem(MEDIA_MY_STATIONS_ID, getString(R.string.auto_my_stations)))
+
+                    // "Für mich" nur anzeigen wenn Dev-Items vorhanden
+                    val forYouItems = PreferencesHelper.getDevForYouItems(this@StreamingService)
+                    if (forYouItems.isNotEmpty()) {
+                        children.add(createBrowsableMediaItem(MEDIA_FOR_YOU_ID, getString(R.string.auto_for_you)))
+                    }
+
+                    // "Was möchtest du hören?" nur anzeigen wenn Dev-Items vorhanden
+                    val whatToListenItems = PreferencesHelper.getDevWhatToListenItems(this@StreamingService)
+                    if (whatToListenItems.isNotEmpty()) {
+                        children.add(createBrowsableMediaItem(MEDIA_WHAT_TO_LISTEN_ID, getString(R.string.auto_what_to_listen)))
+                    }
+
                     Futures.immediateFuture(LibraryResult.ofItemList(children, params))
                 }
                 MEDIA_MY_STATIONS_ID -> {
                     // Meine Sender: Alle Sender anzeigen
                     val stations = PreferencesHelper.getStations(this@StreamingService)
                     val mediaItems = stations.map { station ->
+                        createPlayableMediaItem(station)
+                    }
+                    Futures.immediateFuture(LibraryResult.ofItemList(mediaItems, params))
+                }
+                MEDIA_FOR_YOU_ID -> {
+                    // Für mich: Dev Items anzeigen
+                    val forYouItems = PreferencesHelper.getDevForYouItems(this@StreamingService)
+                    val mediaItems = forYouItems.map { station ->
+                        createPlayableMediaItem(station)
+                    }
+                    Futures.immediateFuture(LibraryResult.ofItemList(mediaItems, params))
+                }
+                MEDIA_WHAT_TO_LISTEN_ID -> {
+                    // Was möchtest du hören?: Dev Items anzeigen
+                    val whatToListenItems = PreferencesHelper.getDevWhatToListenItems(this@StreamingService)
+                    val mediaItems = whatToListenItems.map { station ->
                         createPlayableMediaItem(station)
                     }
                     Futures.immediateFuture(LibraryResult.ofItemList(mediaItems, params))
@@ -425,8 +457,14 @@ class StreamingService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             mediaId: String
         ): ListenableFuture<LibraryResult<MediaItem>> {
+            // Suche in allen Quellen nach dem Item
             val stations = PreferencesHelper.getStations(this@StreamingService)
-            val station = stations.find { it.uuid == mediaId }
+            val forYouItems = PreferencesHelper.getDevForYouItems(this@StreamingService)
+            val whatToListenItems = PreferencesHelper.getDevWhatToListenItems(this@StreamingService)
+
+            val allItems = stations + forYouItems + whatToListenItems
+            val station = allItems.find { it.uuid == mediaId }
+
             return if (station != null) {
                 Futures.immediateFuture(LibraryResult.ofItem(createPlayableMediaItem(station), null))
             } else {
@@ -584,7 +622,12 @@ class StreamingService : MediaLibraryService() {
     // Benachrichtigt Android Auto über Änderungen der Sender-Liste
     private fun notifyStationsChanged() {
         if (::mediaLibrarySession.isInitialized) {
+            // Root notifyen damit neue Kategorien erscheinen/verschwinden
+            mediaLibrarySession.notifyChildrenChanged(MEDIA_ROOT_ID, 0, null)
+            // Alle Kategorien notifyen
             mediaLibrarySession.notifyChildrenChanged(MEDIA_MY_STATIONS_ID, 0, null)
+            mediaLibrarySession.notifyChildrenChanged(MEDIA_FOR_YOU_ID, 0, null)
+            mediaLibrarySession.notifyChildrenChanged(MEDIA_WHAT_TO_LISTEN_ID, 0, null)
         }
     }
 
@@ -913,7 +956,9 @@ class StreamingService : MediaLibraryService() {
         }
         abandonAudioFocus()
         EqualizerHelper.release()
-        mediaLibrarySession.release()
+        if (::mediaLibrarySession.isInitialized) {
+            mediaLibrarySession.release()
+        }
         player.release()
         super.onDestroy()
     }
@@ -1021,7 +1066,8 @@ class StreamingService : MediaLibraryService() {
                                     station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
                                     title = extendedInfo.trackName,
                                     artist = extendedInfo.artistName,
-                                    url = extendedInfo.spotifyUrl.takeIf { it.isNotBlank() }
+                                    url = extendedInfo.spotifyUrl.takeIf { it.isNotBlank() },
+                                    coverUrl = extendedInfo.bestCoverUrl
                                 )
                             )
                         } else {
@@ -1046,7 +1092,8 @@ class StreamingService : MediaLibraryService() {
                                     station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
                                     title = title,
                                     artist = artist,
-                                    url = null
+                                    url = null,
+                                    coverUrl = fallbackartworkUri
                                 )
                             )
                         }
@@ -1076,7 +1123,8 @@ class StreamingService : MediaLibraryService() {
                         station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
                         title = title,
                         artist = artist,
-                        url = null
+                        url = null,
+                        coverUrl = fallbackartworkUri
                     )
                 )
             }
@@ -1107,7 +1155,8 @@ class StreamingService : MediaLibraryService() {
                     station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
                     title = title,
                     artist = artist,
-                    url = null
+                    url = null,
+                    coverUrl = fallbackartworkUri
                 )
             )
         }

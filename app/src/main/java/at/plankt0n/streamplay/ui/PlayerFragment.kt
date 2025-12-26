@@ -915,6 +915,7 @@ class PlayerFragment : Fragment() {
             title = trackInfo?.trackName ?: "",
             artist = trackInfo?.artistName ?: "",
             url = trackInfo?.spotifyUrl?.takeIf { it.isNotBlank() },
+            coverUrl = trackInfo?.bestCoverUrl,
             manual = true
         )
 
