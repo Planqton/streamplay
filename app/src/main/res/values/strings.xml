@@ -122,17 +122,30 @@
     <string name="toast_shortcut_added">Shortcut added to home screen</string>
 
     <!-- Discover Fragment -->
-    <string name="discover_title">Discover</string>
-    <string name="search_hint">Search stations</string>
-    <string name="filter_dialog_title">Filters</string>
-    <string name="filter_country">Country</string>
+    <string name="discover_title">Entdecken</string>
+    <string name="search_hint">Sender suchen…</string>
+    <string name="filter_dialog_title">Filter</string>
+    <string name="filter_country">Land</string>
     <string name="filter_genre">Genre</string>
-    <string name="filter_language">Language</string>
+    <string name="filter_language">Sprache</string>
     <string name="filter_codec">Codec</string>
-    <string name="clear_filters">Clear Filters</string>
-    <string name="filter_summary_none">No filters applied</string>
-    <string name="confirm_add_title">Add Station</string>
-    <string name="confirm_add_message">Add %1$s to your playlist?</string>
+    <string name="clear_filters">Filter löschen</string>
+    <string name="filter_summary_none">Keine Filter aktiv</string>
+    <string name="confirm_add_title">Sender hinzufügen</string>
+    <string name="confirm_add_message">%1$s zur Playlist hinzufügen?</string>
+
+    <!-- Discover Tabs -->
+    <string name="discover_tab_top">Top Charts</string>
+    <string name="discover_tab_local">In deiner Nähe</string>
+    <string name="discover_tab_genres">Genres</string>
+    <string name="discover_tab_trending">Trending</string>
+
+    <!-- Discover Info -->
+    <string name="discover_votes">%1$s Votes</string>
+    <string name="discover_listeners">%1$s Hörer</string>
+    <string name="discover_loading">Lädt…</string>
+    <string name="discover_no_results">Keine Sender gefunden</string>
+    <string name="discover_pull_refresh">Zum Aktualisieren ziehen</string>
 
     <!-- Settings Fragment -->
     <string name="settings_title">Settings</string>

@@ -24,15 +24,22 @@ import java.util.GregorianCalendar
  * RadioBrowserResult class
  */
 data class RadioBrowserResult(
-    @Expose val changeuuid: String,
-    @Expose val stationuuid: String,
-    @Expose val name: String,
-    @Expose val url: String,
-    @Expose val url_resolved: String,
-    @Expose val homepage: String,
-    @Expose val favicon: String,
-    @Expose val codec: String,
-    @Expose val bitrate: Int
+    @Expose val changeuuid: String = "",
+    @Expose val stationuuid: String = "",
+    @Expose val name: String = "",
+    @Expose val url: String = "",
+    @Expose val url_resolved: String = "",
+    @Expose val homepage: String = "",
+    @Expose val favicon: String = "",
+    @Expose val codec: String = "",
+    @Expose val bitrate: Int = 0,
+    @Expose val votes: Int = 0,
+    @Expose val clickcount: Int = 0,
+    @Expose val tags: String = "",
+    @Expose val country: String = "",
+    @Expose val countrycode: String = "",
+    @Expose val language: String = "",
+    @Expose val state: String = ""
 ) {
     /* Converts RadioBrowserResult to StationItem */
     fun toStationItem(): StationItem = StationItem(
@@ -41,6 +48,19 @@ data class RadioBrowserResult(
         streamURL = url,
         iconURL = favicon
     )
+
+    /* Format votes for display (e.g., 1.2k, 5.4M) */
+    fun formatVotes(): String = when {
+        votes >= 1_000_000 -> String.format("%.1fM", votes / 1_000_000.0)
+        votes >= 1_000 -> String.format("%.1fk", votes / 1_000.0)
+        else -> votes.toString()
+    }
+
+    /* Format bitrate for display */
+    fun formatBitrate(): String = if (bitrate > 0) "${bitrate}kbps" else ""
+
+    /* Get first tag as genre */
+    fun getFirstTag(): String = tags.split(",").firstOrNull()?.trim() ?: ""
 }
 
 
