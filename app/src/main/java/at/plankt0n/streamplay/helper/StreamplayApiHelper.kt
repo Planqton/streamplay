@@ -547,7 +547,11 @@ object StreamplayApiHelper {
                 Keys.PREF_SCREEN_ORIENTATION,
                 Keys.KEY_STATIONS,  // Stations are pushed separately as array, not as string in settings
                 Keys.PREF_API_SYNC_ERROR,
-                Keys.PREF_API_SYNC_ERROR_MESSAGE
+                Keys.PREF_API_SYNC_ERROR_MESSAGE,
+                Keys.KEY_DEV_FOR_YOU_ITEMS,      // Dev-only items, not synced
+                Keys.KEY_DEV_WHAT_TO_LISTEN_ITEMS,  // Dev-only items, not synced
+                Keys.PREF_UPDATE_AVAILABLE,      // Local-only flag, not synced
+                "alarms"                         // Legacy field, no longer used
             )
             excludedKeys.forEach { allSettings.remove(it) }
 

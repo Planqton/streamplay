@@ -35,7 +35,6 @@ object Keys {
     const val PREF_EQ_ENABLED = "eq_enabled"
     const val PREF_EQ_PRESET = "eq_preset"
     const val PREF_EQ_BAND_PREFIX = "eq_band_"  // eq_band_0, eq_band_1, etc.
-    const val PREF_EQ_CUSTOM_GAINS = "eq_custom_gains"  // JSON array of custom gains
     const val ACTION_EQUALIZER_SETTINGS_UPDATED = "at.plankt0n.streamplay.ACTION_EQUALIZER_SETTINGS_UPDATED"
 
     // Android Auto

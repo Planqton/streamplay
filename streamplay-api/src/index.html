@@ -81,6 +81,11 @@
             border-bottom: 1px solid #333; padding-bottom: 10px;
         }
 
+        .settings-info-hint {
+            background: #1a1a3e; border: 1px solid #333; border-radius: 8px;
+            padding: 12px 15px; color: #888; font-size: 13px;
+        }
+
         .setting-row {
             display: grid; grid-template-columns: 200px 1fr; gap: 10px;
             align-items: center; margin-bottom: 10px;
@@ -195,12 +200,9 @@
 
             <!-- Streamplay Visual Editor -->
             <div id="streamplayEditor" class="streamplay-editor hidden">
-                <!-- Settings Section -->
-                <div class="settings-section">
-                    <h3>Einstellungen</h3>
-                    <div id="settingsForm">
-                        <!-- Settings werden dynamisch generiert -->
-                    </div>
+                <!-- Info-Hinweis für Settings -->
+                <div class="settings-info-hint">
+                    <span>ℹ️ Einstellungen können nur in der Raw JSON Ansicht bearbeitet werden.</span>
                 </div>
 
                 <!-- Stations Section -->
@@ -520,7 +522,6 @@
                 if (!currentStreamplayData.settings) currentStreamplayData.settings = {};
                 if (!currentStreamplayData.stations) currentStreamplayData.stations = [];
 
-                renderSettings();
                 renderStations();
             } else {
                 rawEditor.classList.remove('hidden');
@@ -735,24 +736,9 @@
         }
 
         function getStreamplayData() {
-            // Collect settings from form
-            const settings = {};
-            document.querySelectorAll('#settingsForm input[data-setting]').forEach(input => {
-                const key = input.dataset.setting;
-                if (input.type === 'checkbox') {
-                    settings[key] = input.checked;
-                } else {
-                    // Try to parse as boolean or number, otherwise keep as string
-                    let value = input.value;
-                    if (value === 'true') value = true;
-                    else if (value === 'false') value = false;
-                    else if (!isNaN(value) && value !== '') value = Number(value);
-                    settings[key] = value;
-                }
-            });
-
+            // Im Streamplay-Modus nur Stationen bearbeiten, Settings beibehalten
             return {
-                settings: settings,
+                settings: currentStreamplayData.settings || {},
                 stations: currentStreamplayData.stations || []
             };
         }
