@@ -96,6 +96,18 @@
     <string name="bottom_sheet_settings_text">Einstellungen</string>
     <string name="bottom_sheet_settings_desc">App konfigurieren</string>
     <string name="bottom_sheet_settings_content_desc">Open settings</string>
+    <!-- Option Equalizer -->
+    <string name="bottom_sheet_equalizer_text">Equalizer</string>
+    <string name="bottom_sheet_equalizer_desc">Klang anpassen</string>
+    <string name="bottom_sheet_equalizer_content_desc">Equalizer öffnen</string>
+
+    <!-- Equalizer -->
+    <string name="eq_title">Equalizer</string>
+    <string name="eq_preset">Preset</string>
+    <string name="eq_cancel">Abbrechen</string>
+    <string name="eq_apply">Übernehmen</string>
+    <string name="eq_saved">Equalizer-Einstellungen gespeichert</string>
+    <string name="eq_not_available">Equalizer nicht verfügbar - starte zuerst einen Stream</string>
 
     <!-- Meta log -->
     <string name="search_logs_hint">Search logs</string>
@@ -182,6 +194,8 @@
     <string name="cover_animation_fade">Fade</string>
     <string name="cover_mode_station">Station Cover</string>
     <string name="cover_mode_meta">Metadata Cover</string>
+    <string name="settings_show_station_in_mediainfo">Sendername in Mediainfo</string>
+    <string name="settings_show_station_in_mediainfo_summary">Zeigt den Sendernamen im Titel-Feld der Medienbenachrichtigung</string>
     <string name="settings_use_spotify_meta">Use Spotify Meta</string>
     <string name="settings_spotify_api_key">Spotify API Key</string>
     <string name="settings_spotify_secret_key">Spotify Secret Key</string>
@@ -189,6 +203,7 @@
     <string name="settings_audiofocus_stop">Stop Playing</string>
     <string name="settings_audiofocus_hold">Hold Audiofocus</string>
     <string name="settings_audiofocus_lower">Lower Audio</string>
+    <string name="settings_duck_volume">Lautstärke bei Unterbrechung (%)</string>
     <string name="settings_resume_live_after_pause">Resume Live After Pause</string>
     <string name="settings_network_type">Datenverbindung</string>
     <string name="network_type_all">Alle (WiFi + Mobile)</string>

@@ -408,16 +408,10 @@
                 document.getElementById('jsonEditor').value = '{}';
             }
 
-            // Auto-detect Streamplay format
-            if (isStreamplayFormat(jsonData)) {
-                document.getElementById('editorMode').value = 'streamplay';
-                currentStreamplayData = JSON.parse(JSON.stringify(jsonData));
-                switchEditorMode();
-            } else {
-                document.getElementById('editorMode').value = 'raw';
-                currentStreamplayData = null;
-                switchEditorMode();
-            }
+            // Always start in raw mode - user must manually switch
+            document.getElementById('editorMode').value = 'raw';
+            currentStreamplayData = null;
+            switchEditorMode();
 
             hideError('jsonError');
             hideSuccess('jsonSuccess');
@@ -531,11 +525,7 @@
             } else {
                 rawEditor.classList.remove('hidden');
                 streamplayEditor.classList.add('hidden');
-
-                // Sync data back to raw editor if we have streamplay data
-                if (currentStreamplayData) {
-                    document.getElementById('jsonEditor').value = JSON.stringify(getStreamplayData(), null, 2);
-                }
+                // DO NOT modify the raw JSON here - only on explicit save!
             }
         }
 
@@ -561,7 +551,32 @@
             { key: 'spotify_client_id', label: 'Spotify Client ID', type: 'text' },
             { key: 'spotify_client_secret', label: 'Spotify Client Secret', type: 'password' },
             { key: 'update_available', label: 'Update verfügbar', type: 'boolean' },
-            { key: 'use_spotify_meta', label: 'Spotify Metadaten nutzen', type: 'boolean' }
+            { key: 'use_spotify_meta', label: 'Spotify Metadaten nutzen', type: 'boolean' },
+            // Numeric settings
+            { key: 'auto_autoplay_enabled', label: 'Auto-Autoplay aktiviert', type: 'boolean' },
+            { key: 'auto_start_activity', label: 'Auto-Start Activity', type: 'boolean' },
+            { key: 'auto_stop_on_exit', label: 'Auto-Stop bei Exit', type: 'boolean' },
+            { key: 'autoplay_delay', label: 'Autoplay Verzögerung (Sek)', type: 'number' },
+            { key: 'duck_volume_level', label: 'Duck Volume Level', type: 'number' },
+            { key: 'lower_volume_level', label: 'Lower Volume Level', type: 'number' },
+            { key: 'network_type', label: 'Netzwerk-Typ', type: 'text' },
+            { key: 'show_station_in_mediainfo', label: 'Station in MediaInfo anzeigen', type: 'boolean' },
+            // Equalizer settings
+            { key: 'eq_enabled', label: 'EQ aktiviert', type: 'boolean' },
+            { key: 'eq_preset', label: 'EQ Preset', type: 'text' },
+            { key: 'eq_custom_gains', label: 'EQ Custom Gains', type: 'text' },
+            { key: 'eq_band_0', label: 'EQ Band 0', type: 'number' },
+            { key: 'eq_band_1', label: 'EQ Band 1', type: 'number' },
+            { key: 'eq_band_2', label: 'EQ Band 2', type: 'number' },
+            { key: 'eq_band_3', label: 'EQ Band 3', type: 'number' },
+            { key: 'eq_band_4', label: 'EQ Band 4', type: 'number' },
+            { key: 'eq_band_5', label: 'EQ Band 5', type: 'number' },
+            { key: 'eq_band_6', label: 'EQ Band 6', type: 'number' },
+            { key: 'eq_band_7', label: 'EQ Band 7', type: 'number' },
+            { key: 'eq_band_8', label: 'EQ Band 8', type: 'number' },
+            { key: 'eq_band_9', label: 'EQ Band 9', type: 'number' },
+            { key: 'equalizer_enabled', label: 'Equalizer aktiviert', type: 'boolean' },
+            { key: 'equalizer_preset', label: 'Equalizer Preset', type: 'text' }
         ];
 
         function renderSettings() {
@@ -572,10 +587,16 @@
             const definedKeys = settingDefinitions.map(s => s.key);
             const extraSettings = Object.keys(settings)
                 .filter(key => !definedKeys.includes(key))
+                // Filter out arrays and objects - these can't be edited as text inputs
+                .filter(key => {
+                    const value = settings[key];
+                    return value === null || typeof value !== 'object';
+                })
                 .map(key => ({
                     key,
                     label: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-                    type: typeof settings[key] === 'boolean' ? 'boolean' : 'text'
+                    type: typeof settings[key] === 'boolean' ? 'boolean' :
+                          typeof settings[key] === 'number' ? 'number' : 'text'
                 }));
 
             const allSettings = [...settingDefinitions, ...extraSettings];

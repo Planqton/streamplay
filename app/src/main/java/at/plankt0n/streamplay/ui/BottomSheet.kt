@@ -47,6 +47,12 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
             openMetaLogFragment()
         }
 
+        // Equalizer
+        view.findViewById<CardView>(R.id.option_equalizer).setOnClickListener {
+            dismiss()
+            openEqualizerBottomSheet()
+        }
+
         // Settings
         view.findViewById<CardView>(R.id.option_settings).setOnClickListener {
             dismiss()
@@ -107,6 +113,11 @@ class MediaItemOptionsBottomSheet : BottomSheetDialogFragment() {
             .add(R.id.fragment_container, SettingsPageFragment())
             .addToBackStack(null)
             .commit()
+    }
+
+    private fun openEqualizerBottomSheet() {
+        val equalizerSheet = EqualizerBottomSheet()
+        equalizerSheet.show(parentFragmentManager, EqualizerBottomSheet.TAG)
     }
 
 }

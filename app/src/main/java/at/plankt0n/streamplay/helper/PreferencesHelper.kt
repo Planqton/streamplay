@@ -24,8 +24,15 @@ object PreferencesHelper {
     fun getStations(context: Context): MutableList<StationItem> {
         val json = getPrefs(context).getString(Keys.KEY_STATIONS, null)
         return if (json != null) {
-            val type = object : TypeToken<MutableList<StationItem>>() {}.type
-            Gson().fromJson(json, type)
+            try {
+                val type = object : TypeToken<MutableList<StationItem>>() {}.type
+                Gson().fromJson(json, type) ?: mutableListOf()
+            } catch (e: Exception) {
+                // JSON ist korrupt - leere Liste zurückgeben und korrupte Daten löschen
+                android.util.Log.e("PreferencesHelper", "Korrupte Station-Daten gefunden, lösche: ${e.message}")
+                getPrefs(context).edit().remove(Keys.KEY_STATIONS).apply()
+                mutableListOf()
+            }
         } else {
             mutableListOf()
         }

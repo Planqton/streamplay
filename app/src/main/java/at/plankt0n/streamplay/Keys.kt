@@ -25,6 +25,19 @@ object Keys {
     const val PREF_NETWORK_TYPE = "network_type"
     const val PREF_ONBOARDING_DONE = "onboarding_done"
 
+    // UI Settings
+    const val PREF_SHOW_STATION_IN_MEDIAINFO = "show_station_in_mediainfo"
+
+    // Audio Settings
+    const val PREF_DUCK_VOLUME = "duck_volume"  // Int 5-50, default 20 (percent)
+
+    // Equalizer Settings
+    const val PREF_EQ_ENABLED = "eq_enabled"
+    const val PREF_EQ_PRESET = "eq_preset"
+    const val PREF_EQ_BAND_PREFIX = "eq_band_"  // eq_band_0, eq_band_1, etc.
+    const val PREF_EQ_CUSTOM_GAINS = "eq_custom_gains"  // JSON array of custom gains
+    const val ACTION_EQUALIZER_SETTINGS_UPDATED = "at.plankt0n.streamplay.ACTION_EQUALIZER_SETTINGS_UPDATED"
+
     // Android Auto
     const val PREF_AUTO_AUTOPLAY = "auto_autoplay_enabled"
     const val PREF_AUTO_STOP_ON_EXIT = "auto_stop_on_exit"
@@ -39,6 +52,8 @@ object Keys {
     const val PREF_API_PASSWORD = "api_password"
     const val PREF_API_TOKEN = "api_token"
     const val PREF_API_SYNC_ENABLED = "api_sync_enabled"
+    const val PREF_API_SYNC_ERROR = "api_sync_error"
+    const val PREF_API_SYNC_ERROR_MESSAGE = "api_sync_error_message"
     const val ACTION_STATIONS_UPDATED = "at.plankt0n.streamplay.ACTION_STATIONS_UPDATED"
 
 

@@ -10,8 +10,8 @@ import kotlinx.parcelize.Parcelize
 @Keep
 @Parcelize
 data class StationItem(
-    val uuid: String,
-    val stationName: String,
-    val streamURL: String,
-    val iconURL: String
+    val uuid: String = "",
+    val stationName: String = "",
+    val streamURL: String = "",
+    val iconURL: String = ""
 ) : Parcelable

@@ -99,10 +99,20 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
                         }
                         is StreamplayApiHelper.ApiResult.Error -> {
                             Log.e("API_SYNC", "Sync failed: ${result.message}")
+                            Toast.makeText(
+                                this@MainActivity,
+                                "API Sync fehlgeschlagen: ${result.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     }
                 } catch (e: Exception) {
                     Log.e("API_SYNC", "Sync exception: ${e.message}", e)
+                    Toast.makeText(
+                        this@MainActivity,
+                        "API Sync Fehler: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         } else {
@@ -269,7 +279,14 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         // Nach dem Onboarding: Stationen von der API laden (nicht pushen!)
         if (prefs.getBoolean(Keys.PREF_API_SYNC_ENABLED, false)) {
             lifecycleScope.launch {
-                StreamplayApiHelper.readFromProfile(this@MainActivity)
+                val result = StreamplayApiHelper.readFromProfile(this@MainActivity)
+                if (result is StreamplayApiHelper.ApiResult.Error) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "API Sync fehlgeschlagen: ${result.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
     }

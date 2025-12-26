@@ -5,8 +5,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.net.ConnectivityManager
 import android.net.Network
@@ -50,6 +52,7 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import android.content.ContentResolver
 import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.helper.EqualizerHelper
 import at.plankt0n.streamplay.helper.IcyStreamReader
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.SpotifyMetaReader
@@ -261,6 +264,7 @@ class StreamingService : MediaLibraryService() {
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
     private var audioFocusMode = AudioFocusMode.STOP
+    private var wasPlayingBeforeFocusLoss = false
     private lateinit var prefs: SharedPreferences
     private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
         if (key == Keys.PREF_AUDIO_FOCUS_MODE) {
@@ -275,6 +279,16 @@ class StreamingService : MediaLibraryService() {
         }
     }
 
+    // Empfänger für Equalizer-Settings-Updates von der API
+    private val equalizerUpdateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == Keys.ACTION_EQUALIZER_SETTINGS_UPDATED) {
+                Log.d("StreamingService", "🎛️ Equalizer settings updated from API - reloading")
+                EqualizerHelper.reloadSettings(context)
+            }
+        }
+    }
+
     private val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
         if (audioFocusMode == AudioFocusMode.HOLD) {
             if (focusChange <= 0) {
@@ -284,17 +298,34 @@ class StreamingService : MediaLibraryService() {
         }
 
         when (focusChange) {
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK,
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
             AudioManager.AUDIOFOCUS_LOSS -> {
+                // Dauerhafter Verlust - immer pausieren, kein automatisches Resume
+                wasPlayingBeforeFocusLoss = false
+                player.pause()
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                // Temporärer Verlust - pausieren, später fortsetzen
+                wasPlayingBeforeFocusLoss = player.isPlaying
+                player.pause()
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                // Kann leiser machen
                 if (audioFocusMode == AudioFocusMode.LOWER) {
-                    player.volume = 0.2f
+                    val duckVolume = prefs.getInt(Keys.PREF_DUCK_VOLUME, 20) / 100f
+                    player.volume = duckVolume
                 } else {
+                    wasPlayingBeforeFocusLoss = player.isPlaying
                     player.pause()
                 }
             }
             AudioManager.AUDIOFOCUS_GAIN -> {
+                // Focus zurück - Volume wiederherstellen
                 player.volume = 1f
+                // Bei transientem Verlust wieder starten
+                if (wasPlayingBeforeFocusLoss) {
+                    player.play()
+                    wasPlayingBeforeFocusLoss = false
+                }
             }
         }
     }
@@ -563,6 +594,21 @@ class StreamingService : MediaLibraryService() {
 
         prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         prefs.registerOnSharedPreferenceChangeListener(prefListener)
+
+        // Equalizer-Update-Receiver registrieren
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                equalizerUpdateReceiver,
+                IntentFilter(Keys.ACTION_EQUALIZER_SETTINGS_UPDATED),
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            registerReceiver(
+                equalizerUpdateReceiver,
+                IntentFilter(Keys.ACTION_EQUALIZER_SETTINGS_UPDATED)
+            )
+        }
+
         val storedMode = prefs.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.STOP.name)
         audioFocusMode = AudioFocusMode.fromName(storedMode)
         if (audioFocusMode.name != storedMode) {
@@ -640,6 +686,12 @@ class StreamingService : MediaLibraryService() {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         if (isPlaying) {
                             requestAudioFocus()
+                            // Equalizer initialisieren wenn noch nicht geschehen
+                            if (!EqualizerHelper.isInitialized()) {
+                                if (EqualizerHelper.init(player.audioSessionId, this@StreamingService)) {
+                                    Log.d("StreamingService", "🎛️ Equalizer bei Playback-Start initialisiert")
+                                }
+                            }
                         } else {
                             abandonAudioFocus()
                         }
@@ -657,6 +709,13 @@ class StreamingService : MediaLibraryService() {
 
 
             }
+
+        // Equalizer initialisieren
+        if (EqualizerHelper.init(player.audioSessionId, this)) {
+            Log.d("StreamingService", "🎛️ Equalizer initialisiert")
+        } else {
+            Log.w("StreamingService", "⚠️ Equalizer konnte nicht initialisiert werden")
+        }
 
         // Migriere autoplay_delay von Float zu Int falls nötig
         migrateAutoplayDelayPreference()
@@ -847,7 +906,13 @@ class StreamingService : MediaLibraryService() {
         unregisterBoundNetworkCallback()
         connectivityManager.bindProcessToNetwork(null) // Netzwerkbindung aufheben
         prefs.unregisterOnSharedPreferenceChangeListener(prefListener)
+        try {
+            unregisterReceiver(equalizerUpdateReceiver)
+        } catch (e: Exception) {
+            Log.w("StreamingService", "Equalizer receiver already unregistered")
+        }
         abandonAudioFocus()
+        EqualizerHelper.release()
         mediaLibrarySession.release()
         player.release()
         super.onDestroy()
@@ -1053,20 +1118,36 @@ class StreamingService : MediaLibraryService() {
 
         val isInForeground = isAppInForeground()
         lastArtworkUri = artworkUri
+        val showStationInMediaInfo = prefs.getBoolean(Keys.PREF_SHOW_STATION_IN_MEDIAINFO, false)
+        val stationName = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: ""
 
         val updateartist: String
         var updatetitle: String
 
         if (isInForeground) {
             updateartist = artist
-            updatetitle = title
+            updatetitle = if (showStationInMediaInfo && stationName.isNotBlank() && title.isNotBlank()) {
+                "$stationName: $title"
+            } else {
+                title
+            }
             Log.d("StreamingService", "App im Vordergrund: bleibt so")
         } else {
-            updatetitle = "$artist - $title"
-            if (artist.isBlank() && title.isBlank()) {
+            updatetitle = if (showStationInMediaInfo && stationName.isNotBlank()) {
+                if (artist.isNotBlank() && title.isNotBlank()) {
+                    "$stationName: $artist - $title"
+                } else if (title.isNotBlank()) {
+                    "$stationName: $title"
+                } else {
+                    stationName
+                }
+            } else {
+                "$artist - $title"
+            }
+            if (artist.isBlank() && title.isBlank() && !showStationInMediaInfo) {
                 updatetitle = getString(R.string.no_metadata_available)
             }
-            updateartist = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "Sendername nicht Gesetzt"
+            updateartist = stationName.ifBlank { "Sendername nicht Gesetzt" }
             Log.d("StreamingService", "App ist im Hinterrgund: updateartist=$updateartist, updatetitle=$updatetitle")
         }
 

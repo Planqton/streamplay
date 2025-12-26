@@ -220,6 +220,9 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
             }
         }
 
+    // Check if there's an API sync error
+    val hasApiSyncError = StreamplayApiHelper.hasSyncError(context)
+
     val categoryMap = SettingsCategory.values().associateWith { cat ->
         PreferenceCategory(context).apply {
             title = when (cat) {
@@ -228,13 +231,22 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                 SettingsCategory.UI -> getString(R.string.settings_category_ui)
                 SettingsCategory.METAINFO -> getString(R.string.settings_category_metainfo)
                 SettingsCategory.SPOTIFY_META -> getString(R.string.settings_category_spotify_meta)
-                SettingsCategory.API_SYNC -> getString(R.string.settings_category_api_sync)
+                SettingsCategory.API_SYNC -> if (hasApiSyncError) {
+                    getString(R.string.settings_category_api_sync) + " ⚠"
+                } else {
+                    getString(R.string.settings_category_api_sync)
+                }
                 SettingsCategory.ANDROID_AUTO -> getString(R.string.settings_category_android_auto)
                 SettingsCategory.ABOUT -> getString(R.string.settings_category_about)
             }
-            // Kategorie-Icon mit Akzentfarbe
+            // Kategorie-Icon mit Akzentfarbe (rot bei API-Fehler)
+            val accentColor = if (cat == SettingsCategory.API_SYNC && hasApiSyncError) {
+                context.getColor(R.color.category_api_error)
+            } else {
+                cat.getAccentColor(context)
+            }
             icon = context.getDrawable(cat.getIconResource())?.mutate()?.apply {
-                setTint(cat.getAccentColor(context))
+                setTint(accentColor)
             }
             isIconSpaceReserved = true
         }
@@ -265,6 +277,24 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         category = SettingsCategory.PLAYER
         icon = context.getDrawable(R.drawable.ic_button_play)
         summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
+    }
+
+    val playerPrefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+    val duckVolumeSlider = SeekBarPreference(context).apply {
+        key = Keys.PREF_DUCK_VOLUME
+        title = getString(R.string.settings_duck_volume)
+        min = 5
+        max = 50
+        setDefaultValue(20)
+        showSeekBarValue = true
+        category = SettingsCategory.PLAYER
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        isEnabled = playerPrefs.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.STOP.name) == AudioFocusMode.LOWER.name
+    }
+
+    audioFocusPref.setOnPreferenceChangeListener { _, newValue ->
+        duckVolumeSlider.isEnabled = newValue == AudioFocusMode.LOWER.name
+        true
     }
 
     val networkTypePref = ListPreference(context).apply {
@@ -432,6 +462,15 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         category = SettingsCategory.UI
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
         summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
+    }
+
+    val showStationInMediaInfoSwitch = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_SHOW_STATION_IN_MEDIAINFO
+        title = getString(R.string.settings_show_station_in_mediainfo)
+        summary = getString(R.string.settings_show_station_in_mediainfo_summary)
+        setDefaultValue(false)
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
     }
 
     val spotifyApiKeyPref = EditTextPreference(context).apply {
@@ -608,6 +647,11 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         title = getString(R.string.settings_api_read_profile)
         category = SettingsCategory.API_SYNC
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        // Show last error message if there was an error
+        if (hasApiSyncError) {
+            val errorMsg = StreamplayApiHelper.getSyncErrorMessage(context)
+            summary = getString(R.string.settings_api_error, errorMsg ?: "Unknown error")
+        }
         setOnPreferenceClickListener {
             summary = getString(R.string.settings_api_reading)
             this@initSettingsScreen.lifecycleScope.launch {
@@ -616,11 +660,29 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                     apiUsernamePref.text,
                     apiPasswordPref.text
                 )
-                summary = when (result) {
-                    is StreamplayApiHelper.ApiResult.Success ->
-                        getString(R.string.settings_api_read_success, result.data.stations.size)
-                    is StreamplayApiHelper.ApiResult.Error ->
-                        getString(R.string.settings_api_error, result.message)
+                when (result) {
+                    is StreamplayApiHelper.ApiResult.Success -> {
+                        summary = getString(R.string.settings_api_read_success, result.data.stations.size)
+                        Toast.makeText(context, summary, Toast.LENGTH_SHORT).show()
+                        // Update category color - need to refresh the fragment
+                        categoryMap[SettingsCategory.API_SYNC]?.let { catPref ->
+                            catPref.title = getString(R.string.settings_category_api_sync)
+                            catPref.icon = context.getDrawable(SettingsCategory.API_SYNC.getIconResource())?.mutate()?.apply {
+                                setTint(SettingsCategory.API_SYNC.getAccentColor(context))
+                            }
+                        }
+                    }
+                    is StreamplayApiHelper.ApiResult.Error -> {
+                        summary = getString(R.string.settings_api_error, result.message)
+                        Toast.makeText(context, summary, Toast.LENGTH_LONG).show()
+                        // Update category to show error state
+                        categoryMap[SettingsCategory.API_SYNC]?.let { catPref ->
+                            catPref.title = getString(R.string.settings_category_api_sync) + " ⚠"
+                            catPref.icon = context.getDrawable(SettingsCategory.API_SYNC.getIconResource())?.mutate()?.apply {
+                                setTint(context.getColor(R.color.category_api_error))
+                            }
+                        }
+                    }
                 }
             }
             true
@@ -753,6 +815,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
 
     val preferences = listOf(
         audioFocusPref,
+        duckVolumeSlider,
         networkTypePref,
         autoAutoplaySwitch,
         autoStopSwitch,
@@ -765,6 +828,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         backgroundEffectPref,
         coverModePref,
         coverAnimationStylePref,
+        showStationInMediaInfoSwitch,
         spotifyApiKeyPref,
         spotifySecretKeyPref,
         useSpotifyMetaPref,
