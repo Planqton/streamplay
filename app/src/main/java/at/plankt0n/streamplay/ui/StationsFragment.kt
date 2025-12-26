@@ -243,7 +243,7 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
                 val url = editUrl.text.toString().trim()
                 val icon = editIcon.text.toString().trim()
                 if (url.isBlank()) {
-                    Toast.makeText(requireContext(), "URL erforderlich", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.toast_url_required), Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
                 lifecycleScope.launch {
@@ -273,7 +273,7 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
     private fun pinStationToHome(station: StationItem) {
         val context = requireContext()
         if (!ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
-            Toast.makeText(context, "Pinning shortcuts not supported", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.toast_shortcut_not_supported), Toast.LENGTH_SHORT).show()
             return
         }
 

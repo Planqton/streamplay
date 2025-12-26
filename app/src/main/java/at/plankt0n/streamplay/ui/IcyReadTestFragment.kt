@@ -42,7 +42,7 @@ class IcyReadTestFragment : Fragment() {
     private fun startReading() {
         val url = editTextUrl.text.toString().trim()
         if (url.isEmpty()) {
-            Toast.makeText(requireContext(), "Bitte URL eingeben!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.toast_please_enter_url), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -53,12 +53,12 @@ class IcyReadTestFragment : Fragment() {
             }
         }
         icyStreamReader?.start()
-        Toast.makeText(requireContext(), "🔄 Lese Metadaten…", Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), getString(R.string.toast_reading_metadata), Toast.LENGTH_SHORT).show()
     }
 
     private fun stopReading() {
         icyStreamReader?.stop()
-        Toast.makeText(requireContext(), "🛑 Gestoppt.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), getString(R.string.toast_stopped), Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroyView() {

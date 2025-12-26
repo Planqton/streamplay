@@ -3,6 +3,8 @@ package at.plankt0n.streamplay
 import android.app.Application
 import android.content.Context
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import at.plankt0n.streamplay.helper.CrashHandler
 
 class StreamPlayApplication : Application() {
@@ -10,6 +12,16 @@ class StreamPlayApplication : Application() {
         super.onCreate()
         Thread.setDefaultUncaughtExceptionHandler(CrashHandler(this))
         migratePreferences()
+        applyStoredLanguage()
+    }
+
+    private fun applyStoredLanguage() {
+        val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        val languageCode = prefs.getString(Keys.PREF_APP_LANGUAGE, "system") ?: "system"
+        if (languageCode != "system") {
+            val localeList = LocaleListCompat.forLanguageTags(languageCode)
+            AppCompatDelegate.setApplicationLocales(localeList)
+        }
     }
 
     private fun migratePreferences() {

@@ -2,34 +2,34 @@
     <string name="app_name">StreamPlay</string>
 
     <!-- media_item_view.xml -->
-    <string name="desc_media_cover">Media Cover</string>
-    <string name="desc_media_item_container">Media item container layout</string>
-    <string name="desc_guideline">Guideline for layout alignment</string>
-    <string name="desc_cover_image">Cover image of the media item</string>
-    <string name="desc_player_buttons_group">Player control buttons: back, play/pause, forward</string>
-    <string name="desc_button_back">Back button</string>
-    <string name="desc_button_play_pause">Play or pause button</string>
-    <string name="desc_button_forward">Forward button</string>
-    <string name="desc_shortcut_recycler_view">Shortcut list for quick actions</string>
-    <string name="desc_right_buttons_container">Container for right side vertical buttons</string>
-    <string name="desc_right_vertical_buttons">Vertical buttons: mute, share, menu</string>
-    <string name="desc_button_mute_unmute">Mute or unmute button</string>
-    <string name="desc_button_share">Share button</string>
-    <string name="desc_button_menu">Menu button</string>
+    <string name="desc_media_cover">Medien-Cover</string>
+    <string name="desc_media_item_container">Medien-Container</string>
+    <string name="desc_guideline">Hilfslinien für Layout</string>
+    <string name="desc_cover_image">Cover-Bild des Medien-Elements</string>
+    <string name="desc_player_buttons_group">Player-Steuerung: zurück, Play/Pause, vor</string>
+    <string name="desc_button_back">Zurück-Button</string>
+    <string name="desc_button_play_pause">Play- oder Pause-Button</string>
+    <string name="desc_button_forward">Vor-Button</string>
+    <string name="desc_shortcut_recycler_view">Schnellzugriffsliste</string>
+    <string name="desc_right_buttons_container">Container für rechte Schaltflächen</string>
+    <string name="desc_right_vertical_buttons">Vertikale Buttons: Stumm, Teilen, Menü</string>
+    <string name="desc_button_mute_unmute">Stummschalt-Button</string>
+    <string name="desc_button_share">Teilen-Button</string>
+    <string name="desc_button_menu">Menü-Button</string>
 
-    <string name="desc_volume_slider">Volume slider</string>
+    <string name="desc_volume_slider">Lautstärkeregler</string>
 
-    <string name="desc_metainfo_overlay_container">Metainfo overlay container</string>
-    <string name="desc_metainfo_overlay_image">Meta image</string>
-    <string name="desc_metainfo_overlay_texts_container">Container for overlay texts</string>
-    <string name="desc_metainfo_overlay_text_title">Title overlay text</string>
-    <string name="desc_metainfo_overlay_text_artist">Artist overlay text</string>
-    <string name="desc_button_manual_log">Manual log button</string>
-    <string name="desc_station_overlay_container">Station overlay container</string>
-    <string name="desc_station_overlay_content">Content of the Station overlay</string>
-    <string name="desc_station_overlay_image">Image in the Station overlay</string>
-    <string name="desc_station_overlay_text">Text in the Station overlay</string>
-    <string name="placeholder_upper_overlay">Upper overlay text</string>
+    <string name="desc_metainfo_overlay_container">Metainfo-Overlay-Container</string>
+    <string name="desc_metainfo_overlay_image">Meta-Bild</string>
+    <string name="desc_metainfo_overlay_texts_container">Container für Overlay-Texte</string>
+    <string name="desc_metainfo_overlay_text_title">Titel-Overlay-Text</string>
+    <string name="desc_metainfo_overlay_text_artist">Künstler-Overlay-Text</string>
+    <string name="desc_button_manual_log">Manueller Log-Button</string>
+    <string name="desc_station_overlay_container">Sender-Overlay-Container</string>
+    <string name="desc_station_overlay_content">Inhalt des Sender-Overlays</string>
+    <string name="desc_station_overlay_image">Bild im Sender-Overlay</string>
+    <string name="desc_station_overlay_text">Text im Sender-Overlay</string>
+    <string name="placeholder_upper_overlay">Oberer Overlay-Text</string>
 
 
     <!-- StreamsFragment -->
@@ -50,31 +50,31 @@
     <string name="sample_text_sleep_timer_remaining_time" translatable="false">00:00</string>
 
     <!-- StreamService -->
-    <string name="streaming_service_notification_title">Streaming Service</string>
-    <string name="streaming_service_notification_text">Initializing.....</string>
-    <string name="streaming_service_channel_name">Streaming Service Channel</string>
-    <string name="streaming_service_channel_description">Channel for the Streaming Service</string>
-    <string name="streaming_service_refresh_playlist_log">🔁 refreshPlaylist() executed via Save button!</string>
-    <string name="streaming_service_media_item_changed_log">🔁 MediaItem changed: Index = %1$d</string>
-    <string name="streaming_service_timeline_changed_log">📻 Timeline Changed</string>
-    <string name="streaming_service_unknown_stream">Unknown Stream</string>
-    <string name="streaming_service_error_message">Error playing %1$s: %2$s\n%3$s: %4$s</string>
+    <string name="streaming_service_notification_title">Streaming-Dienst</string>
+    <string name="streaming_service_notification_text">Wird initialisiert…</string>
+    <string name="streaming_service_channel_name">Streaming-Dienst Kanal</string>
+    <string name="streaming_service_channel_description">Kanal für den Streaming-Dienst</string>
+    <string name="streaming_service_refresh_playlist_log">🔁 refreshPlaylist() ausgeführt!</string>
+    <string name="streaming_service_media_item_changed_log">🔁 MediaItem geändert: Index = %1$d</string>
+    <string name="streaming_service_timeline_changed_log">📻 Timeline geändert</string>
+    <string name="streaming_service_unknown_stream">Unbekannter Stream</string>
+    <string name="streaming_service_error_message">Fehler beim Abspielen von %1$s: %2$s\n%3$s: %4$s</string>
 
 
     <!-- Topbar -->
-    <string name="descr_back_icon">Navigate back</string>
-    <string name="fragment_stations_title">Stations</string>
+    <string name="descr_back_icon">Zurück navigieren</string>
+    <string name="fragment_stations_title">Stationen</string>
 
     <!-- Player Fragment -->
-    <string name="unknown_title">No Title Information</string>
-    <string name="unknown_artist">No Artist Information</string>
-    <string name="unknown_station">Unknown Statio</string>
-    <string name="unknown_album">Unknown Album</string>
+    <string name="unknown_title">Keine Titelinformation</string>
+    <string name="unknown_artist">Keine Künstlerinformation</string>
+    <string name="unknown_station">Unbekannter Sender</string>
+    <string name="unknown_album">Unbekanntes Album</string>
     <string name="album_prefix">Album: %1$s</string>
     <string name="genre_prefix">Genre: %1$s</string>
-    <string name="unknown_genre">Unknown Genre</string>
-    <string name="share_text">Hey! I am listening: %1$s from %2$s\nCheck it out: %3$s</string>
-    <string name="share_chooser_title">Share with…</string>
+    <string name="unknown_genre">Unbekanntes Genre</string>
+    <string name="share_text">Hey! Ich höre gerade: %1$s von %2$s\nSchau mal rein: %3$s</string>
+    <string name="share_chooser_title">Teilen mit…</string>
 
 
     <!-- Sheet Menu -->
@@ -87,15 +87,15 @@
     <!-- Option Discover -->
     <string name="bottom_sheet_discover_text">Entdecken</string>
     <string name="bottom_sheet_discover_desc">Neue Radiosender finden</string>
-    <string name="bottom_sheet_discover_content_desc">Browse online stations</string>
+    <string name="bottom_sheet_discover_content_desc">Online-Sender durchsuchen</string>
     <!-- Option Logs -->
     <string name="bottom_sheet_logs_text">Song-Verlauf</string>
     <string name="bottom_sheet_logs_desc">Gespielte Titel anzeigen</string>
-    <string name="bottom_sheet_logs_content_desc">View metadata log</string>
+    <string name="bottom_sheet_logs_content_desc">Metadaten-Log anzeigen</string>
     <!-- Option Settings -->
     <string name="bottom_sheet_settings_text">Einstellungen</string>
     <string name="bottom_sheet_settings_desc">App konfigurieren</string>
-    <string name="bottom_sheet_settings_content_desc">Open settings</string>
+    <string name="bottom_sheet_settings_content_desc">Einstellungen öffnen</string>
     <!-- Option Equalizer -->
     <string name="bottom_sheet_equalizer_text">Equalizer</string>
     <string name="bottom_sheet_equalizer_desc">Klang anpassen</string>
@@ -112,7 +112,7 @@
     <!-- Meta log -->
     <string name="search_logs_hint">Suchen…</string>
     <string name="clear_logs">Verlauf löschen</string>
-    <string name="filter_manual_logs">Show only manual logs</string>
+    <string name="filter_manual_logs">Nur manuelle Einträge anzeigen</string>
     <string name="manual_log_saved">Gespeichert</string>
     <string name="meta_log_filter_all">Alle</string>
     <string name="meta_log_filter_saved">Gespeichert</string>
@@ -134,11 +134,11 @@
     <string name="meta_log_confirm_clear_message">Der gesamte Song-Verlauf wird unwiderruflich gelöscht.</string>
     <string name="meta_log_cleared">Verlauf gelöscht</string>
 
-    <string name="drag_handle_desc">Move station</string>
+    <string name="drag_handle_desc">Station verschieben</string>
 
     <!-- Stations Fragment play button -->
-    <string name="desc_button_play_station">Play this station</string>
-    <string name="toast_shortcut_added">Shortcut added to home screen</string>
+    <string name="desc_button_play_station">Diesen Sender abspielen</string>
+    <string name="toast_shortcut_added">Verknüpfung zum Startbildschirm hinzugefügt</string>
 
     <!-- Discover Fragment -->
     <string name="discover_title">Entdecken</string>
@@ -167,50 +167,54 @@
     <string name="discover_pull_refresh">Zum Aktualisieren ziehen</string>
 
     <!-- Settings Fragment -->
-    <string name="settings_title">Settings</string>
+    <string name="settings_title">Einstellungen</string>
     <string name="settings_autoplay">Autoplay</string>
-    <string name="settings_delay">Minimize Delay</string>
+    <string name="settings_delay">Minimieren-Verzögerung</string>
     <string name="settings_delay_seconds">%1$d s</string>
-    <string name="settings_minimize">Minimize after Autoplay</string>
-    <string name="settings_rotation">Screen Orientation</string>
-    <string name="orientation_auto">Auto rotate</string>
-    <string name="orientation_landscape">Lock landscape</string>
-    <string name="orientation_portrait">Lock portrait</string>
-    <string name="settings_category_playback">Playback</string>
-    <string name="settings_category_ui">UI Settings</string>
-    <string name="settings_category_metainfo">Metainfo Settings</string>
+    <string name="settings_minimize">Nach Autoplay minimieren</string>
+    <string name="settings_rotation">Bildschirmausrichtung</string>
+    <string name="orientation_auto">Automatisch</string>
+    <string name="orientation_landscape">Querformat</string>
+    <string name="orientation_portrait">Hochformat</string>
+    <string name="settings_language">Sprache</string>
+    <string name="language_system">Systemsprache</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_english">English</string>
+    <string name="settings_category_playback">Wiedergabe</string>
+    <string name="settings_category_ui">Oberflächen-Einstellungen</string>
+    <string name="settings_category_metainfo">Metainfo-Einstellungen</string>
     <string name="settings_category_spotify_meta">Spotify Meta</string>
     <string name="settings_category_personal_sync">Personal Sync</string>
-    <string name="settings_category_about">About</string>
-    <string name="settings_category_player">Player settings</string>
-    <string name="settings_app_version">App Version</string>
-    <string name="settings_check_updates">Check for Updates</string>
+    <string name="settings_category_about">Über</string>
+    <string name="settings_category_player">Player-Einstellungen</string>
+    <string name="settings_app_version">App-Version</string>
+    <string name="settings_check_updates">Nach Updates suchen</string>
     <string name="update_latest">Aktuellste Version installiert</string>
-    <string name="settings_personal_sync_url">Personal JSON URL</string>
-    <string name="settings_personal_sync_url_empty">EMPTY</string>
-    <string name="settings_sync_personal_json">Sync Personal JSON</string>
-    <string name="settings_export_personal_json">Export Personal JSON</string>
-    <string name="settings_autosync_json_startup">Autosync JSON at Startup</string>
-    <string name="settings_add_test_stations">Add Test Stations</string>
-    <string name="settings_import_export">Import/Export Settings</string>
-    <string name="settings_export_settings">Export Settings</string>
-    <string name="settings_import_settings">Import Settings</string>
-    <string name="settings_export_success">Settings exported</string>
-    <string name="settings_import_success">Settings imported, restarting…</string>
-    <string name="settings_import_failed">Import failed: %1$s</string>
-    <string name="update_checking">Checking for updates…</string>
-    <string name="update_available_title">Update Available</string>
-    <string name="update_available_message">Version %1$s is available. Download?</string>
-    <string name="update_downloading">Downloading update…</string>
+    <string name="settings_personal_sync_url">Persönliche JSON-URL</string>
+    <string name="settings_personal_sync_url_empty">LEER</string>
+    <string name="settings_sync_personal_json">Personal JSON synchronisieren</string>
+    <string name="settings_export_personal_json">Personal JSON exportieren</string>
+    <string name="settings_autosync_json_startup">JSON beim Start synchronisieren</string>
+    <string name="settings_add_test_stations">Test-Stationen hinzufügen</string>
+    <string name="settings_import_export">Einstellungen Import/Export</string>
+    <string name="settings_export_settings">Einstellungen exportieren</string>
+    <string name="settings_import_settings">Einstellungen importieren</string>
+    <string name="settings_export_success">Einstellungen exportiert</string>
+    <string name="settings_import_success">Einstellungen importiert, Neustart…</string>
+    <string name="settings_import_failed">Import fehlgeschlagen: %1$s</string>
+    <string name="update_checking">Suche nach Updates…</string>
+    <string name="update_available_title">Update verfügbar</string>
+    <string name="update_available_message">Version %1$s ist verfügbar. Herunterladen?</string>
+    <string name="update_downloading">Update wird heruntergeladen…</string>
     <string name="update_download_fail">Download fehlgeschlagen</string>
     <string name="update_check_fail">Updateprüfung fehlgeschlagen</string>
-    <string name="minimizing_in">Minimizing in %1$d s</string>
+    <string name="minimizing_in">Minimieren in %1$d s</string>
     <string name="no_metadata_available">Keine Informationen verfügbar</string>
-    <string name="settings_exoplayer_infobanner">Show Exoplayer Infobanner</string>
+    <string name="settings_exoplayer_infobanner">Exoplayer Infobanner anzeigen</string>
     <string name="connecting">Verbindung wird hergestellt…</string>
-    <string name="connected">Connected!</string>
-    <string name="playback_error">Error: %1$s</string>
-    <string name="settings_background_effect">Background Effect</string>
+    <string name="connected">Verbunden!</string>
+    <string name="playback_error">Fehler: %1$s</string>
+    <string name="settings_background_effect">Hintergrund-Effekt</string>
     <string name="bg_effect_fade">Fade</string>
     <string name="bg_effect_aqua">Aqua</string>
     <string name="bg_effect_radial">Radial</string>
@@ -219,24 +223,24 @@
     <string name="bg_effect_diagonal">Diagonal</string>
     <string name="bg_effect_spotlight">Spotlight</string>
     <string name="bg_effect_blur">Blur</string>
-    <string name="settings_cover_mode">Cover Source</string>
-    <string name="settings_cover_animation">Cover Animation Style</string>
-    <string name="cover_animation_none">None</string>
+    <string name="settings_cover_mode">Cover-Quelle</string>
+    <string name="settings_cover_animation">Cover-Animationsstil</string>
+    <string name="cover_animation_none">Keine</string>
     <string name="cover_animation_flip">Flip</string>
     <string name="cover_animation_fade">Fade</string>
-    <string name="cover_mode_station">Station Cover</string>
-    <string name="cover_mode_meta">Metadata Cover</string>
+    <string name="cover_mode_station">Sender-Cover</string>
+    <string name="cover_mode_meta">Metadaten-Cover</string>
     <string name="settings_show_station_in_mediainfo">Sendername in Mediainfo</string>
     <string name="settings_show_station_in_mediainfo_summary">Zeigt den Sendernamen im Titel-Feld der Medienbenachrichtigung</string>
-    <string name="settings_use_spotify_meta">Use Spotify Meta</string>
+    <string name="settings_use_spotify_meta">Spotify Meta verwenden</string>
     <string name="settings_spotify_api_key">Spotify API Key</string>
     <string name="settings_spotify_secret_key">Spotify Secret Key</string>
-    <string name="settings_audiofocus">Audiofocus</string>
-    <string name="settings_audiofocus_stop">Stop Playing</string>
-    <string name="settings_audiofocus_hold">Hold Audiofocus</string>
-    <string name="settings_audiofocus_lower">Lower Audio</string>
+    <string name="settings_audiofocus">Audiofokus</string>
+    <string name="settings_audiofocus_stop">Wiedergabe stoppen</string>
+    <string name="settings_audiofocus_hold">Audiofokus halten</string>
+    <string name="settings_audiofocus_lower">Audio verringern</string>
     <string name="settings_duck_volume">Lautstärke bei Unterbrechung (%)</string>
-    <string name="settings_resume_live_after_pause">Resume Live After Pause</string>
+    <string name="settings_resume_live_after_pause">Live nach Pause fortsetzen</string>
     <string name="settings_network_type">Datenverbindung</string>
     <string name="network_type_all">Alle (WiFi + Mobile)</string>
     <string name="network_type_wifi_only">Nur WIFI</string>
@@ -245,23 +249,23 @@
     <!-- StreamPlay API Sync -->
     <string name="settings_category_api_sync">StreamPlay API</string>
     <string name="settings_api_sync_enabled">Auto-Sync</string>
-    <string name="settings_api_sync_enabled_summary">Sync settings and stations with API on start and on changes</string>
-    <string name="settings_api_endpoint">API Endpoint</string>
-    <string name="settings_api_username">Username</string>
-    <string name="settings_api_password">Password</string>
+    <string name="settings_api_sync_enabled_summary">Synchronisiere Einstellungen und Sender bei Start und Änderungen</string>
+    <string name="settings_api_endpoint">API-Endpunkt</string>
+    <string name="settings_api_username">Benutzername</string>
+    <string name="settings_api_password">Passwort</string>
     <string name="settings_api_password_hidden">••••••••</string>
-    <string name="settings_api_test_login">Test Login</string>
-    <string name="settings_api_push_profile">Push to Profile</string>
-    <string name="settings_api_read_profile">Read from Profile</string>
-    <string name="settings_api_testing">Testing connection…</string>
-    <string name="settings_api_pushing">Pushing data…</string>
-    <string name="settings_api_reading">Reading profile…</string>
-    <string name="settings_api_success">Success: %1$s</string>
-    <string name="settings_api_error">Error: %1$s</string>
-    <string name="settings_api_read_success">Profile loaded: %1$d stations</string>
+    <string name="settings_api_test_login">Login testen</string>
+    <string name="settings_api_push_profile">Zum Profil hochladen</string>
+    <string name="settings_api_read_profile">Vom Profil laden</string>
+    <string name="settings_api_testing">Teste Verbindung…</string>
+    <string name="settings_api_pushing">Daten werden hochgeladen…</string>
+    <string name="settings_api_reading">Profil wird geladen…</string>
+    <string name="settings_api_success">Erfolg: %1$s</string>
+    <string name="settings_api_error">Fehler: %1$s</string>
+    <string name="settings_api_read_success">Profil geladen: %1$d Sender</string>
 
     <!-- Factory Reset -->
-    <string name="settings_factory_reset">Factory Reset</string>
+    <string name="settings_factory_reset">Werkseinstellungen</string>
     <string name="settings_factory_reset_summary">5 Sekunden gedrückt halten</string>
     <string name="settings_factory_reset_hold">Halten… %1$d</string>
     <string name="settings_factory_reset_confirm_title">Wirklich zurücksetzen?</string>
@@ -278,4 +282,16 @@
     <string name="settings_auto_autoplay_summary">Startet automatisch den letzten Sender wenn Android Auto verbunden wird</string>
     <string name="settings_auto_stop">Stop bei Android Auto Trennung</string>
     <string name="settings_auto_stop_summary">Stoppt die Wiedergabe wenn Android Auto getrennt wird</string>
+
+    <!-- Hardcoded strings -->
+    <string name="toast_url_required">URL erforderlich</string>
+    <string name="toast_please_enter_url">Bitte URL eingeben!</string>
+    <string name="toast_reading_metadata">🔄 Lese Metadaten…</string>
+    <string name="toast_stopped">🛑 Gestoppt.</string>
+    <string name="toast_shortcut_not_supported">Shortcuts werden nicht unterstützt</string>
+    <string name="hold_open_github">GitHub öffnen in %1$d…</string>
+    <string name="hold_force_update">Force Update in %1$d…</string>
+    <string name="hold_format">Halten… %1$d</string>
+    <string name="sync_complete">Sync abgeschlossen: %1$d neu, %2$d aktualisiert.</string>
+    <string name="sync_error">Fehler beim Sync: %1$s</string>
 </resources>

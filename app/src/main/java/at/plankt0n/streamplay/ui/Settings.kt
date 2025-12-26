@@ -65,7 +65,7 @@ fun SettingsCategory.getIconResource(): Int = when (this) {
 @SuppressLint("ClickableViewAccessibility")
 class LongPressPreference(context: Context) : Preference(context) {
     var holdDurationSeconds = 5
-    var holdTextFormat = "Halten… %1\$d"
+    var holdTextFormat = ""  // Will be set from string resource
     var defaultSummary = ""
     var onLongPressComplete: (() -> Unit)? = null
     var onNormalClick: (() -> Unit)? = null
@@ -139,6 +139,25 @@ fun PreferenceFragmentCompat.updateSpotifyToggle(
     if (!hasKeys) {
         useSpotifyMetaPref?.isChecked = false
     }
+}
+
+fun applyLanguage(context: Context, languageCode: String) {
+    val locale = when (languageCode) {
+        "de" -> java.util.Locale.GERMAN
+        "en" -> java.util.Locale.ENGLISH
+        else -> java.util.Locale.getDefault()
+    }
+    val config = context.resources.configuration
+    config.setLocale(locale)
+    context.resources.updateConfiguration(config, context.resources.displayMetrics)
+
+    // Also update AppCompatDelegate for consistent behavior
+    val localeList = if (languageCode == "system") {
+        androidx.core.os.LocaleListCompat.getEmptyLocaleList()
+    } else {
+        androidx.core.os.LocaleListCompat.forLanguageTags(languageCode)
+    }
+    androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(localeList)
 }
 
 fun PreferenceFragmentCompat.initSettingsScreen() {
@@ -382,6 +401,31 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         category = SettingsCategory.UI
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
         summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
+    }
+
+    val languagePref = ListPreference(context).apply {
+        key = Keys.PREF_APP_LANGUAGE
+        title = getString(R.string.settings_language)
+        entries = arrayOf(
+            getString(R.string.language_system),
+            getString(R.string.language_german),
+            getString(R.string.language_english)
+        )
+        entryValues = arrayOf("system", "de", "en")
+        setDefaultValue("system")
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
+        setOnPreferenceChangeListener { _, newValue ->
+            val languageCode = newValue as String
+            applyLanguage(context, languageCode)
+            // Restart activity to apply language
+            val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            }
+            intent?.let { context.startActivity(it) }
+            true
+        }
     }
 
     val bannerSwitch = SwitchPreferenceCompat(context).apply {
@@ -702,7 +746,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         // App-Icon NICHT tinten - wird später ausgeschlossen
         icon = context.getDrawable(R.mipmap.ic_launcher)
         holdDurationSeconds = 5
-        holdTextFormat = "GitHub öffnen in %1\$d…"
+        holdTextFormat = getString(R.string.hold_open_github)
         onLongPressComplete = {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Planqton/streamplay"))
             context.startActivity(intent)
@@ -733,7 +777,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         category = SettingsCategory.ABOUT
         icon = context.getDrawable(R.drawable.ic_autoplay)
         holdDurationSeconds = 5
-        holdTextFormat = "Force Update in %1\$d…"
+        holdTextFormat = getString(R.string.hold_force_update)
         // onNormalClick und onLongPressComplete werden in SettingsFragment gesetzt
     }
 
@@ -752,13 +796,13 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
                     )
                     Toast.makeText(
                         context,
-                        "Sync abgeschlossen: ${result.added} neu, ${result.updated} aktualisiert.",
+                        getString(R.string.sync_complete, result.added, result.updated),
                         Toast.LENGTH_LONG
                     ).show()
                 } catch (e: Exception) {
                     Toast.makeText(
                         context,
-                        "Fehler beim Sync: ${e.message}",
+                        getString(R.string.sync_error, e.message),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -841,6 +885,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         minimizeSwitch,
         delayPreference,
         orientationPref,
+        languagePref,
         bannerSwitch,
         resumeLiveSwitch,
         backgroundEffectPref,
