@@ -17,13 +17,12 @@ import androidx.media3.session.SessionToken
 import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.data.StationItem
-import java.lang.Thread.State
 
 class MediaServiceController(private val context: Context) {
 
-     var mediaController: MediaController? = null
+    var mediaController: MediaController? = null
     var listener: Player.Listener? = null
-     val handler = Handler(Looper.getMainLooper())
+    val handler = Handler(Looper.getMainLooper())
 
     fun initializeAndConnect(
         onConnected: (MediaController) -> Unit,
@@ -34,6 +33,20 @@ class MediaServiceController(private val context: Context) {
         onPlaybackStateChanged: (Int) -> Unit = {},
         onPlayerError: (PlaybackException) -> Unit = {}
     ) {
+        // Prüfen ob bereits ein Controller im Holder existiert und verbunden ist
+        val existingController = MediaControllerHolder.mediaController
+        if (existingController != null && existingController.isConnected) {
+            Log.d("MediaServiceController", "♻️ Reusing existing MediaController from Holder")
+            mediaController = existingController
+
+            listener = createListener(existingController, onPlaybackChanged, onStreamIndexChanged,
+                onMetadataChanged, onTimelineChanged, onPlaybackStateChanged, onPlayerError)
+            existingController.addListener(listener!!)
+
+            onConnected(existingController)
+            return
+        }
+
         // Service als Foreground starten
         val serviceIntent = Intent(context, StreamingService::class.java)
         context.startForegroundService(serviceIntent)
@@ -46,46 +59,12 @@ class MediaServiceController(private val context: Context) {
             try {
                 val controller = future.get()
                 mediaController = controller
+                MediaControllerHolder.setController(controller)
 
                 logMediaSessionItems(controller)
 
-                listener = object : Player.Listener {
-                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-                        onPlaybackChanged(isPlaying)
-                    }
-
-                    override fun onPlaybackStateChanged(playbackState: Int) {
-                        onPlaybackStateChanged(playbackState)
-                    }
-
-                    override fun onPlayerError(error: PlaybackException) {
-                        onPlayerError(error)
-                    }
-
-                    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                        handler.postDelayed({
-                            val index = controller.currentMediaItemIndex
-                            if (index >= 0) {
-                                onStreamIndexChanged(index)
-                            }
-                        }, 100)
-                    }
-
-                    override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-                        Log.d("MediaServiceController", "🔁 Timeline geändert! Grund: $reason")
-
-                        if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED && StateHelper.isPlaylistChangePending) {
-                            onTimelineChanged(reason)
-                        } else {
-                            Log.d("MediaServiceController", "ℹ️ Timeline-Änderung ignoriert (Grund: $reason)")
-                        }
-
-                    }
-
-                    override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-                        mediaMetadata.title?.toString()?.let { onMetadataChanged(it) }
-                    }
-                }
+                listener = createListener(controller, onPlaybackChanged, onStreamIndexChanged,
+                    onMetadataChanged, onTimelineChanged, onPlaybackStateChanged, onPlayerError)
 
                 controller.addListener(listener!!)
                 onConnected(controller)
@@ -94,6 +73,53 @@ class MediaServiceController(private val context: Context) {
                 e.printStackTrace()
             }
         }, context.mainExecutor)
+    }
+
+    private fun createListener(
+        controller: MediaController,
+        onPlaybackChanged: (Boolean) -> Unit,
+        onStreamIndexChanged: (Int) -> Unit,
+        onMetadataChanged: (String) -> Unit,
+        onTimelineChanged: (Int) -> Unit,
+        onPlaybackStateChanged: (Int) -> Unit,
+        onPlayerError: (PlaybackException) -> Unit
+    ): Player.Listener {
+        return object : Player.Listener {
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                onPlaybackChanged(isPlaying)
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                onPlaybackStateChanged(playbackState)
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                onPlayerError(error)
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                handler.postDelayed({
+                    val index = controller.currentMediaItemIndex
+                    if (index >= 0) {
+                        onStreamIndexChanged(index)
+                    }
+                }, 100)
+            }
+
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                Log.d("MediaServiceController", "🔁 Timeline geändert! Grund: $reason")
+
+                if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED && StateHelper.isPlaylistChangePending) {
+                    onTimelineChanged(reason)
+                } else {
+                    Log.d("MediaServiceController", "ℹ️ Timeline-Änderung ignoriert (Grund: $reason)")
+                }
+            }
+
+            override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                mediaMetadata.title?.toString()?.let { onMetadataChanged(it) }
+            }
+        }
     }
 
     private fun logMediaSessionItems(controller: MediaController) {
@@ -107,7 +133,7 @@ class MediaServiceController(private val context: Context) {
 
     fun disconnect() {
         listener?.let { mediaController?.removeListener(it) }
-        mediaController?.release()
+        // Nicht release() aufrufen - der Controller bleibt im Holder für Config Changes
         mediaController = null
         listener = null
     }
@@ -121,6 +147,7 @@ class MediaServiceController(private val context: Context) {
             controller.play()
         }
     }
+
     fun getCurrentPlaylist(): List<StationItem> {
         val controller = mediaController ?: return emptyList()
         val itemCount = controller.mediaItemCount
@@ -132,7 +159,6 @@ class MediaServiceController(private val context: Context) {
             val extras = metadata.extras
 
             val uuid = extras?.getString("EXTRA_UUID") ?: ""
-
             val url = mediaItem.localConfiguration?.uri?.toString() ?: ""
             val iconUrl = extras?.getString("EXTRA_ICON_URL") ?: ""
             val name = extras?.getString("EXTRA_STATION_NAME") ?: ""
@@ -148,7 +174,6 @@ class MediaServiceController(private val context: Context) {
 
         return streams
     }
-
 
     fun seekToIndex(index: Int) {
         val controller = mediaController ?: return
@@ -191,6 +216,4 @@ class MediaServiceController(private val context: Context) {
             } ?: -1
         } ?: -1
     }
-
-
 }

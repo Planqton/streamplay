@@ -874,8 +874,8 @@ class PlayerFragment : Fragment() {
             countdownHandler.removeCallbacksAndMessages(null)
             bannerHandler.removeCallbacksAndMessages(null)
             prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
-            // Nur trennen wenn Fragment wirklich entfernt wird (nicht nur versteckt)
-            if (isRemoving || requireActivity().isFinishing) {
+            // Nur trennen wenn Fragment wirklich entfernt wird (nicht bei Orientierungswechsel)
+            if (isRemoving || (requireActivity().isFinishing && !requireActivity().isChangingConfigurations)) {
                 mediaServiceController.disconnect()
             }
         }

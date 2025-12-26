@@ -12,6 +12,6 @@
         android:visibility="gone" />
 
     <!-- Fixiertes UI Overlay -->
-    <include layout="@layout/fragment_player_ui_overlay_land" />
+    <include layout="@layout/fragment_player_ui_overlay" />
 
 </FrameLayout>

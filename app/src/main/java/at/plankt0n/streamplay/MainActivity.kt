@@ -344,11 +344,15 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         }
 
         val sw = config.smallestScreenWidthDp
+        val isLandscape = config.orientation == Configuration.ORIENTATION_LANDSCAPE
         val layoutFolder = when {
-            config.orientation == Configuration.ORIENTATION_LANDSCAPE && sw >= 800 -> "layout-sw800dp-land"
-            config.orientation == Configuration.ORIENTATION_LANDSCAPE && sw >= 600 -> "layout-sw600dp-land"
-            config.orientation == Configuration.ORIENTATION_LANDSCAPE && sw >= 384 -> "layout-sw384dp-land"
-            config.orientation == Configuration.ORIENTATION_LANDSCAPE -> "layout-land"
+            isLandscape && sw >= 800 -> "layout-sw800dp-land"
+            isLandscape && sw >= 600 -> "layout-sw600dp-land"
+            isLandscape && sw >= 384 -> "layout-sw384dp-land"
+            isLandscape -> "layout-land"
+            sw >= 800 -> "layout-sw800dp"
+            sw >= 600 -> "layout-sw600dp"
+            sw >= 384 -> "layout-sw384dp"
             else -> "layout"
         }
 

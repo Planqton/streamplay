@@ -56,49 +56,56 @@
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintWidth_percent="0.35" />
 
-    <!-- Player Buttons rechts vom Cover -->
+    <!-- Player Buttons über den Shortcuts -->
     <LinearLayout
         android:id="@+id/player_buttons_group"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="4dp"
         android:orientation="horizontal"
         android:gravity="center"
         android:contentDescription="@string/desc_player_buttons_group"
-        android:background="@android:color/transparent"
-        app:layout_constraintTop_toTopOf="@id/meta_cover_image"
-        app:layout_constraintBottom_toBottomOf="@id/meta_cover_image"
+        android:background="@drawable/rounded_white_semitransparent_bg"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:elevation="4dp"
+        app:layout_constraintBottom_toTopOf="@id/shortcut_recycler_wrapper"
         app:layout_constraintStart_toEndOf="@id/meta_cover_image"
         app:layout_constraintEnd_toStartOf="@id/right_buttons_container">
 
         <ImageButton
             android:id="@+id/button_back"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/desc_button_back"
             android:src="@drawable/ic_button_back"
-            app:tint="@color/primary_material_light" />
+            app:tint="@color/primary_dark_material_dark" />
 
         <ImageButton
             android:id="@+id/button_play_pause"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/desc_button_play_pause"
             android:scaleType="fitXY"
             android:src="@drawable/ic_button_play"
-            app:tint="@color/primary_material_light" />
+            app:tint="@color/primary_dark_material_dark" />
 
         <ImageButton
             android:id="@+id/button_forward"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/desc_button_forward"
             android:src="@drawable/ic_button_forward"
-            app:tint="@color/primary_material_light" />
+            app:tint="@color/primary_dark_material_dark" />
     </LinearLayout>
 
     <!-- Right Buttons Container -->
@@ -227,7 +234,7 @@
         </LinearLayout>
     </FrameLayout>
 
-    <!-- Shortcut RecyclerView unten (horizontale Station-Liste) -->
+    <!-- Shortcut RecyclerView (horizontale Station-Liste) -->
     <FrameLayout
         android:id="@+id/shortcut_recycler_wrapper"
         android:layout_width="0dp"

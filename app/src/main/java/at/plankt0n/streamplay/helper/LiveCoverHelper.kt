@@ -1,6 +1,7 @@
 package at.plankt0n.streamplay.helper
 
 import android.animation.ValueAnimator
+import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -55,6 +56,11 @@ object LiveCoverHelper {
                 override fun onResourceReady(bitmap: Bitmap, transition: Transition<in Bitmap>?) {
                     if (effect == BackgroundEffect.BLUR) {
                         Palette.from(bitmap).generate { palette ->
+                            // Skip if activity is destroyed (e.g. during orientation change)
+                            if (context is Activity && (context.isDestroyed || context.isFinishing)) {
+                                return@generate
+                            }
+
                             val dominantColor = palette?.getDominantColor(defaultColor) ?: defaultColor
 
                             val hsv = FloatArray(3)
@@ -87,6 +93,11 @@ object LiveCoverHelper {
                         }
                     } else {
                         Palette.from(bitmap).generate { palette ->
+                            // Skip if activity is destroyed (e.g. during orientation change)
+                            if (context is Activity && (context.isDestroyed || context.isFinishing)) {
+                                return@generate
+                            }
+
                             palette?.let {
                                 val dominantColor = it.getDominantColor(defaultColor)
 

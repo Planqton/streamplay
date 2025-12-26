@@ -964,7 +964,11 @@ class StreamingService : MediaLibraryService() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        stopSelf()
+        // Nur stoppen wenn nicht gerade abgespielt wird
+        // Bei Orientierungswechsel läuft die Musik weiter
+        if (!player.isPlaying && player.playbackState != Player.STATE_BUFFERING) {
+            stopSelf()
+        }
     }
 
     fun fetchMetadata(metadata: Metadata) {

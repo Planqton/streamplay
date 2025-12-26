@@ -20,6 +20,7 @@ import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.NetworkType
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.ScreenOrientationMode
+import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.data.CoverAnimationStyle
 import at.plankt0n.streamplay.data.CoverMode
 import at.plankt0n.streamplay.helper.LiveCoverHelper
@@ -813,6 +814,23 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
     }
 
+    val exitAppPref = Preference(context).apply {
+        key = "exit_app"
+        title = getString(R.string.settings_exit_app)
+        summary = getString(R.string.settings_exit_app_summary)
+        category = SettingsCategory.ABOUT
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        setOnPreferenceClickListener {
+            // Service stoppen
+            context.stopService(Intent(context, StreamingService::class.java))
+            // Activity beenden
+            (context as? android.app.Activity)?.finishAffinity()
+            // Prozess beenden
+            Runtime.getRuntime().exit(0)
+            true
+        }
+    }
+
     val preferences = listOf(
         audioFocusPref,
         duckVolumeSlider,
@@ -843,7 +861,8 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         updatePref,
         addTestPref,
         settingsTransferPref,
-        factoryResetPref
+        factoryResetPref,
+        exitAppPref
     )
 
     // Icons der Preferences mit Kategorie-Farbe tinting (außer App-Icon)
