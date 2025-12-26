@@ -217,6 +217,24 @@
     <string name="bg_effect_diagonal">Diagonal</string>
     <string name="bg_effect_spotlight">Spotlight</string>
     <string name="bg_effect_blur">Blur</string>
+    <string name="bg_effect_visualizer">Visualizer (Experimental)</string>
+    <string name="settings_visualizer_style">Visualizer Style</string>
+    <string name="visualizer_style_bars">Bars</string>
+    <string name="visualizer_style_wave">Wave</string>
+    <string name="visualizer_style_circle">Circle</string>
+    <string name="visualizer_style_line">Line</string>
+    <string name="visualizer_style_spectrum">Spectrum</string>
+    <string name="visualizer_style_rings">Rings</string>
+    <string name="visualizer_style_blob">Blob</string>
+    <string name="visualizer_style_mirror">Mirror</string>
+    <string name="visualizer_style_dna">DNA</string>
+    <string name="visualizer_style_fountain">Fountain</string>
+    <string name="visualizer_style_equalizer">Equalizer</string>
+    <string name="visualizer_style_radar">Radar</string>
+    <string name="visualizer_style_pulse">Pulse</string>
+    <string name="visualizer_style_plasma">Plasma</string>
+    <string name="visualizer_style_orbits">Orbits</string>
+    <string name="visualizer_style_blur_motion">Blur Motion</string>
     <string name="settings_cover_mode">Cover Source</string>
     <string name="settings_cover_animation">Cover Animation Style</string>
     <string name="cover_animation_none">None</string>
@@ -288,4 +306,11 @@
     <string name="hold_format">Hold… %1$d</string>
     <string name="sync_complete">Sync complete: %1$d new, %2$d updated.</string>
     <string name="sync_error">Sync error: %1$s</string>
+
+    <!-- Recording -->
+    <string name="desc_button_record">Record button</string>
+    <string name="recording_started">Recording started</string>
+    <string name="recording_stopped">Recording saved: %1$s</string>
+    <string name="recording_failed">Recording failed</string>
+    <string name="recording_no_stream">No stream to record</string>
 </resources>

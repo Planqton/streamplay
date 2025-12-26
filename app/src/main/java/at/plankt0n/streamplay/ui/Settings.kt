@@ -24,6 +24,7 @@ import at.plankt0n.streamplay.StreamingService
 import at.plankt0n.streamplay.data.CoverAnimationStyle
 import at.plankt0n.streamplay.data.CoverMode
 import at.plankt0n.streamplay.helper.LiveCoverHelper
+import at.plankt0n.streamplay.view.VisualizerView
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StationImportHelper
 import at.plankt0n.streamplay.helper.StreamplayApiHelper
@@ -455,7 +456,8 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
             getString(R.string.bg_effect_forest),
             getString(R.string.bg_effect_diagonal),
             getString(R.string.bg_effect_spotlight),
-            getString(R.string.bg_effect_blur)
+            getString(R.string.bg_effect_blur),
+            getString(R.string.bg_effect_visualizer)
         )
         entryValues = arrayOf(
             LiveCoverHelper.BackgroundEffect.FADE.name,
@@ -465,9 +467,55 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
             LiveCoverHelper.BackgroundEffect.FOREST.name,
             LiveCoverHelper.BackgroundEffect.DIAGONAL.name,
             LiveCoverHelper.BackgroundEffect.SPOTLIGHT.name,
-            LiveCoverHelper.BackgroundEffect.BLUR.name
+            LiveCoverHelper.BackgroundEffect.BLUR.name,
+            LiveCoverHelper.BackgroundEffect.VISUALIZER.name
         )
         setDefaultValue(LiveCoverHelper.BackgroundEffect.FADE.name)
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
+    }
+
+    val visualizerStylePref = ListPreference(context).apply {
+        key = Keys.PREF_VISUALIZER_STYLE
+        title = getString(R.string.settings_visualizer_style)
+        entries = arrayOf(
+            getString(R.string.visualizer_style_bars),
+            getString(R.string.visualizer_style_wave),
+            getString(R.string.visualizer_style_circle),
+            getString(R.string.visualizer_style_line),
+            getString(R.string.visualizer_style_spectrum),
+            getString(R.string.visualizer_style_rings),
+            getString(R.string.visualizer_style_blob),
+            getString(R.string.visualizer_style_mirror),
+            getString(R.string.visualizer_style_dna),
+            getString(R.string.visualizer_style_fountain),
+            getString(R.string.visualizer_style_equalizer),
+            getString(R.string.visualizer_style_radar),
+            getString(R.string.visualizer_style_pulse),
+            getString(R.string.visualizer_style_plasma),
+            getString(R.string.visualizer_style_orbits),
+            getString(R.string.visualizer_style_blur_motion)
+        )
+        entryValues = arrayOf(
+            VisualizerView.Style.BARS.name,
+            VisualizerView.Style.WAVE.name,
+            VisualizerView.Style.CIRCLE.name,
+            VisualizerView.Style.LINE.name,
+            VisualizerView.Style.SPECTRUM.name,
+            VisualizerView.Style.RINGS.name,
+            VisualizerView.Style.BLOB.name,
+            VisualizerView.Style.MIRROR.name,
+            VisualizerView.Style.DNA.name,
+            VisualizerView.Style.FOUNTAIN.name,
+            VisualizerView.Style.EQUALIZER.name,
+            VisualizerView.Style.RADAR.name,
+            VisualizerView.Style.PULSE.name,
+            VisualizerView.Style.PLASMA.name,
+            VisualizerView.Style.ORBITS.name,
+            VisualizerView.Style.BLUR_MOTION.name
+        )
+        setDefaultValue(VisualizerView.Style.BARS.name)
         category = SettingsCategory.UI
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
         summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
@@ -889,6 +937,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         bannerSwitch,
         resumeLiveSwitch,
         backgroundEffectPref,
+        visualizerStylePref,
         coverModePref,
         coverAnimationStylePref,
         showStationInMediaInfoSwitch,

@@ -28,7 +28,8 @@ object LiveCoverHelper {
         FOREST,
         DIAGONAL,
         SPOTLIGHT,
-        BLUR
+        BLUR,
+        VISUALIZER
     }
 
     fun loadCoverWithBackground(
@@ -41,7 +42,8 @@ object LiveCoverHelper {
         lastEffect: BackgroundEffect?,
         effect: BackgroundEffect = BackgroundEffect.FADE,
         onNewColor: (Int) -> Unit,
-        onNewEffect: (BackgroundEffect) -> Unit
+        onNewEffect: (BackgroundEffect) -> Unit,
+        onVisualizerColors: ((Int, Int) -> Unit)? = null
     ) {
         Glide.with(context)
             .load(imageUrl)
@@ -54,7 +56,41 @@ object LiveCoverHelper {
             .load(imageUrl)
             .into(object : CustomTarget<Bitmap>() {
                 override fun onResourceReady(bitmap: Bitmap, transition: Transition<in Bitmap>?) {
-                    if (effect == BackgroundEffect.BLUR) {
+                    if (effect == BackgroundEffect.VISUALIZER) {
+                        // Skip if activity is destroyed
+                        if (context is Activity && (context.isDestroyed || context.isFinishing)) {
+                            return
+                        }
+
+                        // Für Visualizer: Farben aus Cover extrahieren
+                        Palette.from(bitmap).generate { palette ->
+                            if (context is Activity && (context.isDestroyed || context.isFinishing)) {
+                                return@generate
+                            }
+
+                            // Primärfarbe: Vibrant oder Dominant
+                            val vibrantColor = palette?.getVibrantColor(0)
+                            val dominantColor = palette?.getDominantColor(defaultColor) ?: defaultColor
+                            val primaryColor = if (vibrantColor != null && vibrantColor != 0) vibrantColor else dominantColor
+
+                            // Sekundärfarbe: Light Vibrant, Muted, oder komplementär
+                            val lightVibrant = palette?.getLightVibrantColor(0)
+                            val mutedColor = palette?.getMutedColor(0)
+                            val secondaryColor = when {
+                                lightVibrant != null && lightVibrant != 0 -> lightVibrant
+                                mutedColor != null && mutedColor != 0 -> mutedColor
+                                else -> adjustBrightness(primaryColor, 1.3f)
+                            }
+
+                            // Hintergrund dunkel halten
+                            backgroundTarget.background = createGradient(Color.BLACK, effect)
+                            onNewColor(primaryColor)
+                            onNewEffect(effect)
+
+                            // Farben an Visualizer weitergeben
+                            onVisualizerColors?.invoke(primaryColor, secondaryColor)
+                        }
+                    } else if (effect == BackgroundEffect.BLUR) {
                         Palette.from(bitmap).generate { palette ->
                             // Skip if activity is destroyed (e.g. during orientation change)
                             if (context is Activity && (context.isDestroyed || context.isFinishing)) {
@@ -171,6 +207,17 @@ object LiveCoverHelper {
                 gradientRadius = 600f
             }
             BackgroundEffect.BLUR -> GradientDrawable().apply { setColor(color) }
+            BackgroundEffect.VISUALIZER -> GradientDrawable().apply {
+                // Transparenter Hintergrund für Visualizer (VisualizerView wird darüber gelegt)
+                setColor(Color.parseColor("#1A000000"))
+            }
         }.apply { cornerRadius = 0f }
+    }
+
+    private fun adjustBrightness(color: Int, factor: Float): Int {
+        val hsv = FloatArray(3)
+        Color.colorToHSV(color, hsv)
+        hsv[2] = (hsv[2] * factor).coerceIn(0f, 1f)
+        return Color.HSVToColor(hsv)
     }
 }

@@ -41,11 +41,18 @@ import at.plankt0n.streamplay.helper.MediaServiceController
 import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.MetaLogHelper
+import at.plankt0n.streamplay.helper.StreamRecordHelper
+import at.plankt0n.streamplay.view.VisualizerView
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.viewmodel.UITrackInfo
 import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.Keys
 import androidx.core.graphics.ColorUtils
+import android.graphics.Bitmap
+import androidx.palette.graphics.Palette
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
+import android.graphics.drawable.Drawable
 import androidx.annotation.OptIn
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -54,11 +61,12 @@ import com.google.android.material.imageview.ShapeableImageView
 import android.widget.Toast
 
 @OptIn(UnstableApi::class)
-class PlayerFragment : Fragment() {
+class PlayerFragment : Fragment(), StateHelper.VisualizerListener {
 
     private var initialized = false
 
     private lateinit var viewPager: ViewPager2
+    private var standaloneVisualizerView: VisualizerView? = null
     private lateinit var mediaServiceController: MediaServiceController
     private lateinit var spotifyTrackViewModel: UITrackViewModel
 
@@ -73,6 +81,7 @@ class PlayerFragment : Fragment() {
     private lateinit var buttonMute: ImageButton
     private var volumeSlider: SeekBar? = null
     private lateinit var buttonShare: ImageButton
+    private lateinit var buttonRecord: ImageButton
     private lateinit var buttonManualLog: ImageButton
     private lateinit var shortcutRecyclerView: RecyclerView
     private lateinit var shortcutAdapter: ShortcutAdapter
@@ -102,7 +111,24 @@ class PlayerFragment : Fragment() {
             } catch (e: IllegalArgumentException) {
                 LiveCoverHelper.BackgroundEffect.FADE
             }
-            if (initialized) reloadPlaylist()
+            if (initialized) {
+                reloadPlaylist()
+                updateStandaloneVisualizer()
+            }
+        }
+        if (key == Keys.PREF_VISUALIZER_STYLE) {
+            StateHelper.visualizerStyle = try {
+                VisualizerView.Style.valueOf(
+                    shared.getString(key, VisualizerView.Style.BARS.name)!!
+                )
+            } catch (e: IllegalArgumentException) {
+                VisualizerView.Style.BARS
+            }
+            if (initialized && backgroundEffect == LiveCoverHelper.BackgroundEffect.VISUALIZER) {
+                reloadPlaylist()
+                // Update standalone visualizer style
+                standaloneVisualizerView?.style = StateHelper.visualizerStyle
+            }
         }
         if (key == "cover_mode") {
             coverMode = try {
@@ -158,6 +184,11 @@ class PlayerFragment : Fragment() {
         updateBadge = view.findViewById(R.id.update_badge)
         buttonMenu.setOnClickListener { showBottomSheet() }
 
+        // Standalone Visualizer für Layouts wo ViewPager hidden ist (z.B. Handy Querformat)
+        // Muss früh initialisiert werden, bevor der "keine Stationen" Check
+        standaloneVisualizerView = view.findViewById(R.id.visualizer_view_standalone)
+        Log.d("PlayerFragment", "standaloneVisualizerView found: ${standaloneVisualizerView != null}")
+
         if (PreferencesHelper.getStations(requireContext()).isEmpty()) {
             Log.w("PlayerFragment", "\u26a0\ufe0f Keine Stationen gespeichert, Wechsel ins StationsFragment.")
             (activity as? MainActivity)?.showStationsPage()
@@ -183,6 +214,7 @@ class PlayerFragment : Fragment() {
         buttonSpotify = view.findViewById(R.id.button_spotify)
         buttonMute = view.findViewById(R.id.button_mute_unmute)
         buttonShare = view.findViewById(R.id.button_share)
+        buttonRecord = view.findViewById(R.id.button_record)
         buttonManualLog = view.findViewById(R.id.button_manual_log)
         countdownTextView = view.findViewById(R.id.autoplay_countdown)
         connectingBanner = view.findViewById(R.id.connecting_banner)
@@ -204,6 +236,13 @@ class PlayerFragment : Fragment() {
             )
         } catch (e: IllegalArgumentException) {
             LiveCoverHelper.BackgroundEffect.FADE
+        }
+        StateHelper.visualizerStyle = try {
+            VisualizerView.Style.valueOf(
+                prefs.getString(Keys.PREF_VISUALIZER_STYLE, VisualizerView.Style.BARS.name)!!
+            )
+        } catch (e: IllegalArgumentException) {
+            VisualizerView.Style.BARS
         }
         coverMode = try {
             CoverMode.valueOf(prefs.getString("cover_mode", CoverMode.META.name)!!)
@@ -309,6 +348,10 @@ class PlayerFragment : Fragment() {
                         action = Keys.ACTION_REFRESH_METADATA
                     }
                 )
+
+                // Standalone Visualizer aktualisieren (für Handy Querformat)
+                updateStandaloneVisualizer()
+
                 viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
@@ -321,9 +364,9 @@ class PlayerFragment : Fragment() {
                 })
 
             },
-            onPlaybackChanged = {
+            onPlaybackChanged = { isPlaying ->
                 if (!isAdded) return@initializeAndConnect
-                updatePlayPauseIcon(it)
+                updatePlayPauseIcon(isPlaying)
             },
             onStreamIndexChanged = { index ->
                 if (!isAdded) return@initializeAndConnect
@@ -386,6 +429,11 @@ class PlayerFragment : Fragment() {
             startActivity(Intent.createChooser(intent, chooserTitle))
         }
 
+        buttonRecord.setOnClickListener {
+            toggleRecording()
+        }
+        updateRecordButtonState()
+
         buttonManualLog.setOnClickListener {
             saveManualLog()
         }
@@ -419,6 +467,8 @@ class PlayerFragment : Fragment() {
             reloadPlaylist()
             StateHelper.isPlaylistChangePending = false
         }
+        // Standalone Visualizer aktualisieren (wichtig nach Rotation)
+        updateStandaloneVisualizer()
     }
 
     private fun observeSpotifyTrackInfo() {
@@ -675,6 +725,11 @@ class PlayerFragment : Fragment() {
 
             enableMarquee(titleTextView!!, artistTextView!!, genreTextView!!, albumTextView!!)
             updateManualLogButtonState(trackInfo)
+
+            // Update standalone visualizer colors (für Handy Querformat)
+            if (standaloneVisualizerView?.visibility == View.VISIBLE) {
+                extractColorsForStandaloneVisualizer()
+            }
         }
     }
 
@@ -823,6 +878,7 @@ class PlayerFragment : Fragment() {
 
         // Adapter wiederverwenden statt neu erstellen
         coverPageAdapter?.let { adapter ->
+            adapter.backgroundEffect = backgroundEffect
             adapter.updateMediaItems()
             adapter.mediaItems.forEach { item ->
                 Glide.with(requireContext()).load(item.iconURL).preload()
@@ -874,6 +930,11 @@ class PlayerFragment : Fragment() {
             countdownHandler.removeCallbacksAndMessages(null)
             bannerHandler.removeCallbacksAndMessages(null)
             prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
+
+            // Standalone Visualizer aufräumen
+            standaloneVisualizerView?.release()
+            StateHelper.removeVisualizerListener(this)
+
             // Nur trennen wenn Fragment wirklich entfernt wird (nicht bei Orientierungswechsel)
             if (isRemoving || (requireActivity().isFinishing && !requireActivity().isChangingConfigurations)) {
                 mediaServiceController.disconnect()
@@ -1004,4 +1065,133 @@ class PlayerFragment : Fragment() {
             connectingBanner.visibility = View.GONE
         }
     }
+
+    private fun toggleRecording() {
+        if (StreamRecordHelper.isRecording()) {
+            // Stop recording
+            val fileName = StreamRecordHelper.stopRecording(requireContext())
+            updateRecordButtonState()
+            if (fileName != null) {
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.recording_stopped, fileName),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        } else {
+            // Start recording
+            val controller = mediaServiceController.mediaController ?: return
+            val currentIndex = controller.currentMediaItemIndex
+            if (currentIndex < 0 || currentIndex >= controller.mediaItemCount) {
+                Toast.makeText(requireContext(), getString(R.string.recording_no_stream), Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            val mediaItem = controller.getMediaItemAt(currentIndex)
+            val streamUrl = mediaItem.localConfiguration?.uri?.toString()
+            val stationName = mediaItem.mediaMetadata.extras?.getString("EXTRA_STATION_NAME") ?: "Unknown"
+
+            if (streamUrl.isNullOrBlank()) {
+                Toast.makeText(requireContext(), getString(R.string.recording_no_stream), Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            val success = StreamRecordHelper.startRecording(requireContext(), streamUrl, stationName)
+            updateRecordButtonState()
+            if (success) {
+                Toast.makeText(requireContext(), getString(R.string.recording_started), Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), getString(R.string.recording_failed), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun updateRecordButtonState() {
+        if (StreamRecordHelper.isRecording()) {
+            buttonRecord.setImageResource(R.drawable.ic_button_record_stop)
+        } else {
+            buttonRecord.setImageResource(R.drawable.ic_button_record)
+        }
+    }
+
+    // StateHelper.VisualizerListener implementation
+    override fun onFftDataAvailable(magnitudes: FloatArray) {
+        standaloneVisualizerView?.setMagnitudes(magnitudes)
+    }
+
+    private fun updateStandaloneVisualizer() {
+        val visualizerView = standaloneVisualizerView ?: return
+
+        val isVisualizerEffect = backgroundEffect == LiveCoverHelper.BackgroundEffect.VISUALIZER
+
+        Log.d("PlayerFragment", "updateStandaloneVisualizer: effect=$backgroundEffect, isVisualizerEffect=$isVisualizerEffect")
+
+        if (isVisualizerEffect) {
+            // Show standalone visualizer (immer wenn Visualizer-Effekt aktiv und View existiert)
+            Log.d("PlayerFragment", "Showing standalone visualizer")
+            visualizerView.visibility = View.VISIBLE
+            visualizerView.style = StateHelper.visualizerStyle
+            visualizerView.startFallbackAnimation()
+            StateHelper.addVisualizerListener(this)
+
+            // Extract colors from current cover
+            extractColorsForStandaloneVisualizer()
+        } else {
+            // Hide standalone visualizer
+            visualizerView.visibility = View.GONE
+            visualizerView.release()
+            StateHelper.removeVisualizerListener(this)
+        }
+    }
+
+    private fun extractColorsForStandaloneVisualizer() {
+        val visualizerView = standaloneVisualizerView ?: return
+        if (!isAdded) return
+
+        val controller = mediaServiceController.mediaController ?: return
+        val currentIndex = controller.currentMediaItemIndex
+        if (currentIndex < 0 || currentIndex >= controller.mediaItemCount) return
+
+        val mediaItem = controller.getMediaItemAt(currentIndex)
+        val defaultIconUrl = mediaItem.mediaMetadata.extras?.getString("EXTRA_ICON_URL") ?: ""
+        val trackInfo = spotifyTrackViewModel.trackInfo.value
+
+        // Use meta cover if available, otherwise station icon
+        val coverUrl = if (coverMode == CoverMode.META && !trackInfo?.bestCoverUrl.isNullOrBlank()) {
+            trackInfo?.bestCoverUrl!!
+        } else {
+            defaultIconUrl
+        }
+
+        if (coverUrl.isBlank()) return
+
+        Glide.with(requireContext())
+            .asBitmap()
+            .load(coverUrl)
+            .into(object : CustomTarget<Bitmap>() {
+                override fun onResourceReady(bitmap: Bitmap, transition: Transition<in Bitmap>?) {
+                    if (!isAdded) return
+                    Palette.from(bitmap).generate { palette ->
+                        if (palette == null || !isAdded) return@generate
+
+                        val vibrantColor = palette.getVibrantColor(0)
+                        val dominantColor = palette.getDominantColor(Color.parseColor("#6200EE"))
+                        val primaryColor = if (vibrantColor != 0) vibrantColor else dominantColor
+
+                        val lightVibrant = palette.getLightVibrantColor(0)
+                        val mutedColor = palette.getMutedColor(0)
+                        val secondaryColor = when {
+                            lightVibrant != 0 -> lightVibrant
+                            mutedColor != 0 -> mutedColor
+                            else -> primaryColor
+                        }
+
+                        visualizerView.setColors(primaryColor, secondaryColor)
+                    }
+                }
+
+                override fun onLoadCleared(placeholder: Drawable?) {}
+            })
+    }
+
 }

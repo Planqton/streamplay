@@ -57,9 +57,13 @@ import at.plankt0n.streamplay.helper.IcyStreamReader
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.SpotifyMetaReader
 import at.plankt0n.streamplay.helper.MetaLogHelper
+import at.plankt0n.streamplay.helper.StateHelper
 import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.viewmodel.UITrackRepository
 import at.plankt0n.streamplay.viewmodel.UITrackInfo
+import at.plankt0n.streamplay.audio.VisualizerAudioProcessor
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -75,6 +79,7 @@ class StreamingService : MediaLibraryService() {
     private var icyStreamReader: IcyStreamReader? = null //alt
     private lateinit var player: ExoPlayer
     private lateinit var mediaLibrarySession: MediaLibrarySession
+    private var visualizerProcessor: VisualizerAudioProcessor? = null
 
     // Service-eigener CoroutineScope für Lifecycle-gebundene Coroutines
     private val serviceJob = Job()
@@ -673,10 +678,47 @@ class StreamingService : MediaLibraryService() {
         val mediaSourceFactory = DefaultMediaSourceFactory(this)
             .setDataSourceFactory(DefaultDataSource.Factory(this, httpDataSourceFactory))
 
-        player = ExoPlayer.Builder(this)
-            .setMediaSourceFactory(mediaSourceFactory)
+        // Audio Session ID für Visualizer generieren und sofort speichern
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val generatedAudioSessionId = audioManager.generateAudioSessionId()
+        StateHelper.audioSessionId = generatedAudioSessionId
+        Log.d("StreamingService", "🎵 Generated audioSessionId: $generatedAudioSessionId")
 
+        // VisualizerAudioProcessor erstellen und konfigurieren
+        visualizerProcessor = VisualizerAudioProcessor().apply {
+            setListener(object : VisualizerAudioProcessor.Listener {
+                override fun onFftDataAvailable(magnitudes: FloatArray) {
+                    StateHelper.notifyVisualizerData(magnitudes)
+                }
+            })
+        }
+
+        // Custom RenderersFactory mit VisualizerAudioProcessor
+        val renderersFactory = object : DefaultRenderersFactory(this) {
+            override fun buildAudioSink(
+                context: Context,
+                enableFloatOutput: Boolean,
+                enableAudioTrackPlaybackParams: Boolean
+            ): DefaultAudioSink {
+                return DefaultAudioSink.Builder(context)
+                    .setEnableFloatOutput(enableFloatOutput)
+                    .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                    .setAudioProcessors(arrayOf(visualizerProcessor!!))
+                    .build()
+            }
+        }
+
+        player = ExoPlayer.Builder(this, renderersFactory)
+            .setMediaSourceFactory(mediaSourceFactory)
+            .setAudioAttributes(
+                androidx.media3.common.AudioAttributes.Builder()
+                    .setUsage(androidx.media3.common.C.USAGE_MEDIA)
+                    .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC)
+                    .build(),
+                false // Audio Focus wird manuell verwaltet
+            )
             .build().apply {
+                setAudioSessionId(generatedAudioSessionId)
                 repeatMode = Player.REPEAT_MODE_OFF
                 addListener(object : Player.Listener {
                     //Listener für ICY META aus EXOPLAYER (nicht MediaMetadata)
@@ -729,6 +771,9 @@ class StreamingService : MediaLibraryService() {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         if (isPlaying) {
                             requestAudioFocus()
+                            // AudioSessionId für Visualizer speichern
+                            StateHelper.audioSessionId = player.audioSessionId
+                            Log.d("StreamingService", "🎵 audioSessionId saved: ${player.audioSessionId}")
                             // Equalizer initialisieren wenn noch nicht geschehen
                             if (!EqualizerHelper.isInitialized()) {
                                 if (EqualizerHelper.init(player.audioSessionId, this@StreamingService)) {
@@ -956,6 +1001,8 @@ class StreamingService : MediaLibraryService() {
         }
         abandonAudioFocus()
         EqualizerHelper.release()
+        visualizerProcessor?.reset()
+        visualizerProcessor = null
         if (::mediaLibrarySession.isInitialized) {
             mediaLibrarySession.release()
         }

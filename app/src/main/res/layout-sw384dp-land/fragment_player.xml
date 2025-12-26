@@ -4,6 +4,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Standalone Visualizer für Querformat (ViewPager ist hidden) -->
+    <at.plankt0n.streamplay.view.VisualizerView
+        android:id="@+id/visualizer_view_standalone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
     <!-- ViewPager2 für Hintergrund/Cover - versteckt auf kleinen Geräten im Querformat -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"

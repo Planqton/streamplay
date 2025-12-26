@@ -223,6 +223,24 @@
     <string name="bg_effect_diagonal">Diagonal</string>
     <string name="bg_effect_spotlight">Spotlight</string>
     <string name="bg_effect_blur">Blur</string>
+    <string name="bg_effect_visualizer">Visualizer (Experimental)</string>
+    <string name="settings_visualizer_style">Visualizer-Stil</string>
+    <string name="visualizer_style_bars">Balken</string>
+    <string name="visualizer_style_wave">Welle</string>
+    <string name="visualizer_style_circle">Kreis</string>
+    <string name="visualizer_style_line">Linie</string>
+    <string name="visualizer_style_spectrum">Spektrum</string>
+    <string name="visualizer_style_rings">Ringe</string>
+    <string name="visualizer_style_blob">Blob</string>
+    <string name="visualizer_style_mirror">Spiegel</string>
+    <string name="visualizer_style_dna">DNA</string>
+    <string name="visualizer_style_fountain">Brunnen</string>
+    <string name="visualizer_style_equalizer">Equalizer</string>
+    <string name="visualizer_style_radar">Radar</string>
+    <string name="visualizer_style_pulse">Puls</string>
+    <string name="visualizer_style_plasma">Plasma</string>
+    <string name="visualizer_style_orbits">Orbits</string>
+    <string name="visualizer_style_blur_motion">Blur Bewegung</string>
     <string name="settings_cover_mode">Cover-Quelle</string>
     <string name="settings_cover_animation">Cover-Animationsstil</string>
     <string name="cover_animation_none">Keine</string>
@@ -294,4 +312,11 @@
     <string name="hold_format">Halten… %1$d</string>
     <string name="sync_complete">Sync abgeschlossen: %1$d neu, %2$d aktualisiert.</string>
     <string name="sync_error">Fehler beim Sync: %1$s</string>
+
+    <!-- Recording -->
+    <string name="desc_button_record">Aufnahme-Button</string>
+    <string name="recording_started">Aufnahme gestartet</string>
+    <string name="recording_stopped">Aufnahme gespeichert: %1$s</string>
+    <string name="recording_failed">Aufnahme fehlgeschlagen</string>
+    <string name="recording_no_stream">Kein Stream zum Aufnehmen</string>
 </resources>

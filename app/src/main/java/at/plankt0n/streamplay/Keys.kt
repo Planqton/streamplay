@@ -28,6 +28,7 @@ object Keys {
 
     // UI Settings
     const val PREF_SHOW_STATION_IN_MEDIAINFO = "show_station_in_mediainfo"
+    const val PREF_VISUALIZER_STYLE = "visualizer_style"
 
     // Audio Settings
     const val PREF_DUCK_VOLUME = "duck_volume"  // Int 5-50, default 20 (percent)
