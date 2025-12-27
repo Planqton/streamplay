@@ -61,12 +61,11 @@ import com.google.android.material.imageview.ShapeableImageView
 import android.widget.Toast
 
 @OptIn(UnstableApi::class)
-class PlayerFragment : Fragment(), StateHelper.VisualizerListener {
+class PlayerFragment : Fragment() {
 
     private var initialized = false
 
     private lateinit var viewPager: ViewPager2
-    private var standaloneVisualizerView: VisualizerView? = null
     private lateinit var mediaServiceController: MediaServiceController
     private lateinit var spotifyTrackViewModel: UITrackViewModel
 
@@ -113,7 +112,6 @@ class PlayerFragment : Fragment(), StateHelper.VisualizerListener {
             }
             if (initialized) {
                 reloadPlaylist()
-                updateStandaloneVisualizer()
             }
         }
         if (key == Keys.PREF_VISUALIZER_STYLE) {
@@ -126,8 +124,6 @@ class PlayerFragment : Fragment(), StateHelper.VisualizerListener {
             }
             if (initialized && backgroundEffect == LiveCoverHelper.BackgroundEffect.VISUALIZER) {
                 reloadPlaylist()
-                // Update standalone visualizer style
-                standaloneVisualizerView?.style = StateHelper.visualizerStyle
             }
         }
         if (key == "cover_mode") {
@@ -184,10 +180,6 @@ class PlayerFragment : Fragment(), StateHelper.VisualizerListener {
         updateBadge = view.findViewById(R.id.update_badge)
         buttonMenu.setOnClickListener { showBottomSheet() }
 
-        // Standalone Visualizer für Layouts wo ViewPager hidden ist (z.B. Handy Querformat)
-        // Muss früh initialisiert werden, bevor der "keine Stationen" Check
-        standaloneVisualizerView = view.findViewById(R.id.visualizer_view_standalone)
-        Log.d("PlayerFragment", "standaloneVisualizerView found: ${standaloneVisualizerView != null}")
 
         if (PreferencesHelper.getStations(requireContext()).isEmpty()) {
             Log.w("PlayerFragment", "\u26a0\ufe0f Keine Stationen gespeichert, Wechsel ins StationsFragment.")
@@ -349,9 +341,6 @@ class PlayerFragment : Fragment(), StateHelper.VisualizerListener {
                     }
                 )
 
-                // Standalone Visualizer aktualisieren (für Handy Querformat)
-                updateStandaloneVisualizer()
-
                 viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
@@ -467,8 +456,6 @@ class PlayerFragment : Fragment(), StateHelper.VisualizerListener {
             reloadPlaylist()
             StateHelper.isPlaylistChangePending = false
         }
-        // Standalone Visualizer aktualisieren (wichtig nach Rotation)
-        updateStandaloneVisualizer()
     }
 
     private fun observeSpotifyTrackInfo() {
@@ -725,11 +712,6 @@ class PlayerFragment : Fragment(), StateHelper.VisualizerListener {
 
             enableMarquee(titleTextView!!, artistTextView!!, genreTextView!!, albumTextView!!)
             updateManualLogButtonState(trackInfo)
-
-            // Update standalone visualizer colors (für Handy Querformat)
-            if (standaloneVisualizerView?.visibility == View.VISIBLE) {
-                extractColorsForStandaloneVisualizer()
-            }
         }
     }
 
@@ -764,6 +746,7 @@ class PlayerFragment : Fragment(), StateHelper.VisualizerListener {
         buttonForward.applyStyle()
         buttonMute.applyStyle()
         buttonShare.applyStyle()
+        buttonRecord.applyStyle()
         buttonMenu.applyStyle()
         buttonSpotify.applyStyle()
         buttonManualLog.applyStyle()
@@ -930,10 +913,6 @@ class PlayerFragment : Fragment(), StateHelper.VisualizerListener {
             countdownHandler.removeCallbacksAndMessages(null)
             bannerHandler.removeCallbacksAndMessages(null)
             prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
-
-            // Standalone Visualizer aufräumen
-            standaloneVisualizerView?.release()
-            StateHelper.removeVisualizerListener(this)
 
             // Nur trennen wenn Fragment wirklich entfernt wird (nicht bei Orientierungswechsel)
             if (isRemoving || (requireActivity().isFinishing && !requireActivity().isChangingConfigurations)) {
@@ -1112,86 +1091,6 @@ class PlayerFragment : Fragment(), StateHelper.VisualizerListener {
         } else {
             buttonRecord.setImageResource(R.drawable.ic_button_record)
         }
-    }
-
-    // StateHelper.VisualizerListener implementation
-    override fun onFftDataAvailable(magnitudes: FloatArray) {
-        standaloneVisualizerView?.setMagnitudes(magnitudes)
-    }
-
-    private fun updateStandaloneVisualizer() {
-        val visualizerView = standaloneVisualizerView ?: return
-
-        val isVisualizerEffect = backgroundEffect == LiveCoverHelper.BackgroundEffect.VISUALIZER
-
-        Log.d("PlayerFragment", "updateStandaloneVisualizer: effect=$backgroundEffect, isVisualizerEffect=$isVisualizerEffect")
-
-        if (isVisualizerEffect) {
-            // Show standalone visualizer (immer wenn Visualizer-Effekt aktiv und View existiert)
-            Log.d("PlayerFragment", "Showing standalone visualizer")
-            visualizerView.visibility = View.VISIBLE
-            visualizerView.style = StateHelper.visualizerStyle
-            visualizerView.startFallbackAnimation()
-            StateHelper.addVisualizerListener(this)
-
-            // Extract colors from current cover
-            extractColorsForStandaloneVisualizer()
-        } else {
-            // Hide standalone visualizer
-            visualizerView.visibility = View.GONE
-            visualizerView.release()
-            StateHelper.removeVisualizerListener(this)
-        }
-    }
-
-    private fun extractColorsForStandaloneVisualizer() {
-        val visualizerView = standaloneVisualizerView ?: return
-        if (!isAdded) return
-
-        val controller = mediaServiceController.mediaController ?: return
-        val currentIndex = controller.currentMediaItemIndex
-        if (currentIndex < 0 || currentIndex >= controller.mediaItemCount) return
-
-        val mediaItem = controller.getMediaItemAt(currentIndex)
-        val defaultIconUrl = mediaItem.mediaMetadata.extras?.getString("EXTRA_ICON_URL") ?: ""
-        val trackInfo = spotifyTrackViewModel.trackInfo.value
-
-        // Use meta cover if available, otherwise station icon
-        val coverUrl = if (coverMode == CoverMode.META && !trackInfo?.bestCoverUrl.isNullOrBlank()) {
-            trackInfo?.bestCoverUrl!!
-        } else {
-            defaultIconUrl
-        }
-
-        if (coverUrl.isBlank()) return
-
-        Glide.with(requireContext())
-            .asBitmap()
-            .load(coverUrl)
-            .into(object : CustomTarget<Bitmap>() {
-                override fun onResourceReady(bitmap: Bitmap, transition: Transition<in Bitmap>?) {
-                    if (!isAdded) return
-                    Palette.from(bitmap).generate { palette ->
-                        if (palette == null || !isAdded) return@generate
-
-                        val vibrantColor = palette.getVibrantColor(0)
-                        val dominantColor = palette.getDominantColor(Color.parseColor("#6200EE"))
-                        val primaryColor = if (vibrantColor != 0) vibrantColor else dominantColor
-
-                        val lightVibrant = palette.getLightVibrantColor(0)
-                        val mutedColor = palette.getMutedColor(0)
-                        val secondaryColor = when {
-                            lightVibrant != 0 -> lightVibrant
-                            mutedColor != 0 -> mutedColor
-                            else -> primaryColor
-                        }
-
-                        visualizerView.setColors(primaryColor, secondaryColor)
-                    }
-                }
-
-                override fun onLoadCleared(placeholder: Drawable?) {}
-            })
     }
 
 }
