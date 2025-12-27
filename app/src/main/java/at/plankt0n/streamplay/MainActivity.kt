@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         // Log initial layout
         logCurrentLayout()
 
-        apiSyncIfEnabled()
+        // API-Sync läuft jetzt in StreamPlayApplication (überlebt Activity-Lifecycle)
 
         lifecycleScope.launch {
             GitHubUpdateChecker(this@MainActivity).silentCheckForUpdate()
@@ -78,6 +78,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
         handleShortcutIntent(intent)
         maybeShowOnboarding()
+
     }
 
     override fun onDestroy() {

@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-12-26T23:43:20.632544365Z">
+        <DropdownSelection timestamp="2025-12-27T11:47:02.124646523Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=sg9t65k7heojknws" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=/home/planqton/.android/avd/Xiaomi_EMU.avd" />
             </handle>
           </Target>
         </DropdownSelection>
