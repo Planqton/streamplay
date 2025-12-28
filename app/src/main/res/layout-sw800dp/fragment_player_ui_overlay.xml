@@ -161,6 +161,15 @@
                 android:text="@string/unknown_station"
                 android:textSize="12sp"
                 android:textColor="@color/primary_text_default_material_dark"/>
+
+            <Spinner
+                android:id="@+id/station_overlay_dropdown"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:entries="@array/station_overlay_dropdown_items"
+                android:spinnerMode="dropdown"/>
         </LinearLayout>
     </FrameLayout>
     <!-- Right Button Container -->
