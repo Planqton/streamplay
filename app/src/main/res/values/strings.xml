@@ -270,6 +270,17 @@
     <string name="settings_show_station_in_mediainfo_summary">Zeigt den Sendernamen im Titel-Feld der Medienbenachrichtigung</string>
     <string name="settings_show_rotate_lock">Rotations-Sperre anzeigen</string>
     <string name="settings_show_rotate_lock_summary">Zeigt einen Button zum Sperren der Bildschirmausrichtung</string>
+
+    <!-- Overlay Settings -->
+    <string name="settings_ui_subscreen">Oberflächen-Einstellungen</string>
+    <string name="settings_ui_subscreen_summary">Cover-Overlay, Animationen und mehr</string>
+    <string name="settings_overlay_enabled">Spotify-Overlay aktivieren</string>
+    <string name="settings_overlay_enabled_summary">Zeigt ein durchgestrichenes Spotify-Icon wenn kein Cover gefunden wurde</string>
+    <string name="settings_overlay_position">Overlay-Position</string>
+    <string name="overlay_position_left">Links unten</string>
+    <string name="overlay_position_right">Rechts unten</string>
+    <string name="settings_overlay_opacity">Overlay-Transparenz</string>
+
     <string name="settings_use_spotify_meta">Spotify Meta verwenden</string>
     <string name="settings_spotify_api_key">Spotify API Key</string>
     <string name="settings_spotify_secret_key">Spotify Secret Key</string>

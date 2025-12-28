@@ -244,6 +244,17 @@
     <string name="cover_mode_meta">Metadata Cover</string>
     <string name="settings_show_station_in_mediainfo">Station name in Mediainfo</string>
     <string name="settings_show_station_in_mediainfo_summary">Shows the station name in the title field of the media notification</string>
+
+    <!-- Overlay Settings -->
+    <string name="settings_ui_subscreen">UI Settings</string>
+    <string name="settings_ui_subscreen_summary">Cover overlay, animations and more</string>
+    <string name="settings_overlay_enabled">Enable Spotify Overlay</string>
+    <string name="settings_overlay_enabled_summary">Shows a crossed-out Spotify icon when no cover was found</string>
+    <string name="settings_overlay_position">Overlay Position</string>
+    <string name="overlay_position_left">Bottom Left</string>
+    <string name="overlay_position_right">Bottom Right</string>
+    <string name="settings_overlay_opacity">Overlay Transparency</string>
+
     <string name="settings_use_spotify_meta">Use Spotify Meta</string>
     <string name="settings_spotify_api_key">Spotify API Key</string>
     <string name="settings_spotify_secret_key">Spotify Secret Key</string>

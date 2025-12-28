@@ -5,9 +5,9 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
 
-    <!-- Semi-transparent dark background circle -->
+    <!-- Semi-transparent dark background circle (40% opacity) -->
     <path
-        android:fillColor="#99000000"
+        android:fillColor="#66000000"
         android:pathData="M12,12m-11,0a11,11 0,1 1,22 0a11,11 0,1 1,-22 0"/>
 
     <!-- Spotify logo (scaled to fit inside) -->

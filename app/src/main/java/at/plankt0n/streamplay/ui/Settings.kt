@@ -569,6 +569,41 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_rotate_lock)
     }
 
+    // Overlay-Einstellungen (Spotify Unavailable Badge)
+    val overlayEnabledSwitch = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_OVERLAY_ENABLED
+        title = getString(R.string.settings_overlay_enabled)
+        summary = getString(R.string.settings_overlay_enabled_summary)
+        setDefaultValue(true)
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_spotify_unavailable)
+    }
+
+    val overlayPositionPref = ListPreference(context).apply {
+        key = Keys.PREF_OVERLAY_POSITION
+        title = getString(R.string.settings_overlay_position)
+        entries = arrayOf(
+            getString(R.string.overlay_position_left),
+            getString(R.string.overlay_position_right)
+        )
+        entryValues = arrayOf("LEFT", "RIGHT")
+        setDefaultValue("LEFT")
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+        summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
+    }
+
+    val overlayOpacityPref = SeekBarPreference(context).apply {
+        key = Keys.PREF_OVERLAY_OPACITY
+        title = getString(R.string.settings_overlay_opacity)
+        min = 10
+        max = 100
+        setDefaultValue(40)
+        showSeekBarValue = true
+        category = SettingsCategory.UI
+        icon = context.getDrawable(R.drawable.ic_sheet_settings)
+    }
+
     val spotifyApiKeyPref = EditTextPreference(context).apply {
         key = Keys.PREF_SPOTIFY_CLIENT_ID
         title = getString(R.string.settings_spotify_api_key)
@@ -1050,6 +1085,9 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         visualizerStylePref,
         coverModePref,
         coverAnimationStylePref,
+        overlayEnabledSwitch,
+        overlayPositionPref,
+        overlayOpacityPref,
         showStationInMediaInfoSwitch,
         showRotateLockSwitch,
         spotifyApiKeyPref,

@@ -52,6 +52,8 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import android.content.ContentResolver
 import at.plankt0n.streamplay.data.StationItem
+import at.plankt0n.streamplay.data.CoverMode
+import at.plankt0n.streamplay.helper.BitmapOverlayHelper
 import at.plankt0n.streamplay.helper.EqualizerHelper
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.SpotifyMetaReader
@@ -1184,12 +1186,88 @@ class StreamingService : MediaLibraryService() {
                                 "SpotifyMetaReader",
                                 "❌ Keine Spotify-Daten gefunden für: $artist - $title"
                             )
-                            updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
+                            // Check if cover_mode is META - only then apply overlay
+                            val coverMode = prefs.getString("cover_mode", CoverMode.META.name)
+                            if (coverMode == CoverMode.META.name) {
+                                // Apply Spotify unavailable overlay to station icon
+                                BitmapOverlayHelper.loadAndOverlayForMediaSession(
+                                    this@StreamingService,
+                                    fallbackartworkUri ?: ""
+                                ) { result ->
+                                    // Use original HTTP URL for URI (Android Auto fallback), but pass artworkBytes for overlay
+                                    updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "", result.bitmapBytes)
+                                    UITrackRepository.updateTrackInfoIfCurrent(
+                                        UITrackInfo(
+                                            trackName = title,
+                                            artistName = artist,
+                                            bestCoverUrl = result.uri, // Use cached URI for app UI
+                                            previewUrl = null,
+                                            genre = ""
+                                        ),
+                                        requestId
+                                    )
+                                    MetaLogHelper.addLog(
+                                        this@StreamingService,
+                                        MetaLogEntry(
+                                            timestamp = System.currentTimeMillis(),
+                                            station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
+                                            title = title,
+                                            artist = artist,
+                                            url = null,
+                                            coverUrl = result.uri
+                                        )
+                                    )
+                                }
+                            } else {
+                                // STATION mode - no overlay
+                                updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
+                                UITrackRepository.updateTrackInfoIfCurrent(
+                                    UITrackInfo(
+                                        trackName = title,
+                                        artistName = artist,
+                                        bestCoverUrl = fallbackartworkUri,
+                                        previewUrl = null,
+                                        genre = ""
+                                    ),
+                                    requestId
+                                )
+                                MetaLogHelper.addLog(
+                                    this@StreamingService,
+                                    MetaLogEntry(
+                                        timestamp = System.currentTimeMillis(),
+                                        station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
+                                        title = title,
+                                        artist = artist,
+                                        url = null,
+                                        coverUrl = fallbackartworkUri
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Spotify disabled - use request ID validation
+                metadataJob = serviceScope.launch(Dispatchers.Main) {
+                    if (currentMetadataRequestId != requestId) {
+                        Log.d("StreamingService", "⏭️ Request $requestId stale, ignoring")
+                        return@launch
+                    }
+                    // Check if cover_mode is META - only then apply overlay
+                    val coverMode = prefs.getString("cover_mode", CoverMode.META.name)
+                    if (coverMode == CoverMode.META.name) {
+                        // Apply Spotify unavailable overlay to station icon
+                        BitmapOverlayHelper.loadAndOverlayForMediaSession(
+                            this@StreamingService,
+                            fallbackartworkUri ?: ""
+                        ) { result ->
+                            // Use original HTTP URL for URI (Android Auto fallback), but pass artworkBytes for overlay
+                            updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "", result.bitmapBytes)
                             UITrackRepository.updateTrackInfoIfCurrent(
                                 UITrackInfo(
                                     trackName = title,
                                     artistName = artist,
-                                    bestCoverUrl = fallbackartworkUri,
+                                    bestCoverUrl = result.uri, // Use cached URI for app UI
                                     previewUrl = null,
                                     genre = ""
                                 ),
@@ -1203,27 +1281,86 @@ class StreamingService : MediaLibraryService() {
                                     title = title,
                                     artist = artist,
                                     url = null,
-                                    coverUrl = fallbackartworkUri
+                                    coverUrl = result.uri
                                 )
                             )
                         }
+                    } else {
+                        // STATION mode - no overlay
+                        updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
+                        UITrackRepository.updateTrackInfoIfCurrent(
+                            UITrackInfo(
+                                trackName = title,
+                                artistName = artist,
+                                bestCoverUrl = fallbackartworkUri,
+                                previewUrl = null,
+                                genre = ""
+                            ),
+                            requestId
+                        )
+                        MetaLogHelper.addLog(
+                            this@StreamingService,
+                            MetaLogEntry(
+                                timestamp = System.currentTimeMillis(),
+                                station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
+                                title = title,
+                                artist = artist,
+                                url = null,
+                                coverUrl = fallbackartworkUri
+                            )
+                        )
                     }
                 }
-            } else {
-                // Spotify disabled - use request ID validation
-                metadataJob = serviceScope.launch(Dispatchers.Main) {
-                    if (currentMetadataRequestId != requestId) {
-                        Log.d("StreamingService", "⏭️ Request $requestId stale, ignoring")
-                        return@launch
+            }
+        } else {
+            Log.d(
+                "StreamingService",
+                "⚠️ Artist oder Title fehlen – kein Spotify-Request. Fallback auf alte meta"
+            )
+            // Missing artist/title - use request ID validation
+            metadataJob = serviceScope.launch(Dispatchers.Main) {
+                if (currentMetadataRequestId != requestId) {
+                    Log.d("StreamingService", "⏭️ Request $requestId stale, ignoring")
+                    return@launch
+                }
+                // Check if cover_mode is META - only then apply overlay
+                val coverMode = prefs.getString("cover_mode", CoverMode.META.name)
+                if (coverMode == CoverMode.META.name) {
+                    // Apply Spotify unavailable overlay to station icon
+                    BitmapOverlayHelper.loadAndOverlayForMediaSession(
+                        this@StreamingService,
+                        fallbackartworkUri ?: ""
+                    ) { result ->
+                        // Use original HTTP URL for URI (Android Auto fallback), but pass artworkBytes for overlay
+                        updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "", result.bitmapBytes)
+                        UITrackRepository.updateTrackInfoIfCurrent(
+                            UITrackInfo(
+                                trackName = title,
+                                artistName = artist,
+                                bestCoverUrl = result.uri // Use cached URI for app UI
+                            ),
+                            requestId
+                        )
+                        MetaLogHelper.addLog(
+                            this@StreamingService,
+                            MetaLogEntry(
+                                timestamp = System.currentTimeMillis(),
+                                station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
+                                title = title,
+                                artist = artist,
+                                url = null,
+                                coverUrl = result.uri
+                            )
+                        )
                     }
+                } else {
+                    // STATION mode - no overlay
                     updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
                     UITrackRepository.updateTrackInfoIfCurrent(
                         UITrackInfo(
                             trackName = title,
                             artistName = artist,
-                            bestCoverUrl = fallbackartworkUri,
-                            previewUrl = null,
-                            genre = ""
+                            bestCoverUrl = fallbackartworkUri
                         ),
                         requestId
                     )
@@ -1240,42 +1377,10 @@ class StreamingService : MediaLibraryService() {
                     )
                 }
             }
-        } else {
-            Log.d(
-                "StreamingService",
-                "⚠️ Artist oder Title fehlen – kein Spotify-Request. Fallback auf alte meta"
-            )
-            // Missing artist/title - use request ID validation
-            metadataJob = serviceScope.launch(Dispatchers.Main) {
-                if (currentMetadataRequestId != requestId) {
-                    Log.d("StreamingService", "⏭️ Request $requestId stale, ignoring")
-                    return@launch
-                }
-                updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
-                UITrackRepository.updateTrackInfoIfCurrent(
-                    UITrackInfo(
-                        trackName = title,
-                        artistName = artist,
-                        bestCoverUrl = fallbackartworkUri
-                    ),
-                    requestId
-                )
-                MetaLogHelper.addLog(
-                    this@StreamingService,
-                    MetaLogEntry(
-                        timestamp = System.currentTimeMillis(),
-                        station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
-                        title = title,
-                        artist = artist,
-                        url = null,
-                        coverUrl = fallbackartworkUri
-                    )
-                )
-            }
         }
     }
 
-    fun updateMediaItemMetadata(title: String, artist: String, artworkUri: String) {
+    fun updateMediaItemMetadata(title: String, artist: String, artworkUri: String, artworkBytes: ByteArray? = null) {
         // Save original values for refresh
         lastOriginalTitle = title
         lastOriginalArtist = artist
@@ -1322,12 +1427,19 @@ class StreamingService : MediaLibraryService() {
 
 
         player.currentMediaItem?.let { mediaItem ->
-            val updatedMetadata = mediaItem.mediaMetadata
+            val metadataBuilder = mediaItem.mediaMetadata
                 .buildUpon()
                 .setTitle(updatetitle)
                 .setArtist(updateartist)
-                .setArtworkUri(Uri.parse(artworkUri))
-                .build()
+
+            // Always set URI for compatibility, and also set artworkData if available (for Android Auto)
+            metadataBuilder.setArtworkUri(Uri.parse(artworkUri))
+            if (artworkBytes != null) {
+                metadataBuilder.setArtworkData(artworkBytes, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+                Log.d("StreamingService", "🖼️ Using artworkData (${artworkBytes.size} bytes) + URI for Android Auto")
+            }
+
+            val updatedMetadata = metadataBuilder.build()
 
             val updatedMediaItem = mediaItem.buildUpon()
                 .setMediaMetadata(updatedMetadata)
