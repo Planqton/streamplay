@@ -1194,6 +1194,11 @@ class StreamingService : MediaLibraryService() {
                                     this@StreamingService,
                                     fallbackartworkUri ?: ""
                                 ) { result ->
+                                    // Check if request is still valid (race condition fix)
+                                    if (currentMetadataRequestId != requestId) {
+                                        Log.d("StreamingService", "⏭️ Overlay callback: Request $requestId stale, ignoring")
+                                        return@loadAndOverlayForMediaSession
+                                    }
                                     // Use original HTTP URL for URI (Android Auto fallback), but pass artworkBytes for overlay
                                     updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "", result.bitmapBytes)
                                     UITrackRepository.updateTrackInfoIfCurrent(
@@ -1261,6 +1266,11 @@ class StreamingService : MediaLibraryService() {
                             this@StreamingService,
                             fallbackartworkUri ?: ""
                         ) { result ->
+                            // Check if request is still valid (race condition fix)
+                            if (currentMetadataRequestId != requestId) {
+                                Log.d("StreamingService", "⏭️ Overlay callback: Request $requestId stale, ignoring")
+                                return@loadAndOverlayForMediaSession
+                            }
                             // Use original HTTP URL for URI (Android Auto fallback), but pass artworkBytes for overlay
                             updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "", result.bitmapBytes)
                             UITrackRepository.updateTrackInfoIfCurrent(
@@ -1331,6 +1341,11 @@ class StreamingService : MediaLibraryService() {
                         this@StreamingService,
                         fallbackartworkUri ?: ""
                     ) { result ->
+                        // Check if request is still valid (race condition fix)
+                        if (currentMetadataRequestId != requestId) {
+                            Log.d("StreamingService", "⏭️ Overlay callback: Request $requestId stale, ignoring")
+                            return@loadAndOverlayForMediaSession
+                        }
                         // Use original HTTP URL for URI (Android Auto fallback), but pass artworkBytes for overlay
                         updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "", result.bitmapBytes)
                         UITrackRepository.updateTrackInfoIfCurrent(

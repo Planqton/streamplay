@@ -94,6 +94,9 @@ object BitmapOverlayHelper {
             cacheDir.mkdirs()
         }
 
+        // Clear old cached overlay images to prevent cache bloat
+        cacheDir.listFiles()?.forEach { it.delete() }
+
         val file = File(cacheDir, filename)
         FileOutputStream(file).use { out ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 90, out)
@@ -170,9 +173,10 @@ object BitmapOverlayHelper {
                             val overlaidBitmap = addSpotifyUnavailableOverlay(context, bitmap)
 
                             // Convert bitmap to byte array for setArtworkData()
-                            val stream = java.io.ByteArrayOutputStream()
-                            overlaidBitmap.compress(Bitmap.CompressFormat.PNG, 90, stream)
-                            val bitmapBytes = stream.toByteArray()
+                            val bitmapBytes = java.io.ByteArrayOutputStream().use { stream ->
+                                overlaidBitmap.compress(Bitmap.CompressFormat.PNG, 90, stream)
+                                stream.toByteArray()
+                            }
 
                             // Also save to cache for UI usage
                             val cachedUri = saveBitmapToCache(context, overlaidBitmap, "mediasession_overlay_${System.currentTimeMillis()}.png")
