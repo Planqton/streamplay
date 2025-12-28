@@ -32,6 +32,7 @@ object Keys {
     const val PREF_SHOW_ROTATE_LOCK = "show_rotate_lock"
 
     // Audio Settings
+    const val PREF_AUDIO_FOCUS_HOLD = "audio_focus_hold"  // Boolean, default false
     const val PREF_DUCK_VOLUME = "duck_volume"  // Int 5-50, default 20 (percent)
 
     // Equalizer Settings

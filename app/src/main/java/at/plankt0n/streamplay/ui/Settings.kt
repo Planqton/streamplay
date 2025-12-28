@@ -15,7 +15,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.*
-import at.plankt0n.streamplay.AudioFocusMode
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.NetworkType
 import at.plankt0n.streamplay.R
@@ -292,26 +291,15 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         icon = context.getDrawable(R.drawable.ic_autoplay)
     }
 
-    val audioFocusPref = ListPreference(context).apply {
-        key = Keys.PREF_AUDIO_FOCUS_MODE
-        title = getString(R.string.settings_audiofocus)
-        entries = arrayOf(
-            getString(R.string.settings_audiofocus_stop),
-            getString(R.string.settings_audiofocus_hold),
-            getString(R.string.settings_audiofocus_lower)
-        )
-        entryValues = arrayOf(
-            AudioFocusMode.STOP.name,
-            AudioFocusMode.HOLD.name,
-            AudioFocusMode.LOWER.name
-        )
-        setDefaultValue(AudioFocusMode.STOP.name)
+    val audioFocusHoldSwitch = SwitchPreferenceCompat(context).apply {
+        key = Keys.PREF_AUDIO_FOCUS_HOLD
+        title = getString(R.string.settings_audiofocus_hold)
+        summary = getString(R.string.settings_audiofocus_hold_summary)
+        setDefaultValue(false)
         category = SettingsCategory.PLAYER
         icon = context.getDrawable(R.drawable.ic_button_play)
-        summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
     }
 
-    val playerPrefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
     val duckVolumeSlider = SeekBarPreference(context).apply {
         key = Keys.PREF_DUCK_VOLUME
         title = getString(R.string.settings_duck_volume)
@@ -321,12 +309,6 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         showSeekBarValue = true
         category = SettingsCategory.PLAYER
         icon = context.getDrawable(R.drawable.ic_sheet_settings)
-        isEnabled = playerPrefs.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.STOP.name) == AudioFocusMode.LOWER.name
-    }
-
-    audioFocusPref.setOnPreferenceChangeListener { _, newValue ->
-        duckVolumeSlider.isEnabled = newValue == AudioFocusMode.LOWER.name
-        true
     }
 
     val networkTypePref = ListPreference(context).apply {
@@ -1045,7 +1027,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
     }
 
     val preferences = listOf(
-        audioFocusPref,
+        audioFocusHoldSwitch,
         duckVolumeSlider,
         networkTypePref,
         autoAutoplaySwitch,

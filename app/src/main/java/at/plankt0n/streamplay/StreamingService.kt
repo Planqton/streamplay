@@ -284,16 +284,12 @@ class StreamingService : MediaLibraryService() {
 
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
-    private var audioFocusMode = AudioFocusMode.STOP
+    private var holdAudioFocus = false
     private var wasPlayingBeforeFocusLoss = false
     private lateinit var prefs: SharedPreferences
     private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
-        if (key == Keys.PREF_AUDIO_FOCUS_MODE) {
-            val value = shared.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.STOP.name)
-            audioFocusMode = AudioFocusMode.fromName(value)
-            if (audioFocusMode.name != value) {
-                shared.edit().putString(Keys.PREF_AUDIO_FOCUS_MODE, audioFocusMode.name).apply()
-            }
+        if (key == Keys.PREF_AUDIO_FOCUS_HOLD) {
+            holdAudioFocus = shared.getBoolean(Keys.PREF_AUDIO_FOCUS_HOLD, false)
         } else if (key == Keys.PREF_NETWORK_TYPE) {
             // Bei Änderung der Netzwerkeinstellung Bindung aktualisieren
             updateNetworkBinding()
@@ -311,38 +307,34 @@ class StreamingService : MediaLibraryService() {
     }
 
     private val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
-        if (audioFocusMode == AudioFocusMode.HOLD) {
+        // HOLD-Modus: Focus aggressiv zurückholen
+        if (holdAudioFocus) {
             if (focusChange <= 0) {
                 requestAudioFocus()
             }
             return@OnAudioFocusChangeListener
         }
 
+        // Normaler Modus
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS -> {
-                // Dauerhafter Verlust - immer pausieren, kein automatisches Resume
+                // Dauerhaft verloren - pausieren, KEIN auto-resume
                 wasPlayingBeforeFocusLoss = false
                 player.pause()
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                // Temporärer Verlust - pausieren, später fortsetzen
+                // Temporär verloren - pausieren, auto-resume bei GAIN
                 wasPlayingBeforeFocusLoss = player.isPlaying
                 player.pause()
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                // Kann leiser machen
-                if (audioFocusMode == AudioFocusMode.LOWER) {
-                    val duckVolume = prefs.getInt(Keys.PREF_DUCK_VOLUME, 20) / 100f
-                    player.volume = duckVolume
-                } else {
-                    wasPlayingBeforeFocusLoss = player.isPlaying
-                    player.pause()
-                }
+                // Duck erlaubt - Lautstärke reduzieren
+                val duckVolume = prefs.getInt(Keys.PREF_DUCK_VOLUME, 20) / 100f
+                player.volume = duckVolume
             }
             AudioManager.AUDIOFOCUS_GAIN -> {
-                // Focus zurück - Volume wiederherstellen
+                // Focus zurück - Volume auf 1, auto-resume wenn nötig
                 player.volume = 1f
-                // Bei transientem Verlust wieder starten
                 if (wasPlayingBeforeFocusLoss) {
                     player.play()
                     wasPlayingBeforeFocusLoss = false
@@ -673,11 +665,7 @@ class StreamingService : MediaLibraryService() {
             )
         }
 
-        val storedMode = prefs.getString(Keys.PREF_AUDIO_FOCUS_MODE, AudioFocusMode.STOP.name)
-        audioFocusMode = AudioFocusMode.fromName(storedMode)
-        if (audioFocusMode.name != storedMode) {
-            prefs.edit().putString(Keys.PREF_AUDIO_FOCUS_MODE, audioFocusMode.name).apply()
-        }
+        holdAudioFocus = prefs.getBoolean(Keys.PREF_AUDIO_FOCUS_HOLD, false)
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(lifecycleObserver)

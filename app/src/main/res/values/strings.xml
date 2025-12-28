@@ -273,10 +273,8 @@
     <string name="settings_use_spotify_meta">Spotify Meta verwenden</string>
     <string name="settings_spotify_api_key">Spotify API Key</string>
     <string name="settings_spotify_secret_key">Spotify Secret Key</string>
-    <string name="settings_audiofocus">Audiofokus</string>
-    <string name="settings_audiofocus_stop">Wiedergabe stoppen</string>
     <string name="settings_audiofocus_hold">Audiofokus halten</string>
-    <string name="settings_audiofocus_lower">Audio verringern</string>
+    <string name="settings_audiofocus_hold_summary">Audiofokus nicht an andere Apps abgeben</string>
     <string name="settings_duck_volume">Lautstärke bei Unterbrechung (%)</string>
     <string name="settings_resume_live_after_pause">Live nach Pause fortsetzen</string>
     <string name="settings_network_type">Datenverbindung</string>
