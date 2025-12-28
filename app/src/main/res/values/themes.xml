@@ -1,0 +1,102 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.StreamPlay" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Hauptfarbe (z.B. Toolbar-Hintergrund) -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryDark</item>
+        <item name="colorOnPrimary">@color/textPrimary</item>
+
+        <!-- Akzentfarbe für Buttons, Highlights etc. -->
+        <item name="colorSecondary">@color/category_player</item>
+        <item name="colorSecondaryVariant">@color/category_player</item>
+        <item name="colorOnSecondary">@color/textPrimary</item>
+
+        <!-- SeekBar mit besserem Kontrast -->
+        <item name="seekBarStyle">@style/SeekBar.StreamPlay</item>
+
+        <!-- Hintergrund für alle Activities/Fragments -->
+        <item name="android:windowBackground">@color/backgroundDark</item>
+
+        <!-- Statusbar-Farbe -->
+        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+
+        <!-- Panels / BottomSheets / Karten -->
+        <item name="colorSurface">@color/surfaceDark</item>
+
+
+
+        <!-- Schriftfarben -->
+
+        <item name="android:textColor">@color/primary_dark_material_light</item>
+        <item name="android:textColorSecondary">@color/primary_dark_material_light</item>
+        <item name="preferenceCategoryStyle">@style/PreferenceCategory.WhiteText</item>
+        <!-- Divider / Trennlinien -->
+        <item name="dividerColor">@color/divider</item>
+    </style>
+
+    <style name="PreferenceCategory.WhiteText" parent="Preference.Category">
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.App.CornerFamilyRounded" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <!-- Rounded corners for images -->
+    <style name="RoundedCorner8dp" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="RoundedCorner12dp" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+
+    <!-- Settings Preference Styles -->
+    <style name="PreferenceCategory.Settings" parent="Preference.Category">
+        <item name="android:textColor">@color/textSecondary</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:paddingTop">24dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="allowDividerAbove">false</item>
+        <item name="allowDividerBelow">false</item>
+        <item name="iconSpaceReserved">true</item>
+    </style>
+
+    <style name="Preference.Settings" parent="Preference.Material">
+        <item name="android:textColor">@color/textPrimary</item>
+        <item name="iconSpaceReserved">true</item>
+        <item name="allowDividerAbove">false</item>
+        <item name="allowDividerBelow">false</item>
+    </style>
+
+    <style name="TextAppearance.Settings.Title" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textColor">@color/textPrimary</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="TextAppearance.Settings.Summary" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:textColor">@color/textSecondary</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <style name="TextAppearance.Settings.CategoryTitle" parent="TextAppearance.MaterialComponents.Overline">
+        <item name="android:textColor">@color/textSecondary</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+
+    <!-- SeekBar Style mit besserem Kontrast -->
+    <style name="SeekBar.StreamPlay" parent="Widget.AppCompat.SeekBar">
+        <item name="android:progressTint">@color/category_player</item>
+        <item name="android:progressBackgroundTint">@color/textSecondary</item>
+        <item name="android:thumbTint">@color/category_player</item>
+    </style>
+
+</resources>

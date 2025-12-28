@@ -1,0 +1,290 @@
+================================================================================
+                    STREAMPLAY APP - CODE REVIEW REPORT
+                           Version 1.2.2
+================================================================================
+
+KRITISCHE BUGS (CRASH-RISIKO)
+================================================================================
+
+1. ArrayIndexOutOfBoundsException bei leerer Playlist
+   Datei: StreamingService.kt
+   Zeilen: 357, 397
+   Problem: mediaItems[currentIndex] ohne Längenprüfung
+   Fix: if (mediaItems.isNotEmpty() && currentIndex < mediaItems.size)
+
+2. NullPointerException bei View-Zugriff
+   Datei: PlayerFragment.kt
+   Zeile: 572
+   Problem: titleTextView!! Non-null assertion ohne Sicherheit
+   Fix: titleTextView?.let { enableMarquee(it, ...) }
+
+3. Race Condition bei Spotify Token
+   Datei: SpotifyMetaReader.kt
+   Zeilen: 18-31
+   Problem: accessToken und tokenExpirationTime nicht synchronisiert
+   Fix: @Volatile oder Mutex verwenden
+
+4. ArrayIndexOutOfBoundsException bei MediaItem-Zugriff
+   Datei: PlayerFragment.kt
+   Zeile: 599
+   Problem: controller.getMediaItemAt(index) ohne Bounds-Check
+   Fix: if (index < controller.mediaItemCount)
+
+
+MEMORY LEAKS
+================================================================================
+
+1. GlobalScope ohne Lifecycle-Binding
+   Datei: StreamingService.kt
+   Zeilen: 516, 591, 624
+   Problem: GlobalScope.launch() läuft nach Service-Destroy weiter
+   Fix: Service-eigenen CoroutineScope mit Job verwenden
+
+2. MediaServiceController nie disconnected
+   Datei: MainActivity.kt
+   Zeilen: 154-168
+   Problem: shortcutController wird erstellt aber nie disconnect() aufgerufen
+   Fix: In onDestroy() oder nach Verwendung disconnect() aufrufen
+
+3. Unkontrollierte CoroutineScope
+   Datei: PreferencesHelper.kt
+   Zeilen: 37-38
+   Problem: CoroutineScope(Dispatchers.IO).launch ohne Lifecycle
+   Fix: Context mit LifecycleOwner oder Application-Scope verwenden
+
+4. Doppelte Adapter-Erstellung
+   Datei: PlayerFragment.kt
+   Zeilen: 270, 704
+   Problem: CoverPageAdapter wird in initializeAndConnect UND reloadPlaylist() neu erstellt
+   Fix: Adapter wiederverwenden mit notifyDataSetChanged()
+
+
+PERFORMANCE-PROBLEME
+================================================================================
+
+1. Blocking Glide Call auf UI-Thread
+   Datei: StationsFragment.kt
+   Zeile: 287
+   Problem: Glide.submit().get() blockiert UI-Thread
+   Fix: Glide.into(CustomTarget) mit Callback verwenden
+
+2. Ineffiziente RecyclerView Updates
+   Datei: StationsFragment.kt
+   Zeilen: 72, 336
+   Datei: DiscoverFragment.kt
+   Zeilen: 173, 182
+   Problem: notifyDataSetChanged() zerstört alle ViewHolder
+   Fix: notifyItemInserted(), notifyItemRemoved(), DiffUtil verwenden
+
+3. Mehrfache Glide-Requests pro Cover
+   Datei: LiveCoverHelper.kt
+   Zeilen: 45-122
+   Problem: 3 separate Glide-Requests (ImageView + Bitmap + Blur)
+   Fix: Single Request mit Transformation Pipeline
+
+4. Unnötiges Preloading aller Bilder
+   Datei: PlayerFragment.kt
+   Zeilen: 275-279
+   Problem: Lädt ALLE Cover beim Start
+   Fix: Lazy-Load nur sichtbare + nächste Items
+
+
+SICHERHEITSPROBLEME
+================================================================================
+
+1. Credentials im Klartext gespeichert
+   Datei: StreamplayApiHelper.kt
+   Zeilen: 50-63
+   Problem: API-Username, Passwort und Token in SharedPreferences
+   Fix: EncryptedSharedPreferences verwenden
+
+2. Settings-Export enthält Passwörter
+   Datei: Settings.kt
+   Zeilen: 64-131
+   Problem: Export-JSON enthält alle Credentials im Klartext
+   Fix: Sensitive Keys beim Export filtern
+
+3. Credentials im Logcat
+   Datei: MainActivity.kt
+   Zeile: 76
+   Problem: Log.d("API_SYNC", "...user=$username...")
+   Fix: Keine sensiblen Daten loggen
+
+4. Crash-Logs unsicher gespeichert
+   Datei: CrashHandler.kt
+   Zeilen: 17-18
+   Problem: Logs in External Files Dir (lesbar für andere Apps)
+   Fix: Internal Storage oder verschlüsselt speichern
+
+5. Fehlende Input-Validierung
+   Datei: Settings.kt
+   Zeilen: 370-388
+   Problem: API-Endpoint ohne URL-Validierung (SSRF-Risiko)
+   Fix: URL-Pattern validieren
+
+
+UX-PROBLEME (FEHLENDE FEHLERBEHANDLUNG)
+================================================================================
+
+1. Kein Error-Feedback bei Radio-Browser
+   Datei: DiscoverFragment.kt
+   Zeilen: 167-174
+   Problem: Bei API-Fehler passiert nichts
+   Fix: try-catch + Toast/Snackbar bei Fehler
+
+2. Kein Loading-Spinner
+   Datei: DiscoverFragment.kt
+   Zeilen: 74-107
+   Problem: Kein visuelles Feedback während API-Request
+   Fix: ProgressBar anzeigen während Laden
+
+3. Stiller API-Sync-Fehler
+   Datei: MainActivity.kt
+   Zeilen: 72-95
+   Problem: Wenn Sync fehlschlägt, erfährt User nichts
+   Fix: Toast bei Sync-Fehler anzeigen
+
+4. Stille Playlist-Fehler
+   Datei: StationsFragment.kt
+   Zeilen: 243-258
+   Problem: Wenn Playlist-URL nicht auflösbar, kein Feedback
+   Fix: Toast wenn resolvePlaylistUrl() fehlschlägt
+
+
+CODE-DUPLIKATION
+================================================================================
+
+1. setupPlaylist() und refreshPlaylist() fast identisch
+   Datei: StreamingService.kt
+   Zeilen: 325-360 und 362-402
+   Problem: 95% identischer Code
+   Fix: Gemeinsame Hilfsfunktion extrahieren
+
+2. Identisches Error-Handling
+   Datei: StreamplayApiHelper.kt
+   Zeilen: 99, 202, 273
+   Problem: Gleicher Error-Handling-Code dreimal
+   Fix: Private Helper-Funktion
+
+3. Handler-Instanzen nicht wiederverwendet
+   Datei: PlayerFragment.kt
+   Zeilen: 82, 84, 642
+   Problem: Mehrere Handler für MainLooper
+   Fix: Single Handler-Instanz verwenden
+
+
+VERALTETE APIs
+================================================================================
+
+1. startActivityForResult() deprecated
+   Datei: StationsFragment.kt
+   Zeile: 207
+   Problem: Seit API 30 deprecated
+   Fix: registerForActivityResult() verwenden
+
+2. GlobalScope deprecated
+   Datei: StreamingService.kt
+   Zeilen: 516, 591, 624
+   Problem: GlobalScope ist deprecated und unkontrolliert
+   Fix: lifecycleScope oder eigenen Scope verwenden
+
+
+THREAD-SAFETY PROBLEME
+================================================================================
+
+1. UITrackRepository nicht thread-safe
+   Datei: UITrackInfo.kt
+   Zeilen: 30-31
+   Problem: lastTrackInfo wird ohne Synchronisation gelesen/geschrieben
+   Fix: @Volatile oder Mutex
+
+2. StateHelper nicht thread-safe
+   Datei: StateHelper.kt
+   Zeilen: 3-5
+   Problem: isPlaylistChangePending ohne Synchronisation
+   Fix: AtomicBoolean verwenden
+
+3. currentStationUuid Race Condition
+   Datei: StreamingService.kt
+   Zeile: 462
+   Problem: Wird in verschiedenen Threads gelesen/geschrieben
+   Fix: @Volatile oder synchronized
+
+
+ARCHITEKTUR-VERBESSERUNGEN
+================================================================================
+
+1. Tight Coupling zu Helpern
+   Problem: Direkte Abhängigkeiten statt Dependency Injection
+   Betroffene Dateien: MainActivity, StreamingService, Fragments
+   Fix: Repository-Pattern, Hilt/Koin für DI
+
+2. Fehlende Abstraktionen
+   Problem: API-Logik direkt in HTTP-Code
+   Betroffene Dateien: StreamplayApiHelper, SpotifyMetaReader
+   Fix: Repository-Pattern mit Interface
+
+3. Separation of Concerns
+   Problem: Service mischt Playback mit Notification mit Metadata
+   Datei: StreamingService.kt (700+ Zeilen)
+   Fix: In separate Klassen aufteilen
+
+
+KLEINE BUGS / TYPOS
+================================================================================
+
+1. Typo in Variablenname
+   Datei: StreamingService.kt
+   Zeile: 71
+   Problem: "lastshowedMetadata" statt "lastShownMetadata"
+
+2. Magic Number ohne Konstante
+   Datei: MainActivity.kt
+   Zeile: 131
+   Problem: Handler.postDelayed(..., 50) - was bedeutet 50?
+   Fix: Als Konstante definieren
+
+3. Veralteter Kommentar
+   Datei: StreamingService.kt
+   Zeile: 63
+   Problem: "//alt" ohne Erklärung
+
+
+================================================================================
+                           PRIORITÄTEN-ÜBERSICHT
+================================================================================
+
+SOFORT FIXEN (Crash/Security):
+- ArrayIndexOutOfBounds in StreamingService.kt
+- NullPointerException in PlayerFragment.kt
+- Credentials verschlüsseln
+- GlobalScope durch lifecycleScope ersetzen
+
+BALD FIXEN (Performance/UX):
+- Blocking Glide calls
+- Fehlende Error-Toasts
+- Memory Leaks
+
+SPÄTER FIXEN (Code Quality):
+- Code-Duplikation
+- Deprecated APIs
+- Architektur-Verbesserungen
+
+================================================================================
+                              STATISTIK
+================================================================================
+
+Kritische Bugs:        4
+Memory Leaks:          4
+Performance:           4
+Sicherheit:            5
+UX-Probleme:           4
+Code-Duplikation:      3
+Veraltete APIs:        2
+Thread-Safety:         3
+Architektur:           3
+Kleine Bugs:           3
+--------------------------------
+GESAMT:               35 Probleme
+
+================================================================================

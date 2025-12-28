@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamplay Admin</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        h1 { color: #00d9ff; margin-bottom: 20px; }
+        h2 { color: #00d9ff; margin: 20px 0 10px; font-size: 1.2em; }
+
+        .card { background: #16213e; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+
+        input, textarea, button {
+            padding: 10px 15px; border-radius: 5px; border: none;
+            font-size: 14px; margin: 5px 0;
+        }
+        input, textarea {
+            background: #0f0f23; color: #eee; width: 100%;
+            border: 1px solid #333;
+        }
+        input:focus, textarea:focus { outline: 2px solid #00d9ff; }
+        textarea { min-height: 150px; font-family: monospace; resize: vertical; }
+
+        button {
+            background: #00d9ff; color: #000; cursor: pointer;
+            font-weight: bold; transition: background 0.2s;
+        }
+        button:hover { background: #00b8d9; }
+        button.danger { background: #ff4757; color: #fff; }
+        button.danger:hover { background: #ff3344; }
+        button.secondary { background: #555; color: #fff; }
+
+        .login-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+        .login-form input { width: 200px; }
+
+        .user-list { display: grid; gap: 10px; }
+        .user-item {
+            background: #0f0f23; padding: 15px; border-radius: 5px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px;
+        }
+        .user-info { flex: 1; }
+        .user-actions { display: flex; gap: 5px; }
+
+        .hidden { display: none !important; }
+        .error { color: #ff4757; margin: 10px 0; }
+        .success { color: #2ed573; margin: 10px 0; }
+
+        .json-editor { margin-top: 10px; }
+        .json-editor textarea { width: 100%; }
+
+        .status { padding: 5px 10px; border-radius: 3px; font-size: 12px; }
+        .status.online { background: #2ed573; color: #000; }
+        .status.offline { background: #ff4757; }
+
+        #loggedInAs { color: #2ed573; margin-left: 10px; }
+
+        .new-user-form { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .new-user-form input { width: 180px; }
+
+        /* Streamplay Editor Styles */
+        select {
+            padding: 10px 15px; border-radius: 5px; border: 1px solid #333;
+            font-size: 14px; margin: 5px 0;
+            background: #0f0f23; color: #eee; cursor: pointer;
+        }
+        select:focus { outline: 2px solid #00d9ff; }
+
+        .editor-mode-selector { margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+
+        .streamplay-editor { display: grid; gap: 20px; }
+
+        .settings-section, .stations-section {
+            background: #0f0f23; border-radius: 8px; padding: 15px;
+        }
+        .settings-section h3, .stations-section h3 {
+            color: #00d9ff; margin-bottom: 15px; font-size: 1.1em;
+            border-bottom: 1px solid #333; padding-bottom: 10px;
+        }
+
+        .settings-info-hint {
+            background: #1a1a3e; border: 1px solid #333; border-radius: 8px;
+            padding: 12px 15px; color: #888; font-size: 13px;
+        }
+
+        .setting-row {
+            display: grid; grid-template-columns: 200px 1fr; gap: 10px;
+            align-items: center; margin-bottom: 10px;
+        }
+        .setting-row label { color: #aaa; font-size: 13px; }
+        .setting-row input[type="text"], .setting-row input[type="password"] { width: 100%; }
+        .setting-row input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+
+        .stations-list { display: grid; gap: 10px; }
+        .station-item {
+            background: #16213e; border-radius: 8px; padding: 15px;
+            display: grid; grid-template-columns: 60px 1fr auto; gap: 15px;
+            align-items: center;
+        }
+        .station-icon {
+            width: 50px; height: 50px; border-radius: 8px;
+            object-fit: cover; background: #333;
+        }
+        .station-info { flex: 1; }
+        .station-info strong { display: block; margin-bottom: 5px; }
+        .station-info .stream-url { font-size: 12px; color: #888; word-break: break-all; }
+        .station-actions { display: flex; gap: 5px; }
+
+        .add-station-btn {
+            width: 100%; margin-top: 10px; background: #2ed573; color: #000;
+        }
+        .add-station-btn:hover { background: #26c064; }
+
+        /* Station Edit Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); display: flex;
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: #16213e; border-radius: 10px; padding: 25px;
+            max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;
+        }
+        .modal-content h3 { color: #00d9ff; margin-bottom: 20px; }
+        .modal-content .form-group { margin-bottom: 15px; }
+        .modal-content label { display: block; color: #aaa; margin-bottom: 5px; font-size: 13px; }
+        .modal-content input { width: 100%; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+        .icon-preview {
+            width: 80px; height: 80px; border-radius: 8px;
+            object-fit: cover; background: #333; margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Streamplay Admin Panel</h1>
+
+        <!-- Login Section -->
+        <div class="card" id="loginSection">
+            <h2>Admin Login</h2>
+            <div class="login-form">
+                <input type="text" id="adminUsername" placeholder="Username">
+                <input type="password" id="adminPassword" placeholder="Passwort">
+                <button onclick="adminLogin()">Einloggen</button>
+            </div>
+            <div id="loginError" class="error hidden"></div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="hidden">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Eingeloggt als: <strong id="loggedInAs"></strong></span>
+                    <button class="secondary" onclick="logout()">Ausloggen</button>
+                </div>
+            </div>
+
+            <!-- New User Form -->
+            <div class="card">
+                <h2>Neuen Benutzer anlegen</h2>
+                <div class="new-user-form">
+                    <input type="text" id="newUsername" placeholder="Username">
+                    <input type="password" id="newPassword" placeholder="Passwort">
+                    <button onclick="createUser()">Benutzer anlegen</button>
+                </div>
+                <div id="createError" class="error hidden"></div>
+                <div id="createSuccess" class="success hidden"></div>
+            </div>
+
+            <!-- User List -->
+            <div class="card">
+                <h2>Benutzer</h2>
+                <button onclick="loadUsers()" style="margin-bottom: 15px;">Aktualisieren</button>
+                <div id="userList" class="user-list"></div>
+            </div>
+        </div>
+
+        <!-- JSON Editor Modal -->
+        <div id="jsonEditorCard" class="card hidden">
+            <h2>JSON bearbeiten: <span id="editingUser"></span></h2>
+
+            <!-- Editor Mode Selector -->
+            <div class="editor-mode-selector">
+                <label>Editor-Modus:</label>
+                <select id="editorMode" onchange="switchEditorMode()">
+                    <option value="raw">Raw JSON</option>
+                    <option value="streamplay">Streamplay</option>
+                </select>
+            </div>
+
+            <!-- Raw JSON Editor -->
+            <div id="rawJsonEditor">
+                <textarea id="jsonEditor" placeholder='{"key": "value"}'></textarea>
+            </div>
+
+            <!-- Streamplay Visual Editor -->
+            <div id="streamplayEditor" class="streamplay-editor hidden">
+                <!-- Info-Hinweis für Settings -->
+                <div class="settings-info-hint">
+                    <span>ℹ️ Einstellungen können nur in der Raw JSON Ansicht bearbeitet werden.</span>
+                </div>
+
+                <!-- Stations Section -->
+                <div class="stations-section">
+                    <h3>Radiosender</h3>
+                    <div id="stationsList" class="stations-list">
+                        <!-- Stationen werden dynamisch generiert -->
+                    </div>
+                    <button class="add-station-btn" onclick="addNewStation()">+ Sender hinzufügen</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button onclick="saveJson()">Speichern</button>
+                <button class="secondary" onclick="closeJsonEditor()">Abbrechen</button>
+            </div>
+            <div id="jsonError" class="error hidden"></div>
+            <div id="jsonSuccess" class="success hidden"></div>
+        </div>
+
+        <!-- Station Edit Modal -->
+        <div id="stationModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h3 id="stationModalTitle">Sender bearbeiten</h3>
+                <div class="form-group">
+                    <label>Sender-Name</label>
+                    <input type="text" id="stationName" placeholder="z.B. Radio FM">
+                </div>
+                <div class="form-group">
+                    <label>Stream-URL</label>
+                    <input type="text" id="stationStreamUrl" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Icon-URL</label>
+                    <input type="text" id="stationIconUrl" placeholder="https://..." oninput="updateIconPreview()">
+                    <img id="stationIconPreview" class="icon-preview" src="" alt="Icon Vorschau" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 50 50%22><rect fill=%22%23333%22 width=%2250%22 height=%2250%22/><text x=%2225%22 y=%2230%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2212%22>?</text></svg>'">
+                </div>
+                <input type="hidden" id="stationUuid">
+                <input type="hidden" id="stationEditIndex">
+                <div class="modal-actions">
+                    <button onclick="saveStation()">Speichern</button>
+                    <button class="secondary" onclick="closeStationModal()">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let adminToken = '';
+        let currentEditUserId = null;
+        let userTokens = {};
+        let currentStreamplayData = null;
+
+        const API = '';
+
+        async function adminLogin() {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+
+            try {
+                const res = await fetch(`${API}/api/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!res.ok) {
+                    const err = await res.text();
+                    throw new Error(err || 'Login fehlgeschlagen');
+                }
+
+                const data = await res.json();
+                adminToken = data.token;
+
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                document.getElementById('loggedInAs').textContent = data.username + ' (Admin)';
+                document.getElementById('loginError').classList.add('hidden');
+
+                loadUsers();
+            } catch (e) {
+                document.getElementById('loginError').textContent = e.message;
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            adminToken = '';
+            userTokens = {};
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('jsonEditorCard').classList.add('hidden');
+            document.getElementById('adminUsername').value = '';
+            document.getElementById('adminPassword').value = '';
+        }
+
+        async function createUser() {
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+
+            if (!username || !password) {
+                showError('createError', 'Username und Passwort erforderlich');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API}/api/admin/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!res.ok) {
+                    const err = await res.text();
+                    throw new Error(err || 'Fehler beim Anlegen');
+                }
+
+                document.getElementById('newUsername').value = '';
+                document.getElementById('newPassword').value = '';
+                showSuccess('createSuccess', 'Benutzer angelegt!');
+                hideError('createError');
+                loadUsers();
+            } catch (e) {
+                showError('createError', e.message);
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const res = await fetch(`${API}/api/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (!res.ok) throw new Error('Fehler beim Laden');
+
+                const users = await res.json();
+                renderUsers(users);
+            } catch (e) {
+                document.getElementById('userList').innerHTML = `<div class="error">${e.message}</div>`;
+            }
+        }
+
+        function renderUsers(users) {
+            const list = document.getElementById('userList');
+
+            if (users.length === 0) {
+                list.innerHTML = '<div style="color: #888;">Keine Benutzer vorhanden</div>';
+                return;
+            }
+
+            list.innerHTML = users.map(user => `
+                <div class="user-item">
+                    <div class="user-info">
+                        <strong>${user.username}</strong>
+                        <div style="font-size: 12px; color: #888;">ID: ${user.id} | Erstellt: ${user.created_at}</div>
+                    </div>
+                    <div class="user-actions">
+                        <button onclick="editUserJson(${user.id}, '${user.username}')">JSON bearbeiten</button>
+                        <button class="danger" onclick="deleteUser(${user.id}, '${user.username}')">Löschen</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function deleteUser(id, username) {
+            if (!confirm(`Benutzer "${username}" wirklich löschen?`)) return;
+
+            try {
+                const res = await fetch(`${API}/api/admin/users/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (!res.ok) throw new Error('Fehler beim Löschen');
+
+                loadUsers();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function editUserJson(userId, username) {
+            currentEditUserId = userId;
+            document.getElementById('editingUser').textContent = username;
+            document.getElementById('jsonEditorCard').classList.remove('hidden');
+
+            // Get user token via admin endpoint to fetch their data
+            let jsonData = {};
+            try {
+                const res = await fetch(`${API}/api/admin/users/${userId}/data`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    jsonData = data.data || {};
+                    document.getElementById('jsonEditor').value = JSON.stringify(jsonData, null, 2);
+                } else {
+                    document.getElementById('jsonEditor').value = '{}';
+                }
+            } catch (e) {
+                document.getElementById('jsonEditor').value = '{}';
+            }
+
+            // Always start in raw mode - user must manually switch
+            document.getElementById('editorMode').value = 'raw';
+            currentStreamplayData = null;
+            switchEditorMode();
+
+            hideError('jsonError');
+            hideSuccess('jsonSuccess');
+        }
+
+        function isStreamplayFormat(data) {
+            return data && typeof data === 'object' &&
+                   (data.settings !== undefined || data.stations !== undefined);
+        }
+
+        async function saveJson() {
+            const editorMode = document.getElementById('editorMode').value;
+            let dataToSave;
+
+            if (editorMode === 'streamplay') {
+                // Collect data from Streamplay editor
+                dataToSave = getStreamplayData();
+            } else {
+                // Raw JSON mode
+                const jsonText = document.getElementById('jsonEditor').value;
+                try {
+                    dataToSave = JSON.parse(jsonText);
+                } catch (e) {
+                    showError('jsonError', 'Ungültiges JSON: ' + e.message);
+                    return;
+                }
+            }
+
+            try {
+                const res = await fetch(`${API}/api/admin/users/${currentEditUserId}/data`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ data: dataToSave })
+                });
+
+                if (!res.ok) throw new Error('Fehler beim Speichern');
+
+                // Update raw JSON editor with current data
+                document.getElementById('jsonEditor').value = JSON.stringify(dataToSave, null, 2);
+
+                showSuccess('jsonSuccess', 'Gespeichert!');
+                hideError('jsonError');
+            } catch (e) {
+                showError('jsonError', e.message);
+            }
+        }
+
+        function closeJsonEditor() {
+            document.getElementById('jsonEditorCard').classList.add('hidden');
+            currentEditUserId = null;
+        }
+
+        function showError(id, msg) {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function hideError(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showSuccess(id, msg) {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3000);
+        }
+
+        function hideSuccess(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // Enter key support
+        document.getElementById('adminPassword').addEventListener('keypress', e => {
+            if (e.key === 'Enter') adminLogin();
+        });
+        document.getElementById('newPassword').addEventListener('keypress', e => {
+            if (e.key === 'Enter') createUser();
+        });
+
+        // ========== STREAMPLAY EDITOR FUNCTIONS ==========
+
+        function switchEditorMode() {
+            const mode = document.getElementById('editorMode').value;
+            const rawEditor = document.getElementById('rawJsonEditor');
+            const streamplayEditor = document.getElementById('streamplayEditor');
+
+            if (mode === 'streamplay') {
+                rawEditor.classList.add('hidden');
+                streamplayEditor.classList.remove('hidden');
+
+                // Parse current JSON and initialize Streamplay editor
+                if (!currentStreamplayData) {
+                    try {
+                        currentStreamplayData = JSON.parse(document.getElementById('jsonEditor').value);
+                    } catch (e) {
+                        currentStreamplayData = { settings: {}, stations: [] };
+                    }
+                }
+
+                // Ensure structure exists
+                if (!currentStreamplayData.settings) currentStreamplayData.settings = {};
+                if (!currentStreamplayData.stations) currentStreamplayData.stations = [];
+
+                renderStations();
+            } else {
+                rawEditor.classList.remove('hidden');
+                streamplayEditor.classList.add('hidden');
+                // DO NOT modify the raw JSON here - only on explicit save!
+            }
+        }
+
+        // Setting definitions with types
+        const settingDefinitions = [
+            { key: 'api_sync_enabled', label: 'API Sync aktiviert', type: 'boolean' },
+            { key: 'audio_focus_mode', label: 'Audio Focus Modus', type: 'text' },
+            { key: 'autoplay_enabled', label: 'Autoplay aktiviert', type: 'boolean' },
+            { key: 'autosync_couchdb_startup', label: 'CouchDB Sync bei Start', type: 'boolean' },
+            { key: 'autosync_json_startup', label: 'JSON Sync bei Start', type: 'boolean' },
+            { key: 'background_effect', label: 'Hintergrund-Effekt', type: 'text' },
+            { key: 'couchdb_endpoint', label: 'CouchDB Endpoint', type: 'text' },
+            { key: 'couchdb_password', label: 'CouchDB Passwort', type: 'password' },
+            { key: 'couchdb_show_logs', label: 'CouchDB Logs anzeigen', type: 'boolean' },
+            { key: 'couchdb_username', label: 'CouchDB Benutzername', type: 'text' },
+            { key: 'cover_animation_style', label: 'Cover Animation', type: 'text' },
+            { key: 'cover_mode', label: 'Cover Modus', type: 'text' },
+            { key: 'minimize_after_autoplay', label: 'Minimieren nach Autoplay', type: 'boolean' },
+            { key: 'onboarding_done', label: 'Onboarding abgeschlossen', type: 'boolean' },
+            { key: 'personal_sync_url', label: 'Persönliche Sync URL', type: 'text' },
+            { key: 'resume_live_after_pause', label: 'Live nach Pause fortsetzen', type: 'boolean' },
+            { key: 'show_exoplayer_banner', label: 'ExoPlayer Banner anzeigen', type: 'boolean' },
+            { key: 'spotify_client_id', label: 'Spotify Client ID', type: 'text' },
+            { key: 'spotify_client_secret', label: 'Spotify Client Secret', type: 'password' },
+            { key: 'update_available', label: 'Update verfügbar', type: 'boolean' },
+            { key: 'use_spotify_meta', label: 'Spotify Metadaten nutzen', type: 'boolean' },
+            // Numeric settings
+            { key: 'auto_autoplay_enabled', label: 'Auto-Autoplay aktiviert', type: 'boolean' },
+            { key: 'auto_start_activity', label: 'Auto-Start Activity', type: 'boolean' },
+            { key: 'auto_stop_on_exit', label: 'Auto-Stop bei Exit', type: 'boolean' },
+            { key: 'autoplay_delay', label: 'Autoplay Verzögerung (Sek)', type: 'number' },
+            { key: 'duck_volume_level', label: 'Duck Volume Level', type: 'number' },
+            { key: 'lower_volume_level', label: 'Lower Volume Level', type: 'number' },
+            { key: 'network_type', label: 'Netzwerk-Typ', type: 'text' },
+            { key: 'show_station_in_mediainfo', label: 'Station in MediaInfo anzeigen', type: 'boolean' },
+            // Equalizer settings
+            { key: 'eq_enabled', label: 'EQ aktiviert', type: 'boolean' },
+            { key: 'eq_preset', label: 'EQ Preset', type: 'text' },
+            { key: 'eq_custom_gains', label: 'EQ Custom Gains', type: 'text' },
+            { key: 'eq_band_0', label: 'EQ Band 0', type: 'number' },
+            { key: 'eq_band_1', label: 'EQ Band 1', type: 'number' },
+            { key: 'eq_band_2', label: 'EQ Band 2', type: 'number' },
+            { key: 'eq_band_3', label: 'EQ Band 3', type: 'number' },
+            { key: 'eq_band_4', label: 'EQ Band 4', type: 'number' },
+            { key: 'eq_band_5', label: 'EQ Band 5', type: 'number' },
+            { key: 'eq_band_6', label: 'EQ Band 6', type: 'number' },
+            { key: 'eq_band_7', label: 'EQ Band 7', type: 'number' },
+            { key: 'eq_band_8', label: 'EQ Band 8', type: 'number' },
+            { key: 'eq_band_9', label: 'EQ Band 9', type: 'number' },
+            { key: 'equalizer_enabled', label: 'Equalizer aktiviert', type: 'boolean' },
+            { key: 'equalizer_preset', label: 'Equalizer Preset', type: 'text' }
+        ];
+
+        function renderSettings() {
+            const container = document.getElementById('settingsForm');
+            const settings = currentStreamplayData.settings || {};
+
+            // Find any additional settings not in our definitions
+            const definedKeys = settingDefinitions.map(s => s.key);
+            const extraSettings = Object.keys(settings)
+                .filter(key => !definedKeys.includes(key))
+                // Filter out arrays and objects - these can't be edited as text inputs
+                .filter(key => {
+                    const value = settings[key];
+                    return value === null || typeof value !== 'object';
+                })
+                .map(key => ({
+                    key,
+                    label: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                    type: typeof settings[key] === 'boolean' ? 'boolean' :
+                          typeof settings[key] === 'number' ? 'number' : 'text'
+                }));
+
+            const allSettings = [...settingDefinitions, ...extraSettings];
+
+            container.innerHTML = allSettings.map(setting => {
+                const value = settings[setting.key];
+                if (setting.type === 'boolean') {
+                    return `
+                        <div class="setting-row">
+                            <label>${setting.label}</label>
+                            <input type="checkbox"
+                                   data-setting="${setting.key}"
+                                   ${value ? 'checked' : ''}>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="setting-row">
+                            <label>${setting.label}</label>
+                            <input type="${setting.type}"
+                                   data-setting="${setting.key}"
+                                   value="${value !== undefined ? value : ''}"
+                                   placeholder="${setting.label}">
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function renderStations() {
+            const container = document.getElementById('stationsList');
+            const stations = currentStreamplayData.stations || [];
+
+            if (stations.length === 0) {
+                container.innerHTML = '<div style="color: #888; padding: 10px;">Keine Sender vorhanden</div>';
+                return;
+            }
+
+            container.innerHTML = stations.map((station, index) => `
+                <div class="station-item">
+                    <img class="station-icon"
+                         src="${station.iconURL || ''}"
+                         alt="${station.stationName}"
+                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 50 50%22><rect fill=%22%23333%22 width=%2250%22 height=%2250%22/><text x=%2225%22 y=%2230%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2210%22>Radio</text></svg>'">
+                    <div class="station-info">
+                        <strong>${station.stationName || 'Unbenannt'}</strong>
+                        <div class="stream-url">${station.streamURL || 'Keine URL'}</div>
+                    </div>
+                    <div class="station-actions">
+                        <button onclick="editStation(${index})">Bearbeiten</button>
+                        <button class="danger" onclick="deleteStation(${index})">Löschen</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addNewStation() {
+            document.getElementById('stationModalTitle').textContent = 'Neuen Sender hinzufügen';
+            document.getElementById('stationName').value = '';
+            document.getElementById('stationStreamUrl').value = '';
+            document.getElementById('stationIconUrl').value = '';
+            document.getElementById('stationUuid').value = '';
+            document.getElementById('stationEditIndex').value = '-1';
+            document.getElementById('stationIconPreview').src = '';
+            document.getElementById('stationModal').classList.remove('hidden');
+        }
+
+        function editStation(index) {
+            const station = currentStreamplayData.stations[index];
+            document.getElementById('stationModalTitle').textContent = 'Sender bearbeiten';
+            document.getElementById('stationName').value = station.stationName || '';
+            document.getElementById('stationStreamUrl').value = station.streamURL || '';
+            document.getElementById('stationIconUrl').value = station.iconURL || '';
+            document.getElementById('stationUuid').value = station.uuid || '';
+            document.getElementById('stationEditIndex').value = index;
+            document.getElementById('stationIconPreview').src = station.iconURL || '';
+            document.getElementById('stationModal').classList.remove('hidden');
+        }
+
+        function deleteStation(index) {
+            const station = currentStreamplayData.stations[index];
+            if (!confirm(`Sender "${station.stationName}" wirklich löschen?`)) return;
+
+            currentStreamplayData.stations.splice(index, 1);
+            renderStations();
+        }
+
+        function saveStation() {
+            const name = document.getElementById('stationName').value.trim();
+            const streamUrl = document.getElementById('stationStreamUrl').value.trim();
+            const iconUrl = document.getElementById('stationIconUrl').value.trim();
+            let uuid = document.getElementById('stationUuid').value;
+            const editIndex = parseInt(document.getElementById('stationEditIndex').value);
+
+            if (!name) {
+                alert('Bitte einen Sender-Namen eingeben');
+                return;
+            }
+
+            if (!streamUrl) {
+                alert('Bitte eine Stream-URL eingeben');
+                return;
+            }
+
+            // Generate UUID if new station
+            if (!uuid) {
+                uuid = crypto.randomUUID();
+            }
+
+            const stationData = {
+                stationName: name,
+                streamURL: streamUrl,
+                iconURL: iconUrl,
+                uuid: uuid
+            };
+
+            if (editIndex === -1) {
+                // Add new station
+                currentStreamplayData.stations.push(stationData);
+            } else {
+                // Update existing station
+                currentStreamplayData.stations[editIndex] = stationData;
+            }
+
+            closeStationModal();
+            renderStations();
+        }
+
+        function closeStationModal() {
+            document.getElementById('stationModal').classList.add('hidden');
+        }
+
+        function updateIconPreview() {
+            const url = document.getElementById('stationIconUrl').value;
+            document.getElementById('stationIconPreview').src = url;
+        }
+
+        function getStreamplayData() {
+            // Im Streamplay-Modus nur Stationen bearbeiten, Settings beibehalten
+            return {
+                settings: currentStreamplayData.settings || {},
+                stations: currentStreamplayData.stations || []
+            };
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                if (!document.getElementById('stationModal').classList.contains('hidden')) {
+                    closeStationModal();
+                }
+            }
+        });
+
+        // Close modal on overlay click
+        document.getElementById('stationModal').addEventListener('click', e => {
+            if (e.target.classList.contains('modal-overlay')) {
+                closeStationModal();
+            }
+        });
+    </script>
+</body>
+</html>
