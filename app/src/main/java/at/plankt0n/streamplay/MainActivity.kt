@@ -50,8 +50,10 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
         // API-Sync läuft jetzt in StreamPlayApplication (überlebt Activity-Lifecycle)
 
-        lifecycleScope.launch {
-            GitHubUpdateChecker(this@MainActivity).silentCheckForUpdate()
+        if (BuildConfig.ENABLE_SELF_UPDATE) {
+            lifecycleScope.launch {
+                GitHubUpdateChecker(this@MainActivity).silentCheckForUpdate()
+            }
         }
 
         if (savedInstanceState == null) {

@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.*
+import at.plankt0n.streamplay.BuildConfig
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.NetworkType
 import at.plankt0n.streamplay.R
@@ -829,18 +830,24 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         key = "app_version"
         title = getString(R.string.settings_app_version)
         val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        val gitHash = at.plankt0n.streamplay.BuildConfig.GIT_HASH
-        val buildTime = at.plankt0n.streamplay.BuildConfig.BUILD_TIME
-        defaultSummary = "${pkgInfo.versionName} - $gitHash ($buildTime)"
+        defaultSummary = if (BuildConfig.ENABLE_SELF_UPDATE) {
+            val gitHash = BuildConfig.GIT_HASH
+            val buildTime = BuildConfig.BUILD_TIME
+            "${pkgInfo.versionName} - $gitHash ($buildTime)"
+        } else {
+            pkgInfo.versionName ?: ""
+        }
         summary = defaultSummary
         category = SettingsCategory.ABOUT
         // App-Icon NICHT tinten - wird später ausgeschlossen
         icon = context.getDrawable(R.mipmap.ic_launcher)
-        holdDurationSeconds = 5
-        holdTextFormat = getString(R.string.hold_open_github)
-        onLongPressComplete = {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Planqton/streamplay"))
-            context.startActivity(intent)
+        if (BuildConfig.ENABLE_SELF_UPDATE) {
+            holdDurationSeconds = 5
+            holdTextFormat = getString(R.string.hold_open_github)
+            onLongPressComplete = {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Planqton/streamplay"))
+                context.startActivity(intent)
+            }
         }
     }
 
@@ -1026,7 +1033,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         }
     }
 
-    val preferences = listOf(
+    val preferences = listOfNotNull(
         audioFocusHoldSwitch,
         duckVolumeSlider,
         networkTypePref,
@@ -1058,7 +1065,7 @@ fun PreferenceFragmentCompat.initSettingsScreen() {
         apiPushProfilePref,
         apiReadProfilePref,
         versionPref,
-        updatePref,
+        if (BuildConfig.ENABLE_SELF_UPDATE) updatePref else null,
         addTestPref,
         crashLogsPref,
         crashAppPref,
