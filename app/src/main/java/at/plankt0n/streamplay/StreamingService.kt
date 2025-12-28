@@ -106,6 +106,12 @@ class StreamingService : MediaLibraryService() {
     private var lastOriginalArtworkUri: String = ""
     private var currentStationUuid: String? = null
 
+    // Request-ID Tracking für Race Condition Prevention
+    @Volatile
+    var currentMetadataRequestId: String? = null
+        private set
+    private var metadataJob: Job? = null
+
     private lateinit var connectivityManager: ConnectivityManager
     @Volatile
     private var resumeOnNetwork = false
@@ -735,24 +741,28 @@ class StreamingService : MediaLibraryService() {
 
                     //Listener für wechsel der Streams
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                        currentIndex = currentMediaItemIndex
+                        // KRITISCH: Zuerst alte Requests canceln
+                        metadataJob?.cancel()
+                        currentMetadataRequestId = null
 
+                        currentIndex = currentMediaItemIndex
                         Log.d("StreamingService", "💾 Index gespeichert: $currentIndex")
                         currentStationUuid = mediaItem?.mediaMetadata?.extras?.getString("EXTRA_UUID")
                         val fallbackartworkUri = mediaItem?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
-                        UITrackRepository.clearTrackInfo()
+
+                        // Invalidiere pending Updates im Repository
+                        UITrackRepository.clearTrackInfoAndInvalidatePending()
+
                         lastIcyMetadata = null
                         lastshowedMetadata = null
                         lastArtworkUri = null
 
                         updateMediaItemMetadata("", "", fallbackartworkUri)
 
-
                         PreferencesHelper.setLastPlayedStreamIndex(
                             this@StreamingService,
                             currentIndex
                         )
-
                     }
                     //Listener für errors
                     override fun onPlayerError(error: PlaybackException) {
@@ -1053,8 +1063,14 @@ class StreamingService : MediaLibraryService() {
     }
 
     fun fetchMetadata(metadata: Metadata) {
+        // Cancel any pending metadata fetch
+        metadataJob?.cancel()
 
-        val stationUuidAtFetchStart = currentStationUuid
+        // Generate unique request ID for this fetch
+        val requestId = "${currentStationUuid}_${System.currentTimeMillis()}"
+        currentMetadataRequestId = requestId
+        UITrackRepository.setExpectedRequestId(requestId)
+
         val fallbackartworkUri = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL")
         var title = ""
         var artist = ""
@@ -1069,14 +1085,12 @@ class StreamingService : MediaLibraryService() {
             title = decodeHtmlEntities(mediaMetadata.title?.toString().orEmpty())
             artist = decodeHtmlEntities(mediaMetadata.artist?.toString().orEmpty())
 
-
             Log.d("RadioMeta", "🎵 Title: $title | 👤 Artist: $artist")
         }
 
         if (metadata == lastIcyMetadata) {
             Log.d("StreamingService", "ℹ️ Keine Änderung in der Metadata. beende Fetching")
             return
-
         }
         lastIcyMetadata = metadata //Damit ab jetzt mit dem wert Verglichen wird!
 
@@ -1108,22 +1122,31 @@ class StreamingService : MediaLibraryService() {
                     !prefs.getString(Keys.PREF_SPOTIFY_CLIENT_SECRET, "").isNullOrBlank()
 
             if (useSpotify && hasKeys) {
-                serviceScope.launch(Dispatchers.IO) {
+                metadataJob = serviceScope.launch(Dispatchers.IO) {
+                    // Check before expensive Spotify call
+                    if (currentMetadataRequestId != requestId) {
+                        Log.d("StreamingService", "⏭️ Request $requestId cancelled before Spotify call")
+                        return@launch
+                    }
+
                     val extendedInfo =
                         SpotifyMetaReader.getExtendedMetaInfo(this@StreamingService, artist, title)
+
                     withContext(Dispatchers.Main) {
-                        if (stationUuidAtFetchStart != currentStationUuid) {
-                            Log.d("StreamingService", "ℹ️ Station changed during metadata fetch, ignoring results")
-                            updateMediaItemMetadata("", "", fallbackartworkUri ?: "")
+                        // Check again after Spotify call completed
+                        if (currentMetadataRequestId != requestId) {
+                            Log.d("StreamingService", "⏭️ Request $requestId stale after Spotify call, ignoring results")
                             return@withContext
                         }
+
                         if (extendedInfo != null) {
                             Log.d(
                                 "SpotifyMetaReader",
                                 "✅ Spotify-Infos gefunden: ${extendedInfo.trackName}, spotifyUrl=${extendedInfo.spotifyUrl}"
                             )
 
-                            UITrackRepository.updateTrackInfo(
+                            // Use request-validated update
+                            UITrackRepository.updateTrackInfoIfCurrent(
                                 UITrackInfo(
                                     trackName = extendedInfo.trackName,
                                     artistName = extendedInfo.artistName,
@@ -1135,7 +1158,8 @@ class StreamingService : MediaLibraryService() {
                                     spotifyUrl = extendedInfo.spotifyUrl,
                                     previewUrl = extendedInfo.previewUrl,
                                     genre = extendedInfo.genre
-                                )
+                                ),
+                                requestId
                             )
 
                             updateMediaItemMetadata(
@@ -1161,14 +1185,15 @@ class StreamingService : MediaLibraryService() {
                                 "❌ Keine Spotify-Daten gefunden für: $artist - $title"
                             )
                             updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
-                            UITrackRepository.updateTrackInfo(
+                            UITrackRepository.updateTrackInfoIfCurrent(
                                 UITrackInfo(
                                     trackName = title,
                                     artistName = artist,
                                     bestCoverUrl = fallbackartworkUri,
                                     previewUrl = null,
                                     genre = ""
-                                )
+                                ),
+                                requestId
                             )
                             MetaLogHelper.addLog(
                                 this@StreamingService,
@@ -1185,21 +1210,55 @@ class StreamingService : MediaLibraryService() {
                     }
                 }
             } else {
-                serviceScope.launch(Dispatchers.Main) {
-                    if (stationUuidAtFetchStart != currentStationUuid) {
-                        updateMediaItemMetadata("", "", fallbackartworkUri ?: "")
+                // Spotify disabled - use request ID validation
+                metadataJob = serviceScope.launch(Dispatchers.Main) {
+                    if (currentMetadataRequestId != requestId) {
+                        Log.d("StreamingService", "⏭️ Request $requestId stale, ignoring")
                         return@launch
                     }
                     updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
+                    UITrackRepository.updateTrackInfoIfCurrent(
+                        UITrackInfo(
+                            trackName = title,
+                            artistName = artist,
+                            bestCoverUrl = fallbackartworkUri,
+                            previewUrl = null,
+                            genre = ""
+                        ),
+                        requestId
+                    )
+                    MetaLogHelper.addLog(
+                        this@StreamingService,
+                        MetaLogEntry(
+                            timestamp = System.currentTimeMillis(),
+                            station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
+                            title = title,
+                            artist = artist,
+                            url = null,
+                            coverUrl = fallbackartworkUri
+                        )
+                    )
                 }
-                UITrackRepository.updateTrackInfo(
+            }
+        } else {
+            Log.d(
+                "StreamingService",
+                "⚠️ Artist oder Title fehlen – kein Spotify-Request. Fallback auf alte meta"
+            )
+            // Missing artist/title - use request ID validation
+            metadataJob = serviceScope.launch(Dispatchers.Main) {
+                if (currentMetadataRequestId != requestId) {
+                    Log.d("StreamingService", "⏭️ Request $requestId stale, ignoring")
+                    return@launch
+                }
+                updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
+                UITrackRepository.updateTrackInfoIfCurrent(
                     UITrackInfo(
                         trackName = title,
                         artistName = artist,
-                        bestCoverUrl = fallbackartworkUri,
-                        previewUrl = null,
-                        genre = ""
-                    )
+                        bestCoverUrl = fallbackartworkUri
+                    ),
+                    requestId
                 )
                 MetaLogHelper.addLog(
                     this@StreamingService,
@@ -1213,39 +1272,7 @@ class StreamingService : MediaLibraryService() {
                     )
                 )
             }
-        } else {
-            Log.d(
-                "StreamingService",
-                "⚠️ Artist oder Title fehlen – kein Spotify-Request. Fallback auf alte meta"
-            )
-            // Sicherstellen, dass auch dieser Aufruf im Main-Thread läuft!
-            serviceScope.launch(Dispatchers.Main) {
-                if (stationUuidAtFetchStart != currentStationUuid) {
-                    updateMediaItemMetadata("", "", fallbackartworkUri ?: "")
-                    return@launch
-                }
-                updateMediaItemMetadata(title, artist, fallbackartworkUri ?: "")
-            }
-            UITrackRepository.updateTrackInfo(
-                UITrackInfo(
-                    trackName = title,
-                    artistName = artist,
-                    bestCoverUrl = fallbackartworkUri
-                )
-            )
-            MetaLogHelper.addLog(
-                this@StreamingService,
-                MetaLogEntry(
-                    timestamp = System.currentTimeMillis(),
-                    station = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "",
-                    title = title,
-                    artist = artist,
-                    url = null,
-                    coverUrl = fallbackartworkUri
-                )
-            )
         }
-
     }
 
     fun updateMediaItemMetadata(title: String, artist: String, artworkUri: String) {
