@@ -45,6 +45,7 @@
     <string name="save">Speichern</string>
     <string name="confirm_delete_station">Sender löschen?</string>
     <string name="confirm_delete_station_message">Möchtest du \"%1$s\" wirklich löschen?</string>
+    <string name="error_stream_url_required">Stream-URL ist erforderlich</string>
 
 
     <!-- Sonstige Standardstrings -->

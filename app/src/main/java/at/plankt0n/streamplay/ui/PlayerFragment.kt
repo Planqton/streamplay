@@ -1051,6 +1051,7 @@ class PlayerFragment : Fragment() {
 
     private fun updateOverlayUI(index: Int) {
         val controller = mediaServiceController.mediaController ?: return
+        if (index < 0 || index >= controller.mediaItemCount) return
         val mediaItem = controller.getMediaItemAt(index)
         val extras = mediaItem.mediaMetadata.extras ?: return
 

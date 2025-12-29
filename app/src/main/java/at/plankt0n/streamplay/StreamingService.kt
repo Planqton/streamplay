@@ -179,87 +179,91 @@ class StreamingService : MediaLibraryService() {
         // Check if player is initialized before using it
         if (!::player.isInitialized) return
 
-        val networkType = NetworkType.fromName(prefs.getString(Keys.PREF_NETWORK_TYPE, NetworkType.ALL.name))
-        val wasPlaying = player.isPlaying || player.playbackState == Player.STATE_BUFFERING
+        try {
+            val networkType = NetworkType.fromName(prefs.getString(Keys.PREF_NETWORK_TYPE, NetworkType.ALL.name))
+            val wasPlaying = player.isPlaying || player.playbackState == Player.STATE_BUFFERING
 
-        if (networkType == NetworkType.ALL) {
-            // Keine Bindung nötig - alle Netzwerke erlaubt
-            if (boundNetwork != null) {
-                // Wechsel von spezifischem Netzwerk zu "Alle" - neu starten
-                val needsRestart = wasPlaying
-                if (needsRestart) player.stop()
-                unregisterBoundNetworkCallback()
-                connectivityManager.bindProcessToNetwork(null)
-                boundNetwork = null
-                if (needsRestart && hasAnyNetwork()) {
-                    player.prepare()
-                    player.play()
-                }
-            }
-            // Prüfen ob wir fortsetzen können
-            if (resumeOnNetwork && !player.isPlaying && hasAnyNetwork()) {
-                resumeOnNetwork = false
-                player.prepare()
-                player.play()
-            }
-            return
-        }
-
-        // Suche nach dem gewünschten Netzwerk
-        val desiredNetwork = findNetworkByType(networkType)
-
-        if (desiredNetwork != null) {
-            // Gewünschtes Netzwerk gefunden - binden
-            if (boundNetwork != desiredNetwork) {
-                // Netzwerk wechselt - Player muss neu starten
-                val needsRestart = wasPlaying
-                if (needsRestart) player.stop()
-
-                // Alten Callback entfernen
-                unregisterBoundNetworkCallback()
-
-                // Neues Netzwerk binden
-                connectivityManager.bindProcessToNetwork(desiredNetwork)
-                boundNetwork = desiredNetwork
-                Log.d("StreamingService", "🌐 Gebunden an Netzwerk: ${networkType.name}")
-
-                // Callback für dieses spezifische Netzwerk registrieren
-                boundNetworkCallback = createBoundNetworkCallback()
-                val request = NetworkRequest.Builder()
-                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                    .apply {
-                        when (networkType) {
-                            NetworkType.WIFI_ONLY -> addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                            NetworkType.MOBILE_ONLY -> addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
-                            else -> {}
-                        }
+            if (networkType == NetworkType.ALL) {
+                // Keine Bindung nötig - alle Netzwerke erlaubt
+                if (boundNetwork != null) {
+                    // Wechsel von spezifischem Netzwerk zu "Alle" - neu starten
+                    val needsRestart = wasPlaying
+                    if (needsRestart) player.stop()
+                    unregisterBoundNetworkCallback()
+                    connectivityManager.bindProcessToNetwork(null)
+                    boundNetwork = null
+                    if (needsRestart && hasAnyNetwork()) {
+                        player.prepare()
+                        player.play()
                     }
-                    .build()
-                connectivityManager.registerNetworkCallback(request, boundNetworkCallback!!)
-
-                if (needsRestart) {
+                }
+                // Prüfen ob wir fortsetzen können
+                if (resumeOnNetwork && !player.isPlaying && hasAnyNetwork()) {
+                    resumeOnNetwork = false
                     player.prepare()
                     player.play()
                 }
+                return
             }
-            // Fortsetzen wenn nötig (z.B. nach Netzwerk-Wiederherstellung)
-            if (resumeOnNetwork && !player.isPlaying) {
-                resumeOnNetwork = false
-                player.prepare()
-                player.play()
+
+            // Suche nach dem gewünschten Netzwerk
+            val desiredNetwork = findNetworkByType(networkType)
+
+            if (desiredNetwork != null) {
+                // Gewünschtes Netzwerk gefunden - binden
+                if (boundNetwork != desiredNetwork) {
+                    // Netzwerk wechselt - Player muss neu starten
+                    val needsRestart = wasPlaying
+                    if (needsRestart) player.stop()
+
+                    // Alten Callback entfernen
+                    unregisterBoundNetworkCallback()
+
+                    // Neues Netzwerk binden
+                    connectivityManager.bindProcessToNetwork(desiredNetwork)
+                    boundNetwork = desiredNetwork
+                    Log.d("StreamingService", "🌐 Gebunden an Netzwerk: ${networkType.name}")
+
+                    // Callback für dieses spezifische Netzwerk registrieren
+                    boundNetworkCallback = createBoundNetworkCallback()
+                    val request = NetworkRequest.Builder()
+                        .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                        .apply {
+                            when (networkType) {
+                                NetworkType.WIFI_ONLY -> addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                                NetworkType.MOBILE_ONLY -> addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+                                else -> {}
+                            }
+                        }
+                        .build()
+                    connectivityManager.registerNetworkCallback(request, boundNetworkCallback!!)
+
+                    if (needsRestart) {
+                        player.prepare()
+                        player.play()
+                    }
+                }
+                // Fortsetzen wenn nötig (z.B. nach Netzwerk-Wiederherstellung)
+                if (resumeOnNetwork && !player.isPlaying) {
+                    resumeOnNetwork = false
+                    player.prepare()
+                    player.play()
+                }
+            } else {
+                // Gewünschtes Netzwerk nicht verfügbar - wie offline behandeln
+                unregisterBoundNetworkCallback()
+                if (boundNetwork != null) {
+                    connectivityManager.bindProcessToNetwork(null)
+                    boundNetwork = null
+                }
+                if (wasPlaying || player.playbackState == Player.STATE_READY) {
+                    resumeOnNetwork = true
+                    player.stop()
+                    Log.d("StreamingService", "🌐 Netzwerk ${networkType.name} nicht verfügbar - gestoppt")
+                }
             }
-        } else {
-            // Gewünschtes Netzwerk nicht verfügbar - wie offline behandeln
-            unregisterBoundNetworkCallback()
-            if (boundNetwork != null) {
-                connectivityManager.bindProcessToNetwork(null)
-                boundNetwork = null
-            }
-            if (wasPlaying || player.playbackState == Player.STATE_READY) {
-                resumeOnNetwork = true
-                player.stop()
-                Log.d("StreamingService", "🌐 Netzwerk ${networkType.name} nicht verfügbar - gestoppt")
-            }
+        } catch (e: IllegalStateException) {
+            Log.w("StreamingService", "Player released during network binding", e)
         }
     }
 
@@ -1220,7 +1224,7 @@ class StreamingService : MediaLibraryService() {
         currentMetadataRequestId = requestId
         UITrackRepository.setExpectedRequestId(requestId)
 
-        val fallbackartworkUri = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL")
+        val fallbackartworkUri = player.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_ICON_URL") ?: ""
         var title = ""
         var artist = ""
 

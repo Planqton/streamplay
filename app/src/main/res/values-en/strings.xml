@@ -37,6 +37,7 @@
     <string name="add_stream">Add stream</string>
     <string name="edit_stream">Edit stream</string>
     <string name="delete_stream">Delete stream</string>
+    <string name="error_stream_url_required">Stream URL is required</string>
 
 
     <!-- Standard strings -->

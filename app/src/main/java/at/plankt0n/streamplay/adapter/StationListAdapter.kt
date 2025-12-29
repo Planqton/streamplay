@@ -82,9 +82,22 @@ class StationListAdapter(
         holder.buttonSave.setOnClickListener {
             val pos = holder.bindingAdapterPosition
             if (pos != RecyclerView.NO_POSITION && pos < stationList.size) {
+                val newStreamUrl = holder.editUrl.text.toString().trim()
+                val newStationName = holder.editName.text.toString().trim()
+
+                // Validate: Stream URL must not be empty
+                if (newStreamUrl.isBlank() && stationList[pos].streamURL.isBlank()) {
+                    android.widget.Toast.makeText(
+                        holder.itemView.context,
+                        R.string.error_stream_url_required,
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                    return@setOnClickListener
+                }
+
                 val updatedStation = stationList[pos].copy(
-                    stationName = holder.editName.text.toString().trim().ifEmpty { stationList[pos].stationName },
-                    streamURL = holder.editUrl.text.toString().trim().ifEmpty { stationList[pos].streamURL },
+                    stationName = newStationName.ifEmpty { stationList[pos].stationName },
+                    streamURL = newStreamUrl.ifEmpty { stationList[pos].streamURL },
                     iconURL = holder.editIcon.text.toString().trim()
                 )
                 stationList[pos] = updatedStation
