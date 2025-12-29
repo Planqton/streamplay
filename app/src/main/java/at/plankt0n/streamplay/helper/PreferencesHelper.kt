@@ -254,12 +254,25 @@ object PreferencesHelper {
             return false
         }
 
-        // Stationen der alten Liste holen
-        val stations = lists.remove(oldName) ?: return false
+        // Merke ob die umbenannte Liste die aktuell ausgewählte ist
+        val wasSelected = getSelectedListName(context) == oldName
 
-        // Mit neuem Namen speichern
-        lists[trimmedNewName] = stations
-        saveStationLists(context, lists)
+        // Neue Map erstellen mit Reihenfolge beibehalten
+        val newLists = linkedMapOf<String, MutableList<StationItem>>()
+        for ((key, value) in lists) {
+            if (key == oldName) {
+                newLists[trimmedNewName] = value
+            } else {
+                newLists[key] = value
+            }
+        }
+
+        saveStationLists(context, newLists)
+
+        // Falls die umbenannte Liste ausgewählt war, auf neuen Namen zeigen
+        if (wasSelected) {
+            setSelectedListName(context, trimmedNewName)
+        }
 
         android.util.Log.d("PreferencesHelper", "Liste umbenannt: '$oldName' -> '$trimmedNewName'")
         return true
