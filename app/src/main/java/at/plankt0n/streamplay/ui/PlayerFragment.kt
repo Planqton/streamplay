@@ -1031,6 +1031,9 @@ class PlayerFragment : Fragment() {
         view?.findViewById<TextView>(R.id.meta_overlay_Album)?.applyStyle()
         view?.findViewById<TextView>(R.id.meta_overlay_Genre)?.applyStyle()
 
+        // Dropdown-Text anpassen
+        (listDropdown.selectedView as? TextView)?.applyStyle()
+
         buttonBack.applyStyle()
         playPauseButton.applyStyle()
         buttonForward.applyStyle()
@@ -1163,6 +1166,11 @@ class PlayerFragment : Fragment() {
 
         listDropdown.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                // Farbe des Dropdown-Texts anpassen
+                lastOverlayForeground?.let { color ->
+                    (view as? TextView)?.setTextColor(color)
+                }
+
                 if (isListDropdownInitializing) return
 
                 val currentIndex = PreferencesHelper.getSelectedListIndex(requireContext())
