@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Querformat-Layout: UI rechts neben dem Cover, Elemente unten gestapelt -->
+<!-- Querformat-Layout: UI rechts neben dem Cover -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -9,6 +9,14 @@
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
     android:contentDescription="@string/desc_media_item_container">
+
+    <!-- Guideline für Player Buttons Position (30% von oben) -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_player_buttons"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.3" />
 
     <!-- Banner oben (nur sichtbar wenn aktiv) -->
     <TextView
@@ -68,7 +76,7 @@
         android:clipToOutline="true"
         android:elevation="4dp"
         android:contentDescription="@string/desc_right_buttons_container"
-        app:layout_constraintTop_toTopOf="@id/station_overlay_container"
+        app:layout_constraintTop_toTopOf="@id/player_buttons_group"
         app:layout_constraintBottom_toBottomOf="@id/metainfo_overlay_container"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -319,7 +327,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="4dp"
         android:background="@android:color/transparent"
-        app:layout_constraintBottom_toTopOf="@id/player_buttons_group"
+        app:layout_constraintBottom_toTopOf="@id/metainfo_overlay_container"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/right_buttons_container">
 
@@ -335,7 +343,7 @@
             tools:listitem="@layout/shortcut_item" />
     </FrameLayout>
 
-    <!-- Station Info Overlay (ganz oben der unteren Gruppe) -->
+    <!-- Station Info Overlay (unter Player Buttons) -->
     <FrameLayout
         android:id="@+id/station_overlay_container"
         android:layout_width="0dp"
@@ -391,14 +399,13 @@
         </LinearLayout>
     </FrameLayout>
 
-    <!-- Player Buttons (über MetaInfo, unter Shortcuts) -->
+    <!-- Player Buttons (oben, an Guideline ausgerichtet) -->
     <LinearLayout
         android:id="@+id/player_buttons_group"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="4dp"
         android:orientation="horizontal"
         android:gravity="center"
         android:contentDescription="@string/desc_player_buttons_group"
@@ -408,7 +415,7 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
         android:elevation="4dp"
-        app:layout_constraintBottom_toTopOf="@id/metainfo_overlay_container"
+        app:layout_constraintTop_toBottomOf="@id/guideline_player_buttons"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/right_buttons_container">
 

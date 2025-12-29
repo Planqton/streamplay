@@ -67,9 +67,14 @@ import android.widget.Toast
 import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.widget.AdapterView
+import android.content.res.Configuration
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.Guideline
 
 @OptIn(UnstableApi::class)
 class PlayerFragment : Fragment() {
+
+    private var currentOrientation: Int = Configuration.ORIENTATION_UNDEFINED
 
     private var initialized = false
 
@@ -209,6 +214,11 @@ class PlayerFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Orientierung merken und Layout anpassen
+        currentOrientation = resources.configuration.orientation
+        inflateUiOverlay()
+        applyOrientationLayout()
 
         buttonMenu = view.findViewById(R.id.button_menu)
         updateBadge = view.findViewById(R.id.update_badge)
@@ -526,6 +536,201 @@ class PlayerFragment : Fragment() {
         }
         // Cover aktualisieren wenn man aus Settings zurückkommt
         refreshCurrentCover()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (!initialized) return
+
+        // Nur wenn Orientierung sich wirklich geändert hat
+        if (newConfig.orientation != currentOrientation) {
+            currentOrientation = newConfig.orientation
+
+            // UI-Overlay neu laden für neue Orientierung
+            inflateUiOverlay()
+            applyOrientationLayout()
+
+            // UI-Bindings neu setzen
+            rebindUiOverlay()
+        }
+    }
+
+    /**
+     * Lädt das UI-Overlay in den Container.
+     * Android wählt automatisch das richtige Layout basierend auf der aktuellen Orientierung.
+     */
+    private fun inflateUiOverlay() {
+        val container = view?.findViewById<FrameLayout>(R.id.ui_overlay_container) ?: return
+        container.removeAllViews()
+
+        val overlay = LayoutInflater.from(context).inflate(
+            R.layout.fragment_player_ui_overlay,
+            container,
+            false
+        )
+        container.addView(overlay)
+    }
+
+    /**
+     * Passt das Layout für die aktuelle Orientierung an.
+     * Im Landscape: ViewPager links (50%), Overlay rechts
+     * Im Portrait: ViewPager Vollbild, Overlay überlagert
+     */
+    private fun applyOrientationLayout() {
+        val guideline = view?.findViewById<Guideline>(R.id.guideline_viewpager_end) ?: return
+        val container = view?.findViewById<FrameLayout>(R.id.ui_overlay_container) ?: return
+        val constraintLayout = view as? ConstraintLayout ?: return
+
+        val guidelineParams = guideline.layoutParams as? ConstraintLayout.LayoutParams ?: return
+        val containerParams = container.layoutParams as? ConstraintLayout.LayoutParams ?: return
+
+        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            // Landscape: ViewPager links (50%), Overlay rechts
+            guidelineParams.guidePercent = 0.5f
+            containerParams.startToStart = ConstraintLayout.LayoutParams.UNSET
+            containerParams.startToEnd = R.id.guideline_viewpager_end
+        } else {
+            // Portrait: ViewPager Vollbild, Overlay überlagert
+            guidelineParams.guidePercent = 1.0f
+            containerParams.startToEnd = ConstraintLayout.LayoutParams.UNSET
+            containerParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+        }
+
+        guideline.layoutParams = guidelineParams
+        container.layoutParams = containerParams
+    }
+
+    /**
+     * Bindet alle UI-Elemente nach einem Overlay-Reload neu.
+     */
+    private fun rebindUiOverlay() {
+        val v = view ?: return
+
+        // Alle Views neu finden
+        buttonMenu = v.findViewById(R.id.button_menu)
+        updateBadge = v.findViewById(R.id.update_badge)
+        listDropdown = v.findViewById(R.id.station_overlay_dropdown)
+        stationNameTextView = v.findViewById(R.id.station_overlay_stationname)
+        stationIconImageView = v.findViewById(R.id.station_overlay_stationIcon)
+        playPauseButton = v.findViewById(R.id.button_play_pause)
+        buttonBack = v.findViewById(R.id.button_back)
+        buttonForward = v.findViewById(R.id.button_forward)
+        buttonSpotify = v.findViewById(R.id.button_spotify)
+        buttonMute = v.findViewById(R.id.button_mute_unmute)
+        buttonShare = v.findViewById(R.id.button_share)
+        buttonRecord = v.findViewById(R.id.button_record)
+        buttonManualLog = v.findViewById(R.id.button_manual_log)
+        buttonLyrics = v.findViewById(R.id.button_lyrics)
+        buttonRotateLock = v.findViewById(R.id.button_rotate_lock)
+        countdownTextView = v.findViewById(R.id.autoplay_countdown)
+        connectingBanner = v.findViewById(R.id.connecting_banner)
+        metaFlipper = v.findViewById(R.id.meta_flipper)
+        shortcutRecyclerView = v.findViewById(R.id.shortcut_recycler_view)
+
+        // Event-Listener neu setzen
+        buttonMenu.setOnClickListener { showBottomSheet() }
+        setupListDropdown()
+
+        // Player-Buttons
+        playPauseButton.setOnClickListener { mediaServiceController.togglePlayPause() }
+        buttonBack.setOnClickListener { mediaServiceController.skipToPrevious() }
+        buttonForward.setOnClickListener { mediaServiceController.skipToNext() }
+
+        // Spotify-Button
+        buttonSpotify.setOnClickListener {
+            val trackInfo = spotifyTrackViewModel.trackInfo.value
+            val spotifyUrl = trackInfo?.spotifyUrl ?: return@setOnClickListener
+
+            AlertDialog.Builder(requireContext())
+                .setTitle("Spotify-Link \u00f6ffnen?")
+                .setMessage("M\u00f6chtest du diesen Song in Spotify \u00f6ffnen?")
+                .setPositiveButton("Ja") { _, _ ->
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(spotifyUrl))
+                    startActivity(intent)
+                }
+                .setNegativeButton("Abbrechen", null)
+                .show()
+        }
+
+        // Share-Button
+        buttonShare.setOnClickListener {
+            val trackInfo = spotifyTrackViewModel.trackInfo.value
+            val spotifyUrl = trackInfo?.spotifyUrl
+            val spotifyTitle = trackInfo?.trackName
+            val spotifyArtist = trackInfo?.artistName
+
+            if (spotifyUrl.isNullOrBlank() || spotifyTitle.isNullOrBlank() || spotifyArtist.isNullOrBlank()) return@setOnClickListener
+
+            val textToShare = getString(R.string.share_text, spotifyTitle, spotifyArtist, spotifyUrl)
+            val chooserTitle = getString(R.string.share_chooser_title)
+
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, textToShare)
+            }
+
+            startActivity(Intent.createChooser(intent, chooserTitle))
+        }
+
+        // Record-Button neu einrichten
+        setupRecordButton()
+        updateRecordButtonState()
+
+        // Rotate Lock Button
+        setupRotateLockButton()
+
+        // ManualLog-Button
+        buttonManualLog.setOnClickListener { saveManualLog() }
+
+        // Lyrics-Button
+        buttonLyrics.setOnClickListener { openLyricsSheet() }
+
+        // Mute-Button
+        buttonMute.setOnClickListener {
+            val audioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            if (isMuted) {
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
+                buttonMute.setImageResource(R.drawable.ic_button_unmuted)
+            } else {
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
+                buttonMute.setImageResource(R.drawable.ic_button_muted)
+            }
+            isMuted = !isMuted
+        }
+        buttonMute.setOnLongClickListener { showVolumePopup(it); true }
+
+        // MetaFlipper click listener
+        metaFlipper.setOnClickListener {
+            if (metaFlipper.childCount > 1) {
+                if (metaFlipper.displayedChild == metaFlipper.childCount - 1) {
+                    metaFlipper.displayedChild = 0
+                } else {
+                    metaFlipper.showNext()
+                }
+            }
+        }
+
+        // Shortcut RecyclerView neu einrichten
+        shortcutRecyclerView.adapter = shortcutAdapter
+        shortcutRecyclerView.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+
+        // Update Badge Status
+        updateBadge.visibility = if (prefs.getBoolean(Keys.PREF_UPDATE_AVAILABLE, false)) View.VISIBLE else View.GONE
+
+        // Aktuellen Playback-Status anzeigen
+        val controller = mediaServiceController.mediaController
+        if (controller != null) {
+            updatePlayPauseIcon(controller.isPlaying)
+            val currentIndex = controller.currentMediaItemIndex
+            if (currentIndex >= 0 && currentIndex < controller.mediaItemCount) {
+                updateOverlayUI(currentIndex)
+                shortcutAdapter.selectedIndex = currentIndex
+            }
+        }
+
+        // Track-Info Observer erneut aktivieren (für neue Views)
+        observeSpotifyTrackInfo()
     }
 
     private fun observeSpotifyTrackInfo() {
@@ -1132,7 +1337,10 @@ class PlayerFragment : Fragment() {
             pageChangeCallback = null
 
             // Nur trennen wenn Fragment wirklich entfernt wird (nicht bei Orientierungswechsel)
-            if (isRemoving || (activity?.isFinishing == true && activity?.isChangingConfigurations == false)) {
+            val act = activity
+            val shouldDisconnect = isRemoving ||
+                (act != null && act.isFinishing && !act.isChangingConfigurations)
+            if (shouldDisconnect) {
                 mediaServiceController.disconnect()
             }
         }
