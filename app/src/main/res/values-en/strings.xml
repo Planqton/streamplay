@@ -322,4 +322,12 @@
     <string name="recording_stopped">Recording saved: %1$s</string>
     <string name="recording_failed">Recording failed</string>
     <string name="recording_no_stream">No stream to record</string>
+
+    <!-- List management -->
+    <string name="default_list_name">Default</string>
+    <string name="edit_list_name">Rename list</string>
+    <string name="rename_list_title">Rename list</string>
+    <string name="rename_list_hint">New name</string>
+    <string name="empty_list_hint">List is empty.\nTap to add stations.</string>
+    <string name="add_station">Add station</string>
 </resources>

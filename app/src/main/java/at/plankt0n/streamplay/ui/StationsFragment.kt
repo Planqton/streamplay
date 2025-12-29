@@ -42,6 +42,7 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import at.plankt0n.streamplay.Keys
 import com.bumptech.glide.Glide
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -59,6 +60,10 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
     private lateinit var stationPrefs: SharedPreferences
     private var hasChanges: Boolean = false
     private var isReceiverRegistered = false
+    private lateinit var emptyStateContainer: View
+    private lateinit var fabAddStation: FloatingActionButton
+    private lateinit var listNameLabel: TextView
+    private lateinit var buttonEditListName: ImageButton
 
     private val stationsUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -72,6 +77,31 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
         stationList.clear()
         stationList.addAll(PreferencesHelper.getStations(requireContext()))
         adapter.notifyDataSetChanged()
+        updateEmptyState()
+    }
+
+    private fun updateEmptyState() {
+        if (stationList.isEmpty()) {
+            recyclerView.visibility = View.GONE
+            emptyStateContainer.visibility = View.VISIBLE
+        } else {
+            recyclerView.visibility = View.VISIBLE
+            emptyStateContainer.visibility = View.GONE
+        }
+    }
+
+    private fun openDiscoverFragment() {
+        (activity as? MainActivity)?.let { mainActivity ->
+            val currentFragment = mainActivity.supportFragmentManager.findFragmentById(R.id.fragment_container)
+            if (currentFragment != null) {
+                mainActivity.supportFragmentManager.beginTransaction()
+                    .setReorderingAllowed(true)
+                    .hide(currentFragment)
+                    .add(R.id.fragment_container, DiscoverFragment())
+                    .addToBackStack(null)
+                    .commit()
+            }
+        }
     }
 
     companion object {
@@ -99,6 +129,22 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
 
         recyclerView = view.findViewById(R.id.recyclerViewStations)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+        // Empty State initialisieren
+        emptyStateContainer = view.findViewById(R.id.empty_state_container)
+        fabAddStation = view.findViewById(R.id.fab_add_station)
+        fabAddStation.setOnClickListener {
+            openDiscoverFragment()
+        }
+
+        // Listenname initialisieren
+        listNameLabel = view.findViewById(R.id.list_name_label)
+        buttonEditListName = view.findViewById(R.id.button_edit_list_name)
+        updateListNameLabel()
+        buttonEditListName.setOnClickListener {
+            showRenameListDialog()
+        }
+
         val simpleCallback = object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.UP or ItemTouchHelper.DOWN,
             ItemTouchHelper.LEFT
@@ -221,6 +267,9 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
             }
             (activity as? MainActivity)?.showPlayerPage()
         }
+
+        // Initialen Empty State setzen
+        updateEmptyState()
 
         return view
     }
@@ -361,11 +410,54 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
         }
     }
 
+    private fun updateListNameLabel() {
+        val listName = PreferencesHelper.getSelectedListName(requireContext())
+        listNameLabel.text = listName
+    }
+
+    private fun showRenameListDialog() {
+        val currentName = PreferencesHelper.getSelectedListName(requireContext())
+
+        val padding = (16 * resources.displayMetrics.density).toInt()
+        val editText = EditText(requireContext()).apply {
+            setText(currentName)
+            setSelection(currentName.length)
+            hint = getString(R.string.rename_list_hint)
+            setSingleLine(true)
+            setPadding(padding, padding, padding, padding)
+        }
+
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle(R.string.rename_list_title)
+            .setView(editText)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                val newName = editText.text.toString().trim()
+                if (newName.isNotEmpty() && newName != currentName) {
+                    val success = PreferencesHelper.renameList(requireContext(), currentName, newName)
+                    if (success) {
+                        updateListNameLabel()
+                        // Broadcast senden, damit PlayerFragment Dropdown aktualisiert
+                        LocalBroadcastManager.getInstance(requireContext())
+                            .sendBroadcast(Intent(Keys.ACTION_STATIONS_UPDATED))
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Name existiert bereits oder ist ungültig",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
     override fun onResume() {
         super.onResume()
         hasChanges = false
         stationPrefs.registerOnSharedPreferenceChangeListener(this)
         refreshStationList()
+        updateListNameLabel()
         parentFragment?.view
             ?.findViewById<ViewPager2>(R.id.main_view_pager)
             ?.isUserInputEnabled = false

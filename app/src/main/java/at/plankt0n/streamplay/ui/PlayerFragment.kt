@@ -51,6 +51,7 @@ import at.plankt0n.streamplay.viewmodel.UITrackInfo
 import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.ScreenOrientationMode
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.core.graphics.ColorUtils
 import android.graphics.Bitmap
 import androidx.palette.graphics.Palette
@@ -63,6 +64,9 @@ import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.Glide
 import com.google.android.material.imageview.ShapeableImageView
 import android.widget.Toast
+import android.widget.Spinner
+import android.widget.ArrayAdapter
+import android.widget.AdapterView
 
 @OptIn(UnstableApi::class)
 class PlayerFragment : Fragment() {
@@ -98,6 +102,9 @@ class PlayerFragment : Fragment() {
     private var recordStartRunnable: Runnable? = null
     private lateinit var countdownTextView: TextView
     private lateinit var connectingBanner: TextView
+    private lateinit var listDropdown: Spinner
+    private var listDropdownAdapter: ArrayAdapter<String>? = null
+    private var isListDropdownInitializing = false
     private lateinit var metaFlipper: ViewFlipper
     private val countdownHandler = Handler(Looper.getMainLooper())
     private var countdownRunnable: Runnable? = null
@@ -181,6 +188,15 @@ class PlayerFragment : Fragment() {
         }
     }
 
+    private val stationsUpdateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == Keys.ACTION_STATIONS_UPDATED) {
+                Log.d("PlayerFragment", "Received STATIONS_UPDATED broadcast, refreshing dropdown")
+                refreshListDropdown()
+            }
+        }
+    }
+
     @Volatile
     var isMuted = false
     private var showingMetaCover = true
@@ -198,11 +214,29 @@ class PlayerFragment : Fragment() {
         updateBadge = view.findViewById(R.id.update_badge)
         buttonMenu.setOnClickListener { showBottomSheet() }
 
+        // Listen-Dropdown ZUERST initialisieren (vor dem Empty-Check)
+        listDropdown = view.findViewById(R.id.station_overlay_dropdown)
+        setupListDropdown()
 
-        if (PreferencesHelper.getStations(requireContext()).isEmpty()) {
-            Log.w("PlayerFragment", "\u26a0\ufe0f Keine Stationen gespeichert, Wechsel ins StationsFragment.")
+        // Prüfe ob IRGENDEINE Liste Stationen hat
+        val allLists = PreferencesHelper.getStationLists(requireContext())
+        val hasAnyStations = allLists.values.any { it.isNotEmpty() }
+
+        if (!hasAnyStations) {
+            Log.w("PlayerFragment", "⚠️ Keine Stationen in keiner Liste, Wechsel ins StationsFragment.")
             (activity as? MainActivity)?.showStationsPage()
             return
+        }
+
+        // Wenn aktuelle Liste leer ist, aber andere Listen Stationen haben,
+        // wechsle automatisch zur ersten nicht-leeren Liste
+        if (PreferencesHelper.getStations(requireContext()).isEmpty()) {
+            val firstNonEmptyList = allLists.entries.firstOrNull { it.value.isNotEmpty() }
+            if (firstNonEmptyList != null) {
+                Log.d("PlayerFragment", "Aktuelle Liste leer, wechsle zu: ${firstNonEmptyList.key}")
+                PreferencesHelper.setSelectedListName(requireContext(), firstNonEmptyList.key)
+                refreshListDropdown()
+            }
         }
 
         viewPager = view.findViewById(R.id.view_pager)
@@ -240,6 +274,7 @@ class PlayerFragment : Fragment() {
                 }
             }
         }
+
         prefs = requireContext().getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
         showInfoBanner = prefs.getBoolean("show_exoplayer_banner", true)
         backgroundEffect = try {
@@ -288,6 +323,10 @@ class PlayerFragment : Fragment() {
             Context.RECEIVER_NOT_EXPORTED
         } else 0
         requireContext().registerReceiver(autoplayReceiver, filter, flags)
+
+        // Register for station list updates (from API sync)
+        LocalBroadcastManager.getInstance(requireContext())
+            .registerReceiver(stationsUpdateReceiver, IntentFilter(Keys.ACTION_STATIONS_UPDATED))
 
         // ViewModel VOR MediaServiceController initialisieren (für onConnected Callback)
         spotifyTrackViewModel = ViewModelProvider(requireActivity())[UITrackViewModel::class.java]
@@ -892,6 +931,96 @@ class PlayerFragment : Fragment() {
         })
     }
 
+    /**
+     * Initialisiert die Listen-Dropdown mit allen verfügbaren Stationslisten
+     */
+    private fun setupListDropdown() {
+        val listNames = PreferencesHelper.getListNames(requireContext()).toMutableList()
+        val selectedIndex = PreferencesHelper.getSelectedListIndex(requireContext())
+        android.util.Log.d("PlayerFragment", "setupListDropdown: listNames=$listNames, selectedIndex=$selectedIndex")
+
+        listDropdownAdapter = ArrayAdapter(
+            requireContext(),
+            R.layout.spinner_item_light,
+            listNames
+        )
+        listDropdownAdapter?.setDropDownViewResource(R.layout.spinner_dropdown_item_light)
+        listDropdown.adapter = listDropdownAdapter
+
+        // Aktuelle Auswahl setzen ohne Listener zu triggern
+        isListDropdownInitializing = true
+        if (selectedIndex in listNames.indices) {
+            listDropdown.setSelection(selectedIndex)
+        } else if (listNames.isNotEmpty()) {
+            listDropdown.setSelection(0)
+        }
+        isListDropdownInitializing = false
+
+        listDropdown.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                if (isListDropdownInitializing) return
+
+                val currentIndex = PreferencesHelper.getSelectedListIndex(requireContext())
+
+                if (position != currentIndex) {
+                    switchToList(position)
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+    }
+
+    /**
+     * Wechselt zur angegebenen Stationsliste (per Index) und aktualisiert die Playlist
+     */
+    private fun switchToList(index: Int) {
+        PreferencesHelper.setSelectedListIndex(requireContext(), index)
+
+        // Prüfe ob neue Liste leer ist
+        val stations = PreferencesHelper.getStations(requireContext())
+        if (stations.isEmpty()) {
+            Log.w("PlayerFragment", "Gewählte Liste (Index $index) ist leer. Wechsel ins StationsFragment.")
+            (activity as? MainActivity)?.showStationsPage()
+            return
+        }
+
+        // Playlist im Service aktualisieren
+        StateHelper.isPlaylistChangePending = true
+        requireContext().startService(
+            Intent(requireContext(), StreamingService::class.java).apply {
+                action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
+            }
+        )
+
+        // UI aktualisieren
+        reloadPlaylist()
+    }
+
+    /**
+     * Aktualisiert die Listen-Dropdown (z.B. nach Änderungen an den Listen)
+     */
+    private fun refreshListDropdown() {
+        val listNames = PreferencesHelper.getListNames(requireContext()).toMutableList()
+        val selectedIndex = PreferencesHelper.getSelectedListIndex(requireContext())
+        Log.d("PlayerFragment", "refreshListDropdown: listNames=$listNames, selectedIndex=$selectedIndex")
+
+        isListDropdownInitializing = true
+        listDropdownAdapter?.clear()
+        listDropdownAdapter?.addAll(listNames)
+        listDropdownAdapter?.notifyDataSetChanged()
+
+        Log.d("PlayerFragment", "refreshListDropdown: adapterCount=${listDropdownAdapter?.count}")
+        if (selectedIndex in listNames.indices) {
+            listDropdown.setSelection(selectedIndex)
+        } else if (listNames.isNotEmpty()) {
+            // Fallback zu Index 0
+            listDropdown.setSelection(0)
+            PreferencesHelper.setSelectedListIndex(requireContext(), 0)
+        }
+        isListDropdownInitializing = false
+    }
+
     private fun reloadPlaylist() {
         val controller = mediaServiceController.mediaController ?: return
 
@@ -966,6 +1095,13 @@ class PlayerFragment : Fragment() {
         if (initialized) {
             try {
                 context?.unregisterReceiver(autoplayReceiver)
+            } catch (e: IllegalArgumentException) {
+                // Receiver was not registered, ignore
+            }
+            try {
+                context?.let {
+                    LocalBroadcastManager.getInstance(it).unregisterReceiver(stationsUpdateReceiver)
+                }
             } catch (e: IllegalArgumentException) {
                 // Receiver was not registered, ignore
             }

@@ -170,8 +170,8 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
-                android:entries="@array/station_overlay_dropdown_items"
-                android:spinnerMode="dropdown"/>
+                android:spinnerMode="dropdown"
+                android:popupBackground="#80FFFFFF"/>
         </LinearLayout>
     </FrameLayout>
     <!-- Right Button Container -->

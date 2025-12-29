@@ -37,6 +37,8 @@ object StreamplayApiHelper {
 
     data class SyncData(
         val stations: List<StationItem>,
+        val lists: Map<String, List<StationItem>>?,
+        val selectedListIndex: Int,
         val settings: Map<String, Any?>
     )
 
@@ -144,18 +146,43 @@ object StreamplayApiHelper {
 
     /**
      * Validates the complete API response data
+     * Supports both legacy (stations array) and new (lists object) formats
      */
     private fun validateApiData(data: JsonObject): ValidationResult {
-        // Validate stations
-        val stationsJson = try {
-            data.getAsJsonArray("stations")
+        // Check for new lists format first
+        val listsJson = try {
+            data.getAsJsonObject("lists")
         } catch (e: Exception) {
-            return ValidationResult.Invalid("'stations' hat ein ungültiges Format: ${e.message}")
+            null
         }
 
-        val stationsResult = validateStations(stationsJson)
-        if (stationsResult is ValidationResult.Invalid) {
-            return stationsResult
+        if (listsJson != null && listsJson.keySet().isNotEmpty()) {
+            // New format: validate lists
+            Log.d("API SYNC", "validateApiData: Found lists format with ${listsJson.keySet().size} lists")
+            for (listName in listsJson.keySet()) {
+                val listStations = try {
+                    listsJson.getAsJsonArray(listName)
+                } catch (e: Exception) {
+                    return ValidationResult.Invalid("Liste '$listName' hat ein ungültiges Format")
+                }
+                val result = validateStations(listStations)
+                if (result is ValidationResult.Invalid) {
+                    return ValidationResult.Invalid("Liste '$listName': ${result.reason}")
+                }
+            }
+        } else {
+            // Legacy format: validate stations array
+            Log.d("API SYNC", "validateApiData: Using legacy stations format")
+            val stationsJson = try {
+                data.getAsJsonArray("stations")
+            } catch (e: Exception) {
+                return ValidationResult.Invalid("'stations' hat ein ungültiges Format: ${e.message}")
+            }
+
+            val stationsResult = validateStations(stationsJson)
+            if (stationsResult is ValidationResult.Invalid) {
+                return stationsResult
+            }
         }
 
         // Validate settings
@@ -339,28 +366,68 @@ object StreamplayApiHelper {
                 }
                 Log.d("API SYNC", "Validierung erfolgreich")
 
-                // Parse stations (validation passed, so this should be safe)
-                val stationsJson = data.getAsJsonArray("stations")
-                Log.d("API SYNC", "stationsJson size: ${stationsJson?.size()}")
-                Log.d("API SYNC", "stationsJson first element: ${stationsJson?.firstOrNull()}")
+                // Check for new multi-list format first
+                val listsJson = try {
+                    data.getAsJsonObject("lists")
+                } catch (e: Exception) {
+                    null
+                }
+                Log.d("API SYNC", "listsJson: ${listsJson != null}, keys: ${listsJson?.keySet()}")
 
+                // Parse lists (new format) or stations (legacy)
+                val listsType = object : TypeToken<Map<String, List<StationItem>>>() {}.type
                 val stationsType = object : TypeToken<List<StationItem>>() {}.type
-                val stations: List<StationItem> = if (stationsJson != null) {
-                    try {
-                        Log.d("API SYNC", "Parsing ${stationsJson.size()} stations...")
-                        val parsed = Gson().fromJson<List<StationItem>>(stationsJson, stationsType)
-                        Log.d("API SYNC", "Parsed stations: ${parsed?.size ?: "null"}")
-                        parsed ?: emptyList()
+
+                val parsedLists: Map<String, List<StationItem>>?
+                val stations: List<StationItem>
+
+                if (listsJson != null && listsJson.keySet().isNotEmpty()) {
+                    // New format: parse lists
+                    Log.d("API SYNC", "Using new multi-list format")
+                    parsedLists = try {
+                        Gson().fromJson<Map<String, List<StationItem>>>(listsJson, listsType)
                     } catch (e: Exception) {
-                        Log.e("API SYNC", "Stations-Parsing fehlgeschlagen", e)
-                        Log.e("API SYNC", "Exception type: ${e::class.java.name}")
-                        Log.e("API SYNC", "Exception message: ${e.message}")
-                        Log.e("API SYNC", "Exception cause: ${e.cause}")
-                        return@withContext errorResult("Stations-Parsing fehlgeschlagen: ${e::class.simpleName}: ${e.message}")
+                        Log.e("API SYNC", "Lists-Parsing fehlgeschlagen", e)
+                        return@withContext errorResult("Lists-Parsing fehlgeschlagen: ${e::class.simpleName}: ${e.message}")
                     }
+                    Log.d("API SYNC", "Parsed ${parsedLists?.size ?: 0} lists")
+
+                    // Get stations from selected list index or first list
+                    val settingsJson = data.getAsJsonObject("settings")
+                    val selectedListIndex = try {
+                        settingsJson?.get(Keys.KEY_SELECTED_LIST)?.asInt ?: 0
+                    } catch (e: Exception) {
+                        0 // Fallback to first list
+                    }
+                    val listNames = parsedLists?.keys?.toList() ?: emptyList()
+                    val selectedListName = listNames.getOrNull(selectedListIndex) ?: listNames.firstOrNull()
+                    stations = if (selectedListName != null) {
+                        parsedLists?.get(selectedListName) ?: emptyList()
+                    } else {
+                        parsedLists?.values?.firstOrNull() ?: emptyList()
+                    }
+                    Log.d("API SYNC", "Selected list index: $selectedListIndex, name: $selectedListName, stations: ${stations.size}")
                 } else {
-                    Log.d("API SYNC", "stationsJson is null, returning empty list")
-                    emptyList()
+                    // Legacy format: parse stations array
+                    Log.d("API SYNC", "Using legacy stations format")
+                    parsedLists = null
+                    val stationsJson = data.getAsJsonArray("stations")
+                    Log.d("API SYNC", "stationsJson size: ${stationsJson?.size()}")
+
+                    stations = if (stationsJson != null) {
+                        try {
+                            Log.d("API SYNC", "Parsing ${stationsJson.size()} stations...")
+                            val parsed = Gson().fromJson<List<StationItem>>(stationsJson, stationsType)
+                            Log.d("API SYNC", "Parsed stations: ${parsed?.size ?: "null"}")
+                            parsed ?: emptyList()
+                        } catch (e: Exception) {
+                            Log.e("API SYNC", "Stations-Parsing fehlgeschlagen", e)
+                            return@withContext errorResult("Stations-Parsing fehlgeschlagen: ${e::class.simpleName}: ${e.message}")
+                        }
+                    } else {
+                        Log.d("API SYNC", "stationsJson is null, returning empty list")
+                        emptyList()
+                    }
                 }
                 Log.d("API SYNC", "Final stations count: ${stations.size}")
 
@@ -414,8 +481,26 @@ object StreamplayApiHelper {
                 // Clear error state on success
                 clearSyncError(context)
 
-                // Apply stations (don't sync back to API to avoid loop)
-                PreferencesHelper.saveStations(context, stations, syncToApi = false)
+                // Apply lists or stations (don't sync back to API to avoid loop)
+                if (parsedLists != null && parsedLists.isNotEmpty()) {
+                    // New format: save all lists
+                    Log.d("API SYNC", "Saving ${parsedLists.size} lists to preferences")
+                    PreferencesHelper.saveStationLists(context, parsedLists, syncToApi = false)
+
+                    // Apply selected list index from settings
+                    val selectedIndex = try {
+                        (settings[Keys.KEY_SELECTED_LIST] as? Number)?.toInt() ?: 0
+                    } catch (e: Exception) {
+                        0
+                    }
+                    val maxIndex = parsedLists.size - 1
+                    val safeIndex = selectedIndex.coerceIn(0, maxIndex.coerceAtLeast(0))
+                    PreferencesHelper.setSelectedListIndex(context, safeIndex)
+                    Log.d("API SYNC", "Set selected list index to: $safeIndex")
+                } else {
+                    // Legacy format: save stations only
+                    PreferencesHelper.saveStations(context, stations, syncToApi = false)
+                }
                 StateHelper.isPlaylistChangePending = true
                 val playlistIntent = Intent(context, StreamingService::class.java).apply {
                     action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
@@ -436,7 +521,11 @@ object StreamplayApiHelper {
                         Keys.PREF_API_PASSWORD,
                         Keys.PREF_API_TOKEN,
                         Keys.PREF_API_SYNC_ERROR,
-                        Keys.PREF_API_SYNC_ERROR_MESSAGE
+                        Keys.PREF_API_SYNC_ERROR_MESSAGE,
+                        Keys.KEY_STATIONS,        // Handled separately
+                        Keys.KEY_STATION_LISTS,   // Handled separately
+                        "lists",                  // Prevent saving as string in settings
+                        "stations"                // Prevent saving as string in settings
                     )
                     for ((key, value) in settings) {
                         if (key in excludedKeys) continue
@@ -490,7 +579,12 @@ object StreamplayApiHelper {
                     }
                 }
 
-                ApiResult.Success(SyncData(stations, settings))
+                val selectedListIndex = try {
+                    (settings[Keys.KEY_SELECTED_LIST] as? Number)?.toInt() ?: 0
+                } catch (e: Exception) {
+                    0
+                }
+                ApiResult.Success(SyncData(stations, parsedLists, selectedListIndex, settings))
             } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
                 errorResult("Authentication failed - please check credentials")
             } else {
@@ -532,8 +626,10 @@ object StreamplayApiHelper {
             connection.connectTimeout = 10000
             connection.readTimeout = 10000
 
-            // Get stations
+            // Get stations (current list) and all lists
             val stations = PreferencesHelper.getStations(context)
+            val allLists = PreferencesHelper.getStationLists(context)
+            val selectedListIndex = PreferencesHelper.getSelectedListIndex(context)
 
             // Get settings (excluding API credentials and stations - stations are pushed separately)
             val prefs = context.getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
@@ -543,7 +639,10 @@ object StreamplayApiHelper {
                 Keys.PREF_API_USERNAME,
                 Keys.PREF_API_PASSWORD,
                 Keys.PREF_API_TOKEN,
-                Keys.KEY_STATIONS,  // Stations are pushed separately as array, not as string in settings
+                Keys.KEY_STATIONS,        // Stations are pushed separately as array
+                Keys.KEY_STATION_LISTS,   // Lists are pushed separately as object
+                "lists",                  // Prevent lists being synced as string in settings
+                Keys.KEY_SELECTED_LIST,   // Selected list is pushed in settings
                 Keys.PREF_API_SYNC_ERROR,
                 Keys.PREF_API_SYNC_ERROR_MESSAGE,
                 Keys.KEY_DEV_FOR_YOU_ITEMS,      // Dev-only items, not synced
@@ -553,9 +652,13 @@ object StreamplayApiHelper {
             )
             excludedKeys.forEach { allSettings.remove(it) }
 
-            // Build data object
+            // Add selected_list index to settings for sync
+            allSettings[Keys.KEY_SELECTED_LIST] = selectedListIndex
+
+            // Build data object with both stations (legacy) and lists (new)
             val dataObject = JsonObject().apply {
-                add("stations", Gson().toJsonTree(stations))
+                add("stations", Gson().toJsonTree(stations))  // Legacy: aktuelle Liste
+                add("lists", Gson().toJsonTree(allLists))     // Neu: alle Listen
                 add("settings", Gson().toJsonTree(allSettings))
             }
 

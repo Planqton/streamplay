@@ -1,0 +1,212 @@
+{
+  "settings": {
+    "api_sync_enabled": true,
+    "app_language": "system",
+    "audio_focus_hold": false,
+    "audio_focus_mode": "LOWER",
+    "auto_autoplay_enabled": true,
+    "auto_start_activity": false,
+    "auto_stop_on_exit": true,
+    "autoplay_delay": 10,
+    "autoplay_enabled": true,
+    "autosync_couchdb_startup": true,
+    "autosync_json_startup": false,
+    "background_effect": "VISUALIZER",
+    "couchdb_endpoint": "https://couchdb.printspace.at/stream/data",
+    "couchdb_password": "Ozean3123",
+    "couchdb_show_logs": true,
+    "couchdb_username": "admin",
+    "cover_animation_style": "FADE",
+    "cover_mode": "META",
+    "dev_menu": true,
+    "dev_show_test_stations": false,
+    "duck_volume": 16,
+    "duck_volume_level": 7,
+    "eq_band_0": 0,
+    "eq_band_1": 0,
+    "eq_band_2": 2,
+    "eq_band_3": 8,
+    "eq_band_4": 12,
+    "eq_band_5": 15,
+    "eq_band_6": 15,
+    "eq_band_7": 15,
+    "eq_band_8": 15,
+    "eq_band_9": 15,
+    "eq_custom_gains": "[4,3,1,0,-1,0,2,3,4,4]",
+    "eq_enabled": false,
+    "eq_preset": "TREBLE_BOOST",
+    "equalizer_enabled": false,
+    "equalizer_preset": "FLAT",
+    "lower_volume_level": 1,
+    "minimize_after_autoplay": false,
+    "network_type": "ALL",
+    "onboarding_done": true,
+    "overlay_enabled": true,
+    "overlay_opacity": 10,
+    "overlay_position": "LEFT",
+    "personal_sync_url": "https://github.com/Planqton/streamplay/blob/main/teststations.json",
+    "recording_enabled": true,
+    "resume_live_after_pause": true,
+    "screen_orientation": "AUTO",
+    "selected_list": "default",
+    "show_exoplayer_banner": true,
+    "show_rotate_lock": true,
+    "show_station_in_mediainfo": true,
+    "spotify_client_id": "cc55a94b922c496a84c4a725242a313b",
+    "spotify_client_secret": "1893b26ecec74a4984152f0d86200b63",
+    "use_spotify_meta": true,
+    "visualizer_style": "FOUNTAIN"
+  },
+  "stations": [
+    {
+      "iconURL": "https://www.kronehit.at/apple-touch-icon.png?v1",
+      "stationName": "Kronehit",
+      "streamURL": "http://onair.krone.at/kronehit.mp3",
+      "uuid": "e7b5392d-3f3b-4c40-81f9-7c07a53fb80e"
+    },
+    {
+      "iconURL": "https://tubestatic.orf.at/mojo/1_3/storyserver//tube/common/images/apple-icons/oe3.png",
+      "stationName": "ORF Hitradio Ö21",
+      "streamURL": "https://ors-sn03.ors-shoutcast.at/oe3-q1a",
+      "uuid": "735bb8f7-0775-4e51-ac2e-c54759f69905"
+    },
+    {
+      "iconURL": "https://welle1.at/wp-content/uploads/2020/06/radiopro_theme_mobile_icon_50x50_2020.png",
+      "stationName": "Welle 1 - Kärnten",
+      "streamURL": "https://live.welle1.at:15128/live",
+      "uuid": "1b70bfae-14ba-46f1-a046-d284679c2639"
+    },
+    {
+      "iconURL": "https://upload.wikimedia.org/wikipedia/commons/6/63/Antenne_Logo.svg",
+      "stationName": "Antenne Kärnten",
+      "streamURL": "http://live.antenne.at/ak",
+      "uuid": "5b6871d9-abfa-41af-bde4-7ac82ae88024"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/bounce-fm-DBnGFc0B.png",
+      "stationName": "Bounce FM",
+      "streamURL": "https://audio.gtaradio.net/sa/bounce-fm",
+      "uuid": "7f343c49-dc84-4c2e-8c27-4330e839e9b9"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/csr-D7l6mUnO.png",
+      "stationName": "CSR",
+      "streamURL": "https://audio.gtaradio.net/sa/csr",
+      "uuid": "6e0473ee-8d7c-4f8c-ab48-f445177666bf"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/k-dst-D1NsRPFj.png",
+      "stationName": "K-DST",
+      "streamURL": "https://audio.gtaradio.net/sa/k-dst",
+      "uuid": "a47a0483-a080-42aa-a876-9a4ac882b44d"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/k-jah-BLUI6aOm.png",
+      "stationName": "K-JAH",
+      "streamURL": "https://audio.gtaradio.net/sa/k-jah",
+      "uuid": "810bd2a7-d4f1-4175-b4dc-169b09c24c99"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/k-rose-C6gZyPSh.png",
+      "stationName": "K-ROSE",
+      "streamURL": "https://audio.gtaradio.net/sa/k-rose",
+      "uuid": "07b3fa23-4b3b-488e-b28e-a8ab0a6ce6c9"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/master-sounds-faMrZ24G.png",
+      "stationName": "Master Sounds",
+      "streamURL": "https://audio.gtaradio.net/sa/master-sounds",
+      "uuid": "55903fb8-6661-4e15-a8a2-f2e35b038a46"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/playback-fm-D3Lfxn7K.png",
+      "stationName": "Playback FM",
+      "streamURL": "https://audio.gtaradio.net/sa/playback-fm",
+      "uuid": "d1e283fb-b8d2-40a4-ad5b-4613fd6c6da9"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/radio-los-santos-BdirEyIL.png",
+      "stationName": "Radio Los Santos",
+      "streamURL": "https://audio.gtaradio.net/sa/radio-los-santos",
+      "uuid": "01750b99-8afa-4c5f-a499-09d9a6fbac23"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/sfur-5z0RBQd7.png",
+      "stationName": "SFUR",
+      "streamURL": "https://audio.gtaradio.net/sa/sfur",
+      "uuid": "0c94cf0f-9d95-48aa-9e47-26b354748d99"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/radio-x-Bd7TF4Yg.png",
+      "stationName": "Radio X",
+      "streamURL": "https://audio.gtaradio.net/sa/radio-x",
+      "uuid": "4aca0a39-df51-420a-943c-c4f1cb1c618a"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/wctr-CZWFSeXo.png",
+      "stationName": "WCTR",
+      "streamURL": "https://audio.gtaradio.net/sa/wctr",
+      "uuid": "f39cae8c-fb1f-4613-a3b7-57914c2d0deb"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/game-CJfdD1TV.png",
+      "stationName": "Game",
+      "streamURL": "https://audio.gtaradio.net/3/game",
+      "uuid": "4043265f-48a1-4078-ac07-1d64bd0de5c7"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/flash-Btsl3USC.png",
+      "stationName": "Flash",
+      "streamURL": "https://audio.gtaradio.net/vc/flash",
+      "uuid": "3ae18b50-b9db-4f5c-81ec-29bfaa653b78"
+    },
+    {
+      "iconURL": "https://gtaradio.net/build/games/assets/wave-BaWz3UDq.png",
+      "stationName": "Wave",
+      "streamURL": "https://audio.gtaradio.net/vc/wave",
+      "uuid": "9c988b97-024d-475e-8ddf-c5765d141862"
+    },
+    {
+      "iconURL": "https://antenneoesterreich.oe24.at/apple-touch-icon.png",
+      "stationName": "Antenne Österreich",
+      "streamURL": "https://frontend.streamonkey.net/antoesterreich-live",
+      "uuid": "42eb23b8-83ac-4a56-accb-1f59a399c649"
+    },
+    {
+      "iconURL": "https://radiom.ba/wp-content/uploads/2021/06/Radio-M-rotacija.gif",
+      "stationName": "Radio M",
+      "streamURL": "http://www.team-data.ba:8030/stream/",
+      "uuid": "0e76d81c-f6fd-4747-ad44-c4dc989bbab9"
+    },
+    {
+      "iconURL": "https://tubestatic.orf.at/mojo/1_3/storyserver//tube/fm4/images/touch-icon-iphone-retina.png",
+      "stationName": "FM4 | ORF",
+      "streamURL": "https://orf-live.ors-shoutcast.at/fm4-q1a",
+      "uuid": "736cd54a-c2e4-49c2-b013-39e28ee05623"
+    },
+    {
+      "iconURL": "https://mangoradio.de/wp-content/uploads/cropped-Logo-192x192.webp",
+      "stationName": "MANGORADIO",
+      "streamURL": "https://mangoradio.stream.laut.fm/mangoradio",
+      "uuid": "3178569e-b530-49ea-814f-30eb09eb94aa"
+    },
+    {
+      "iconURL": "https://icecast.walmradio.com:8443/christmas.png",
+      "stationName": "Christmas Vinyl HD",
+      "streamURL": "https://icecast.walmradio.com:8443/christmas",
+      "uuid": "90a0e451-24f1-4a3d-b09b-d8717ade348b"
+    },
+    {
+      "iconURL": "https://radioparadise.com/apple-touch-icon.png",
+      "stationName": "Radio Paradise Main Mix (EU) 320k AAC",
+      "streamURL": "http://stream-uk1.radioparadise.com/aac-320",
+      "uuid": "cb441b69-756b-45dc-81b7-e14ee17cf61a"
+    },
+    {
+      "iconURL": "https://dancewave.online/dw_logo.png",
+      "stationName": "Dance Wave!",
+      "streamURL": "https://dancewave.online/dance.mp3",
+      "uuid": "7b4f6aff-b6ef-42a2-9dc8-29b127b9caca"
+    }
+  ]
+}

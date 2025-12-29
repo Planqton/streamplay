@@ -4,6 +4,33 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <include layout="@layout/topbar" />
+
+    <!-- Listenname mit Bearbeiten-Button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingVertical="8dp">
+
+        <TextView
+            android:id="@+id/list_name_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:text="@string/default_list_name" />
+
+        <ImageButton
+            android:id="@+id/button_edit_list_name"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_edit"
+            android:contentDescription="@string/edit_list_name" />
+    </LinearLayout>
+
     <Button
         android:id="@+id/buttonAddStation"
         android:layout_width="wrap_content"
@@ -15,9 +42,39 @@
         android:layout_height="wrap_content"
         android:text="Import Stations" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewStations"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewStations"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <!-- Empty State: Wird angezeigt wenn Liste leer ist -->
+        <LinearLayout
+            android:id="@+id/empty_state_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fab_add_station"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_add"
+                android:contentDescription="@string/add_station" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/empty_list_hint"
+                android:textAppearance="?attr/textAppearanceBody1"
+                android:gravity="center" />
+        </LinearLayout>
+    </FrameLayout>
 </LinearLayout>

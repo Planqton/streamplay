@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import at.plankt0n.streamplay.helper.CrashHandler
+import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.StreamplayApiHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -79,6 +80,35 @@ class StreamPlayApplication : Application() {
             }
         } catch (e: ClassCastException) {
             // Schon ein Int - keine Migration nötig
+        }
+
+        // WICHTIG: Migriere selected_list von String zu Int BEVOR andere Migrationen laufen
+        try {
+            val stringValue = prefs.getString(Keys.KEY_SELECTED_LIST, null)
+            if (stringValue != null) {
+                // Alte String-Version gefunden, konvertiere zu Index 0 (sicher)
+                prefs.edit()
+                    .remove(Keys.KEY_SELECTED_LIST)
+                    .putInt(Keys.KEY_SELECTED_LIST, 0)
+                    .commit()
+                Log.d("StreamPlayApplication", "Migriert selected_list von String '$stringValue' zu Int: 0")
+            }
+        } catch (e: ClassCastException) {
+            // Schon ein Int - keine Migration nötig
+        }
+
+        // Migriere Stationsliste zu Multi-Listen-Struktur
+        if (PreferencesHelper.migrateToMultiList(this)) {
+            Log.d("StreamPlayApplication", "Migriert zu Multi-Listen-Struktur")
+        }
+
+        // Bereinige korrupte 'lists' und 'stations' Keys die fälschlicherweise als String in settings gespeichert wurden
+        if (prefs.contains("lists") || prefs.contains("stations")) {
+            prefs.edit()
+                .remove("lists")
+                .remove("stations")
+                .apply()
+            Log.d("StreamPlayApplication", "Korrupte 'lists'/'stations' Keys aus Settings entfernt")
         }
     }
 }
