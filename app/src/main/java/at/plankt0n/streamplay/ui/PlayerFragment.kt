@@ -48,6 +48,7 @@ import at.plankt0n.streamplay.helper.StreamRecordHelper
 import at.plankt0n.streamplay.view.VisualizerView
 import at.plankt0n.streamplay.viewmodel.UITrackViewModel
 import at.plankt0n.streamplay.viewmodel.UITrackInfo
+import at.plankt0n.streamplay.viewmodel.UITrackRepository
 import at.plankt0n.streamplay.data.MetaLogEntry
 import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.ScreenOrientationMode
@@ -475,6 +476,9 @@ class PlayerFragment : Fragment() {
                 .show()
         }
 
+        // Long press (5 seconds) for debug info in developer mode
+        setupSpotifyDebugLongPress(buttonSpotify)
+
         buttonShare.setOnClickListener {
             val trackInfo = spotifyTrackViewModel.trackInfo.value
             val spotifyUrl = trackInfo?.spotifyUrl
@@ -652,6 +656,9 @@ class PlayerFragment : Fragment() {
                 .setNegativeButton("Abbrechen", null)
                 .show()
         }
+
+        // Long press (5 seconds) for debug info in developer mode
+        setupSpotifyDebugLongPress(buttonSpotify)
 
         // Share-Button
         buttonShare.setOnClickListener {
@@ -1332,6 +1339,8 @@ class PlayerFragment : Fragment() {
             volumeDismissRunnable = null
             recordHandler?.removeCallbacksAndMessages(null)
             recordHandler = null
+            spotifyDebugHandler?.removeCallbacksAndMessages(null)
+            spotifyDebugHandler = null
             recordStartRunnable = null
             // Clear runnable references to prevent memory leaks
             countdownRunnable = null
@@ -1699,6 +1708,88 @@ class PlayerFragment : Fragment() {
             // Farbe zurücksetzen (falls von Recording kommend)
             lastOverlayForeground?.let { buttonRecord.setColorFilter(it) }
         }
+    }
+
+    private var spotifyDebugHandler: Handler? = null
+    private var spotifyDebugRunnable: Runnable? = null
+    private val SPOTIFY_DEBUG_HOLD_MS = 5000L
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupSpotifyDebugLongPress(button: ImageButton) {
+        button.setOnTouchListener { _, event ->
+            val isDevMode = prefs.getBoolean(Keys.PREF_DEV_MENU_ENABLED, false)
+            if (!isDevMode) {
+                // Dev mode not enabled - don't consume touch, let click listener handle it
+                return@setOnTouchListener false
+            }
+
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    spotifyDebugHandler?.removeCallbacksAndMessages(null)
+                    spotifyDebugHandler = Handler(Looper.getMainLooper())
+                    spotifyDebugRunnable = Runnable {
+                        showMetadataDebugDialog()
+                    }
+                    spotifyDebugHandler?.postDelayed(spotifyDebugRunnable!!, SPOTIFY_DEBUG_HOLD_MS)
+                    false // Don't consume - allow click to work
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    spotifyDebugRunnable?.let { spotifyDebugHandler?.removeCallbacks(it) }
+                    false // Don't consume - allow click to work
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun showMetadataDebugDialog() {
+        if (!isAdded || context == null) return
+
+        val debugInfo = UITrackRepository.debugInfo
+        val trackInfo = spotifyTrackViewModel.trackInfo.value
+        val controller = mediaServiceController.mediaController
+
+        val stationName = controller?.currentMediaItem?.mediaMetadata?.extras?.getString("EXTRA_STATION_NAME") ?: "N/A"
+        val streamUrl = controller?.currentMediaItem?.localConfiguration?.uri?.toString() ?: "N/A"
+
+        val debugMessage = buildString {
+            appendLine("=== RAW ICY METADATA ===")
+            appendLine("Raw Title: ${debugInfo.rawTitle.ifEmpty { "(empty)" }}")
+            appendLine("Raw Artist: ${debugInfo.rawArtist.ifEmpty { "(empty)" }}")
+            appendLine()
+            appendLine("=== PROCESSED ===")
+            appendLine("Processed Title: ${debugInfo.processedTitle}")
+            appendLine("Processed Artist: ${debugInfo.processedArtist}")
+            appendLine()
+            appendLine("=== SPOTIFY ===")
+            appendLine("Spotify Found: ${debugInfo.spotifyFound}")
+            if (trackInfo != null) {
+                appendLine("Track Name: ${trackInfo.trackName}")
+                appendLine("Artist Name: ${trackInfo.artistName}")
+                appendLine("Album: ${trackInfo.albumName}")
+                appendLine("Genre: ${trackInfo.genre}")
+                appendLine("Spotify URL: ${trackInfo.spotifyUrl.take(50)}...")
+                appendLine("Cover URL: ${trackInfo.bestCoverUrl?.take(50) ?: "N/A"}...")
+            }
+            appendLine()
+            appendLine("=== STATION ===")
+            appendLine("Station: $stationName")
+            appendLine("Stream URL: ${streamUrl.take(60)}...")
+            appendLine()
+            appendLine("Timestamp: ${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(debugInfo.timestamp))}")
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("🔧 Metadata Debug Info")
+            .setMessage(debugMessage)
+            .setPositiveButton("OK", null)
+            .setNeutralButton("Copy") { _, _ ->
+                val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val clip = android.content.ClipData.newPlainText("Debug Info", debugMessage)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(requireContext(), "Debug info copied to clipboard", Toast.LENGTH_SHORT).show()
+            }
+            .show()
     }
 
 }

@@ -16,7 +16,10 @@ data class UITrackInfo(
     val popularity: Int = 0,
     val spotifyUrl: String = "",
     val previewUrl: String? = null,
-    val genre: String = ""
+    val genre: String = "",
+    // Raw ICY metadata for debugging
+    val rawIcyTitle: String = "",
+    val rawIcyArtist: String = ""
 )
 
 /**
@@ -24,6 +27,18 @@ data class UITrackInfo(
  * This object can be accessed from anywhere in the app, including the
  * [StreamingService]. The [UITrackViewModel] simply exposes the data held here.
  */
+/**
+ * Debug information for raw ICY metadata
+ */
+data class RawIcyDebugInfo(
+    val rawTitle: String = "",
+    val rawArtist: String = "",
+    val processedTitle: String = "",
+    val processedArtist: String = "",
+    val spotifyFound: Boolean = false,
+    val timestamp: Long = 0L
+)
+
 object UITrackRepository {
     private val _trackInfo = MutableLiveData<UITrackInfo?>()
     val trackInfo: LiveData<UITrackInfo?> get() = _trackInfo
@@ -31,6 +46,22 @@ object UITrackRepository {
     private val lock = Any()
     @Volatile
     private var lastTrackInfo: UITrackInfo? = null
+
+    // Debug info for raw ICY metadata
+    @Volatile
+    var debugInfo: RawIcyDebugInfo = RawIcyDebugInfo()
+        private set
+
+    fun updateDebugInfo(rawTitle: String, rawArtist: String, processedTitle: String, processedArtist: String, spotifyFound: Boolean) {
+        debugInfo = RawIcyDebugInfo(
+            rawTitle = rawTitle,
+            rawArtist = rawArtist,
+            processedTitle = processedTitle,
+            processedArtist = processedArtist,
+            spotifyFound = spotifyFound,
+            timestamp = System.currentTimeMillis()
+        )
+    }
 
     // Atomic request ID tracking for race condition prevention
     private val expectedRequestId = AtomicReference<String?>(null)

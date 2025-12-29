@@ -1278,6 +1278,15 @@ class StreamingService : MediaLibraryService() {
         }
 
         if (artist.isNotEmpty() && title.isNotEmpty()) {
+            // Store debug info for developer mode (initial state before Spotify)
+            UITrackRepository.updateDebugInfo(
+                rawTitle = rawTitle,
+                rawArtist = rawArtist,
+                processedTitle = title,
+                processedArtist = artist,
+                spotifyFound = false
+            )
+
             // Use cached prefs instead of getting new instance
             val useSpotify = prefs.getBoolean(Keys.PREF_USE_SPOTIFY_META, false)
             val hasKeys = !prefs.getString(Keys.PREF_SPOTIFY_CLIENT_ID, "").isNullOrBlank() &&
@@ -1305,6 +1314,15 @@ class StreamingService : MediaLibraryService() {
                             Log.d(
                                 "SpotifyMetaReader",
                                 "✅ Spotify-Infos gefunden: ${extendedInfo.trackName}, spotifyUrl=${extendedInfo.spotifyUrl}"
+                            )
+
+                            // Update debug info with Spotify result
+                            UITrackRepository.updateDebugInfo(
+                                rawTitle = rawTitle,
+                                rawArtist = rawArtist,
+                                processedTitle = extendedInfo.trackName,
+                                processedArtist = extendedInfo.artistName,
+                                spotifyFound = true
                             )
 
                             // Use request-validated update
