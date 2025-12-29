@@ -42,7 +42,62 @@ class StationListAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_station_editable, parent, false)
-        return ViewHolder(view)
+        val holder = ViewHolder(view)
+
+        // Click-Listener einmal setzen statt bei jedem Bind (Memory Leak Fix)
+        holder.playButton.setOnClickListener {
+            val pos = holder.bindingAdapterPosition
+            if (pos != RecyclerView.NO_POSITION) onPlayClick(pos)
+        }
+        holder.playButton.setOnLongClickListener {
+            val pos = holder.bindingAdapterPosition
+            if (pos != RecyclerView.NO_POSITION && pos < stationList.size) {
+                onPinToHome(stationList[pos])
+            }
+            true
+        }
+        holder.itemView.setOnLongClickListener {
+            val pos = holder.bindingAdapterPosition
+            if (pos != RecyclerView.NO_POSITION) {
+                val wasEditing = (pos == editingPosition)
+                val oldEditingPos = editingPosition
+                editingPosition = if (wasEditing) -1 else pos
+                // Granulare Updates statt notifyDataSetChanged
+                if (oldEditingPos >= 0) notifyItemChanged(oldEditingPos)
+                if (editingPosition >= 0) notifyItemChanged(editingPosition)
+            }
+            true
+        }
+        holder.dragHandle.setOnTouchListener { _, event ->
+            if (event.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
+                startDrag(holder)
+            }
+            false
+        }
+        holder.buttonSave.setOnClickListener {
+            val pos = holder.bindingAdapterPosition
+            if (pos != RecyclerView.NO_POSITION && pos < stationList.size) {
+                val updatedStation = stationList[pos].copy(
+                    stationName = holder.editName.text.toString(),
+                    streamURL = holder.editUrl.text.toString(),
+                    iconURL = holder.editIcon.text.toString()
+                )
+                stationList[pos] = updatedStation
+                PreferencesHelper.saveStations(holder.itemView.context, stationList)
+                editingPosition = -1
+                notifyItemChanged(pos)
+                onDataChanged()
+            }
+        }
+        holder.buttonCancel.setOnClickListener {
+            val pos = holder.bindingAdapterPosition
+            if (pos != RecyclerView.NO_POSITION) {
+                editingPosition = -1
+                notifyItemChanged(pos)
+            }
+        }
+
+        return holder
     }
 
     override fun getItemCount(): Int = stationList.size
@@ -67,11 +122,6 @@ class StationListAdapter(
         holder.editLayout.visibility = if (isEditing) View.VISIBLE else View.GONE
 
         holder.playButton.visibility = if (isEditing) View.GONE else View.VISIBLE
-        holder.playButton.setOnClickListener { onPlayClick(position) }
-        holder.playButton.setOnLongClickListener {
-            onPinToHome(station)
-            true
-        }
 
         Glide.with(holder.playButton.context)
             .load(station.iconURL)
@@ -85,40 +135,6 @@ class StationListAdapter(
             holder.itemView.setBackgroundColor(context.getColor(R.color.highlight))
         } else {
             holder.itemView.setBackgroundColor(context.getColor(android.R.color.transparent))
-        }
-
-        // Langes Drücken: In den Bearbeitungsmodus wechseln
-        holder.itemView.setOnLongClickListener {
-            editingPosition = if (isEditing) -1 else position
-            notifyDataSetChanged()
-            true
-        }
-
-        holder.dragHandle.setOnTouchListener { _, event ->
-            if (event.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
-                startDrag(holder)
-            }
-            false
-        }
-
-        // Speichern
-        holder.buttonSave.setOnClickListener {
-            val updatedStation = station.copy(
-                stationName = holder.editName.text.toString(),
-                streamURL = holder.editUrl.text.toString(),
-                iconURL = holder.editIcon.text.toString()
-            )
-            stationList[position] = updatedStation
-            PreferencesHelper.saveStations(holder.itemView.context, stationList)
-            editingPosition = -1
-            notifyDataSetChanged()
-            onDataChanged()
-        }
-
-        // Abbrechen
-        holder.buttonCancel.setOnClickListener {
-            editingPosition = -1
-            notifyDataSetChanged()
         }
     }
 

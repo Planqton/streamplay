@@ -50,11 +50,14 @@ import androidx.media3.session.LibraryResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
+import androidx.media3.common.C
 import android.content.ContentResolver
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.data.CoverMode
 import at.plankt0n.streamplay.helper.BitmapOverlayHelper
 import at.plankt0n.streamplay.helper.EqualizerHelper
+import at.plankt0n.streamplay.helper.PackageValidator
 import at.plankt0n.streamplay.helper.PreferencesHelper
 import at.plankt0n.streamplay.helper.SpotifyMetaReader
 import at.plankt0n.streamplay.helper.MetaLogHelper
@@ -505,10 +508,143 @@ class StreamingService : MediaLibraryService() {
             return Futures.immediateFuture(resolvedItems)
         }
 
+        // Voice Search Support: "Hey Google, spiele [Sender] auf StreamPlay"
+        override fun onSearch(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            query: String,
+            params: MediaLibraryService.LibraryParams?
+        ): ListenableFuture<LibraryResult<Void>> {
+            Log.d("StreamingService", "🔍 Voice Search: '$query'")
+
+            // Suche in allen Sender-Quellen
+            val stations = PreferencesHelper.getStations(this@StreamingService)
+            val forYouItems = PreferencesHelper.getDevForYouItems(this@StreamingService)
+            val whatToListenItems = PreferencesHelper.getDevWhatToListenItems(this@StreamingService)
+            val allStations = stations + forYouItems + whatToListenItems
+
+            // Fuzzy-Suche: Sender deren Name den Query enthält (case-insensitive)
+            val matchingStations = allStations.filter { station ->
+                station.stationName.contains(query, ignoreCase = true)
+            }
+
+            val itemCount = matchingStations.size
+            Log.d("StreamingService", "🔍 Gefunden: $itemCount Sender für '$query'")
+
+            // Suchergebnisse werden über notifySearchResultChanged mitgeteilt
+            session.notifySearchResultChanged(browser, query, itemCount, params)
+
+            return Futures.immediateFuture(LibraryResult.ofVoid())
+        }
+
+        // Liefert die Suchergebnisse wenn Android Auto sie anfordert
+        override fun onGetSearchResult(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            query: String,
+            page: Int,
+            pageSize: Int,
+            params: MediaLibraryService.LibraryParams?
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
+            Log.d("StreamingService", "🔍 getSearchResult: '$query' (page=$page, size=$pageSize)")
+
+            // Suche in allen Sender-Quellen
+            val stations = PreferencesHelper.getStations(this@StreamingService)
+            val forYouItems = PreferencesHelper.getDevForYouItems(this@StreamingService)
+            val whatToListenItems = PreferencesHelper.getDevWhatToListenItems(this@StreamingService)
+            val allStations = stations + forYouItems + whatToListenItems
+
+            // Fuzzy-Suche: Sender deren Name den Query enthält (case-insensitive)
+            val matchingStations = allStations.filter { station ->
+                station.stationName.contains(query, ignoreCase = true)
+            }
+
+            // Pagination anwenden
+            val startIndex = page * pageSize
+            val endIndex = minOf(startIndex + pageSize, matchingStations.size)
+            val pagedResults = if (startIndex < matchingStations.size) {
+                matchingStations.subList(startIndex, endIndex)
+            } else {
+                emptyList()
+            }
+
+            val mediaItems = pagedResults.map { station ->
+                createPlayableMediaItem(station)
+            }
+
+            return Futures.immediateFuture(LibraryResult.ofItemList(mediaItems, params))
+        }
+
+        // Playback Resumption: Automatisches Fortsetzen beim Start von Android Auto
+        override fun onPlaybackResumption(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo
+        ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+            Log.d("StreamingService", "🔄 Playback Resumption angefordert")
+
+            val future = SettableFuture.create<MediaSession.MediaItemsWithStartPosition>()
+
+            serviceScope.launch {
+                val stations = PreferencesHelper.getStations(this@StreamingService)
+                val lastIndex = PreferencesHelper.getLastPlayedStreamIndex(this@StreamingService)
+
+                if (stations.isNotEmpty() && lastIndex in stations.indices) {
+                    val station = stations[lastIndex]
+                    val mediaItem = createPlayableMediaItem(station)
+                    Log.d("StreamingService", "🔄 Resuming: ${station.stationName}")
+
+                    future.set(
+                        MediaSession.MediaItemsWithStartPosition(
+                            listOf(mediaItem),
+                            0,
+                            C.TIME_UNSET
+                        )
+                    )
+                } else if (stations.isNotEmpty()) {
+                    // Fallback: Erster Sender
+                    val station = stations[0]
+                    val mediaItem = createPlayableMediaItem(station)
+                    Log.d("StreamingService", "🔄 Resuming (fallback): ${station.stationName}")
+
+                    future.set(
+                        MediaSession.MediaItemsWithStartPosition(
+                            listOf(mediaItem),
+                            0,
+                            C.TIME_UNSET
+                        )
+                    )
+                } else {
+                    // Keine Sender vorhanden
+                    Log.d("StreamingService", "🔄 Keine Sender für Resumption vorhanden")
+                    future.set(
+                        MediaSession.MediaItemsWithStartPosition(
+                            emptyList(),
+                            C.INDEX_UNSET,
+                            C.TIME_UNSET
+                        )
+                    )
+                }
+            }
+
+            return future
+        }
+
         override fun onConnect(
             session: MediaSession,
             controller: MediaSession.ControllerInfo
         ): MediaSession.ConnectionResult {
+            // Security: Prüfen ob der Caller berechtigt ist
+            val isAllowed = PackageValidator.isCallerAllowed(
+                this@StreamingService,
+                controller.packageName,
+                controller.uid
+            )
+
+            if (!isAllowed) {
+                Log.w("StreamingService", "❌ Nicht autorisierter Caller abgelehnt: ${controller.packageName}")
+                return MediaSession.ConnectionResult.reject()
+            }
+
             // Prüfen ob Android Auto verbunden ist
             if (isAndroidAutoController(controller)) {
                 Log.d("StreamingService", "🚗 Android Auto verbunden: ${controller.packageName}")

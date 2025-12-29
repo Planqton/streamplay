@@ -30,7 +30,17 @@ class DiscoverAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_station_tile, parent, false)
-        return ViewHolder(view)
+        val holder = ViewHolder(view)
+
+        // Click-Listener einmal setzen statt bei jedem Bind (Memory Leak Fix)
+        holder.itemView.setOnClickListener {
+            val pos = holder.bindingAdapterPosition
+            if (pos != RecyclerView.NO_POSITION && pos < items.size) {
+                onClick(items[pos])
+            }
+        }
+
+        return holder
     }
 
     override fun getItemCount(): Int = items.size
@@ -88,7 +98,6 @@ class DiscoverAdapter(
             holder.divider.visibility = View.GONE
         }
 
-        holder.itemView.setOnClickListener { onClick(item) }
     }
 
     fun updateItems(newItems: List<RadioBrowserResult>) {

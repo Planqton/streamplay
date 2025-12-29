@@ -25,12 +25,25 @@ class SearchResultAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_search_result, parent, false)
-        return ViewHolder(view)
+        val holder = ViewHolder(view)
+
+        // Click-Listener einmal setzen statt bei jedem Bind (Memory Leak Fix)
+        holder.itemView.setOnClickListener {
+            val pos = holder.bindingAdapterPosition
+            if (pos != RecyclerView.NO_POSITION && pos < searchResults.size) {
+                onClick(searchResults[pos])
+            }
+        }
+
+        return holder
     }
 
     override fun getItemCount(): Int = searchResults.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        // Bounds-Check hinzugefügt
+        if (position !in searchResults.indices) return
+
         val result = searchResults[position]
         holder.textStationName.text = result.stationName
         holder.textStreamUrl.text = result.streamURL
@@ -39,10 +52,6 @@ class SearchResultAdapter(
             .load(result.iconURL)
             .placeholder(R.drawable.ic_stationcover_placeholder)
             .into(holder.imageLogo)
-
-        holder.itemView.setOnClickListener {
-            onClick(result)
-        }
     }
 }
     

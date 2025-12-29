@@ -1,10 +1,19 @@
 package at.plankt0n.streamplay.helper
 
 import at.plankt0n.streamplay.view.VisualizerView
+import java.util.concurrent.atomic.AtomicBoolean
 
 object StateHelper {
-    var isPlaylistChangePending: Boolean = false
-    var hasAutoOpenedDiscover: Boolean = false
+    // Thread-safe mit AtomicBoolean (Race Condition Fix)
+    private val _isPlaylistChangePending = AtomicBoolean(false)
+    var isPlaylistChangePending: Boolean
+        get() = _isPlaylistChangePending.get()
+        set(value) = _isPlaylistChangePending.set(value)
+
+    private val _hasAutoOpenedDiscover = AtomicBoolean(false)
+    var hasAutoOpenedDiscover: Boolean
+        get() = _hasAutoOpenedDiscover.get()
+        set(value) = _hasAutoOpenedDiscover.set(value)
     var audioSessionId: Int = 0
     var visualizerStyle: VisualizerView.Style = VisualizerView.Style.BARS
 

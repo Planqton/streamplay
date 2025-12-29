@@ -503,14 +503,18 @@ object StreamplayApiHelper {
                     PreferencesHelper.saveStations(context, stations, syncToApi = false)
                 }
                 StateHelper.isPlaylistChangePending = true
-                val playlistIntent = Intent(context, StreamingService::class.java).apply {
-                    action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
-                }
-                context.startService(playlistIntent)
 
-                // Notify UI about station updates
-                val updateIntent = Intent(Keys.ACTION_STATIONS_UPDATED)
-                LocalBroadcastManager.getInstance(context).sendBroadcast(updateIntent)
+                // ANR Fix: UI-Operationen müssen auf Main-Thread laufen
+                withContext(Dispatchers.Main) {
+                    val playlistIntent = Intent(context, StreamingService::class.java).apply {
+                        action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
+                    }
+                    context.startService(playlistIntent)
+
+                    // Notify UI about station updates
+                    val updateIntent = Intent(Keys.ACTION_STATIONS_UPDATED)
+                    LocalBroadcastManager.getInstance(context).sendBroadcast(updateIntent)
+                }
 
                 // Apply settings (excluding API credentials)
                 if (settings.isNotEmpty()) {

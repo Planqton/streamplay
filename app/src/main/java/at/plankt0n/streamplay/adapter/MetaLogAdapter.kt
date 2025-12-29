@@ -70,7 +70,18 @@ class MetaLogAdapter(
             else -> {
                 val view = LayoutInflater.from(parent.context)
                     .inflate(R.layout.item_meta_log, parent, false)
-                LogItemViewHolder(view)
+                val holder = LogItemViewHolder(view)
+                // Click-Listener einmal setzen statt bei jedem Bind (Memory Leak Fix)
+                holder.spotifyButton.setOnClickListener {
+                    val pos = holder.bindingAdapterPosition
+                    if (pos != RecyclerView.NO_POSITION && pos < displayItems.size) {
+                        val item = displayItems[pos]
+                        if (item is DisplayItem.LogItem && !item.entry.url.isNullOrBlank()) {
+                            onUrlClick(item.entry.url)
+                        }
+                    }
+                }
+                holder
             }
         }
     }
@@ -119,7 +130,7 @@ class MetaLogAdapter(
         private val stationText: TextView = view.findViewById(R.id.logStation)
         private val timeText: TextView = view.findViewById(R.id.logTime)
         private val savedIcon: ImageView = view.findViewById(R.id.logSavedIcon)
-        private val spotifyButton: ImageButton = view.findViewById(R.id.logSpotifyButton)
+        val spotifyButton: ImageButton = view.findViewById(R.id.logSpotifyButton)
 
         fun bind(entry: MetaLogEntry) {
             titleText.text = entry.title.ifBlank { itemView.context.getString(R.string.unknown_title) }
@@ -142,13 +153,8 @@ class MetaLogAdapter(
                 coverImage.setImageResource(R.drawable.ic_placeholder_logo)
             }
 
-            // Spotify button
-            if (!entry.url.isNullOrBlank()) {
-                spotifyButton.visibility = View.VISIBLE
-                spotifyButton.setOnClickListener { onUrlClick(entry.url) }
-            } else {
-                spotifyButton.visibility = View.GONE
-            }
+            // Spotify button visibility (Listener ist schon in onCreateViewHolder gesetzt)
+            spotifyButton.visibility = if (!entry.url.isNullOrBlank()) View.VISIBLE else View.GONE
         }
     }
 }
