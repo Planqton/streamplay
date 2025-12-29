@@ -67,8 +67,6 @@ import android.widget.Toast
 import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.widget.AdapterView
-import android.content.res.Configuration
-import androidx.constraintlayout.widget.Guideline
 
 @OptIn(UnstableApi::class)
 class PlayerFragment : Fragment() {
@@ -511,9 +509,6 @@ class PlayerFragment : Fragment() {
         buttonMute.setOnLongClickListener { showVolumePopup(it); true }
         updateManualLogButtonState(spotifyTrackViewModel.trackInfo.value)
         initialized = true
-
-        // Layout für aktuelle Orientierung anpassen
-        applyOrientationLayout(resources.configuration.orientation)
     }
 
     override fun onStart() {
@@ -531,47 +526,6 @@ class PlayerFragment : Fragment() {
         }
         // Cover aktualisieren wenn man aus Settings zurückkommt
         refreshCurrentCover()
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        if (!initialized) return
-        applyOrientationLayout(newConfig.orientation)
-    }
-
-    /**
-     * Passt das Layout programmatisch an die aktuelle Orientierung an.
-     * Im Portrait-Modus nimmt der ViewPager die volle Breite ein (Overlay überlagert).
-     * Im Landscape-Modus wird der ViewPager auf die linke Hälfte beschränkt und das Overlay auf die rechte.
-     */
-    private fun applyOrientationLayout(orientation: Int) {
-        val guideline = view?.findViewById<Guideline>(R.id.guideline_viewpager_end) ?: return
-        val overlay = view?.findViewById<View>(R.id.player_ui_overlay) ?: return
-        val constraintLayout = view as? androidx.constraintlayout.widget.ConstraintLayout ?: return
-
-        val guidelineParams = guideline.layoutParams as? androidx.constraintlayout.widget.ConstraintLayout.LayoutParams ?: return
-        val overlayParams = overlay.layoutParams as? androidx.constraintlayout.widget.ConstraintLayout.LayoutParams ?: return
-
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            // Landscape: ViewPager nimmt linke Hälfte, UI-Overlay rechte Hälfte
-            guidelineParams.guidePercent = 0.5f
-
-            // Overlay nur auf rechter Seite (von Guideline bis Ende)
-            overlayParams.startToStart = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.UNSET
-            overlayParams.startToEnd = R.id.guideline_viewpager_end
-            overlayParams.endToEnd = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
-        } else {
-            // Portrait: ViewPager Vollbild, UI-Overlay überlagert komplett
-            guidelineParams.guidePercent = 1.0f
-
-            // Overlay über volle Breite
-            overlayParams.startToEnd = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.UNSET
-            overlayParams.startToStart = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
-            overlayParams.endToEnd = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
-        }
-
-        guideline.layoutParams = guidelineParams
-        overlay.layoutParams = overlayParams
     }
 
     private fun observeSpotifyTrackInfo() {
