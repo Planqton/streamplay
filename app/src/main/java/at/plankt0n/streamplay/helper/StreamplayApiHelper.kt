@@ -483,9 +483,10 @@ object StreamplayApiHelper {
 
                 // Apply lists or stations (don't sync back to API to avoid loop)
                 if (parsedLists != null && parsedLists.isNotEmpty()) {
-                    // New format: save all lists
-                    Log.d("API SYNC", "Saving ${parsedLists.size} lists to preferences")
-                    PreferencesHelper.saveStationLists(context, parsedLists, syncToApi = false)
+                    // New format: save all lists (filter out empty lists)
+                    val nonEmptyLists = parsedLists.filterValues { it.isNotEmpty() }
+                    Log.d("API SYNC", "Saving ${nonEmptyLists.size} non-empty lists to preferences (filtered from ${parsedLists.size})")
+                    PreferencesHelper.saveStationLists(context, nonEmptyLists, syncToApi = false)
 
                     // Apply selected list index from settings
                     val selectedIndex = try {
@@ -493,7 +494,7 @@ object StreamplayApiHelper {
                     } catch (e: Exception) {
                         0
                     }
-                    val maxIndex = parsedLists.size - 1
+                    val maxIndex = nonEmptyLists.size - 1
                     val safeIndex = selectedIndex.coerceIn(0, maxIndex.coerceAtLeast(0))
                     PreferencesHelper.setSelectedListIndex(context, safeIndex)
                     Log.d("API SYNC", "Set selected list index to: $safeIndex")
@@ -626,9 +627,10 @@ object StreamplayApiHelper {
             connection.connectTimeout = 10000
             connection.readTimeout = 10000
 
-            // Get stations (current list) and all lists
+            // Get stations (current list) and all lists (filter out empty lists)
             val stations = PreferencesHelper.getStations(context)
             val allLists = PreferencesHelper.getStationLists(context)
+                .filterValues { it.isNotEmpty() }  // Leere Listen ignorieren
             val selectedListIndex = PreferencesHelper.getSelectedListIndex(context)
 
             // Get settings (excluding API credentials and stations - stations are pushed separately)

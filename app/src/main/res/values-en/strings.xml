@@ -324,10 +324,19 @@
     <string name="recording_no_stream">No stream to record</string>
 
     <!-- List management -->
-    <string name="default_list_name">Default</string>
+    <string name="default_list_name">My Stations</string>
     <string name="edit_list_name">Rename list</string>
     <string name="rename_list_title">Rename list</string>
     <string name="rename_list_hint">New name</string>
     <string name="empty_list_hint">List is empty.\nTap to add stations.</string>
     <string name="add_station">Add station</string>
+    <string name="create_new_list">Create new list</string>
+    <string name="delete_list">Delete list</string>
+    <string name="delete_list_title">Delete list?</string>
+    <string name="delete_list_message">Do you really want to delete the list \"%1$s\"? All stations in this list will be removed.</string>
+    <string name="delete_list_success">List deleted</string>
+    <string name="delete_list_last_error">Cannot delete the last list</string>
+    <string name="cannot_delete_last_station">Cannot delete the last station</string>
+    <string name="new_list_name">New List</string>
+    <string name="new_list_hint">Name of the new list</string>
 </resources>

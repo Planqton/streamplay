@@ -118,6 +118,60 @@ object PreferencesHelper {
     }
 
     /**
+     * Entfernt alle leeren Stationslisten (außer es ist die letzte)
+     * Die letzte Liste wird NICHT gelöscht, auch wenn sie leer ist!
+     * @return true wenn Listen entfernt wurden
+     */
+    fun cleanupEmptyLists(context: Context): Boolean {
+        val lists = getStationLists(context)
+
+        // Keine Listen vorhanden - default erstellen mit Default-Station
+        if (lists.isEmpty()) {
+            val defaultStation = createDefaultStation()
+            val defaultLists = mutableMapOf<String, MutableList<StationItem>>()
+            defaultLists[Keys.DEFAULT_LIST_NAME] = mutableListOf(defaultStation)
+            val json = Gson().toJson(defaultLists)
+            getPrefs(context).edit().putString(Keys.KEY_STATION_LISTS, json).apply()
+            android.util.Log.d("PreferencesHelper", "cleanupEmptyLists: Keine Listen vorhanden, '${Keys.DEFAULT_LIST_NAME}' mit Default-Station erstellt")
+            return true
+        }
+
+        // Nur eine Liste - nicht löschen (auch wenn leer)
+        if (lists.size == 1) {
+            return false
+        }
+
+        // Mehrere Listen - leere entfernen, aber mindestens eine behalten
+        val nonEmptyLists = lists.filterValues { it.isNotEmpty() }.toMutableMap()
+
+        // Wenn alle Listen leer sind, die erste behalten und Default-Station hinzufügen
+        if (nonEmptyLists.isEmpty()) {
+            val firstListName = lists.keys.first()
+            nonEmptyLists[firstListName] = mutableListOf(createDefaultStation())
+            android.util.Log.d("PreferencesHelper", "cleanupEmptyLists: Alle Listen leer, behalte '$firstListName' mit Default-Station")
+        }
+
+        // Prüfen ob etwas entfernt wurde
+        if (nonEmptyLists.size == lists.size) {
+            return false
+        }
+
+        android.util.Log.d("PreferencesHelper", "cleanupEmptyLists: entfernt ${lists.size - nonEmptyLists.size} leere Listen")
+
+        // Speichern ohne API-Sync (wird separat gemacht)
+        val json = Gson().toJson(nonEmptyLists)
+        getPrefs(context).edit().putString(Keys.KEY_STATION_LISTS, json).apply()
+
+        // Index anpassen falls nötig
+        val currentIndex = getSelectedListIndex(context)
+        if (currentIndex >= nonEmptyLists.size) {
+            setSelectedListIndex(context, 0)
+        }
+
+        return true
+    }
+
+    /**
      * Gibt den Index der aktuell ausgewählten Liste zurück
      */
     fun getSelectedListIndex(context: Context): Int {
@@ -212,6 +266,65 @@ object PreferencesHelper {
     }
 
     /**
+     * Löscht eine Liste
+     * @return true wenn erfolgreich, false wenn Liste nicht gefunden oder letzte Liste
+     */
+    fun deleteList(context: Context, listName: String): Boolean {
+        val lists = getStationLists(context)
+
+        // Mindestens eine Liste muss bleiben
+        if (lists.size <= 1) {
+            return false
+        }
+
+        // Prüfe ob Liste existiert
+        if (!lists.containsKey(listName)) {
+            return false
+        }
+
+        // Liste entfernen
+        lists.remove(listName)
+        saveStationLists(context, lists)
+
+        // Wenn gelöschte Liste die aktuelle war, zur ersten wechseln
+        val currentIndex = getSelectedListIndex(context)
+        val listNames = lists.keys.toList()
+        if (currentIndex >= listNames.size) {
+            setSelectedListIndex(context, 0)
+        }
+
+        android.util.Log.d("PreferencesHelper", "Liste gelöscht: '$listName'")
+        return true
+    }
+
+    /**
+     * Erstellt eine neue leere Liste
+     * @return Name der erstellten Liste oder null wenn Name bereits existiert
+     */
+    fun createNewList(context: Context, listName: String): String? {
+        val trimmedName = listName.trim()
+        if (trimmedName.isEmpty()) return null
+
+        val lists = getStationLists(context)
+
+        // Prüfe ob Name bereits existiert
+        if (lists.containsKey(trimmedName)) {
+            return null
+        }
+
+        // Neue leere Liste erstellen
+        lists[trimmedName] = mutableListOf()
+        saveStationLists(context, lists)
+
+        // Zur neuen Liste wechseln
+        val newIndex = lists.keys.toList().indexOf(trimmedName)
+        setSelectedListIndex(context, newIndex)
+
+        android.util.Log.d("PreferencesHelper", "Neue Liste erstellt: '$trimmedName'")
+        return trimmedName
+    }
+
+    /**
      * Prüft ob Multi-Listen-Struktur bereits existiert
      */
     fun hasMultiListStructure(context: Context): Boolean {
@@ -241,15 +354,21 @@ object PreferencesHelper {
             mutableListOf()
         }
 
-        // Neue Struktur erstellen
+        // Neue Struktur erstellen - falls keine Stationen vorhanden, Default-Station hinzufügen
+        val stationsForList = if (oldStations.isEmpty()) {
+            mutableListOf(createDefaultStation())
+        } else {
+            oldStations
+        }
+
         val newLists = mutableMapOf<String, MutableList<StationItem>>()
-        newLists[Keys.DEFAULT_LIST_NAME] = oldStations
+        newLists[Keys.DEFAULT_LIST_NAME] = stationsForList
 
         // Speichern (ohne API-Sync, da keine echte Änderung)
         saveStationLists(context, newLists, syncToApi = false)
         setSelectedListName(context, Keys.DEFAULT_LIST_NAME)
 
-        android.util.Log.i("PreferencesHelper", "Migration zu Multi-Listen abgeschlossen: ${oldStations.size} Stationen")
+        android.util.Log.i("PreferencesHelper", "Migration zu Multi-Listen abgeschlossen: ${stationsForList.size} Stationen")
         return true
     }
 
@@ -333,5 +452,17 @@ object PreferencesHelper {
                 iconURL = "https://picsum.photos/seed/$uuid/300/300"
             )
         }
+    }
+
+    /**
+     * Erstellt die Default-Station für neue/leere Listen
+     */
+    private fun createDefaultStation(): StationItem {
+        return StationItem(
+            uuid = java.util.UUID.randomUUID().toString(),
+            stationName = "Onlineradio SOFT ROCK",
+            streamURL = "https://stream.0nlineradio.com/soft-rock?ref=radiobrowser",
+            iconURL = "https://i.ibb.co/SJFG3bt/soft-rock.jpg"
+        )
     }
 }

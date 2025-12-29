@@ -64,6 +64,8 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
     private lateinit var fabAddStation: FloatingActionButton
     private lateinit var listNameLabel: TextView
     private lateinit var buttonEditListName: ImageButton
+    private lateinit var buttonDeleteList: ImageButton
+    private lateinit var buttonCreateNewList: View
 
     private val stationsUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -140,9 +142,21 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
         // Listenname initialisieren
         listNameLabel = view.findViewById(R.id.list_name_label)
         buttonEditListName = view.findViewById(R.id.button_edit_list_name)
+        buttonDeleteList = view.findViewById(R.id.button_delete_list)
+        buttonCreateNewList = view.findViewById(R.id.button_create_new_list)
+
         updateListNameLabel()
+
         buttonEditListName.setOnClickListener {
             showRenameListDialog()
+        }
+
+        buttonDeleteList.setOnClickListener {
+            showDeleteListDialog()
+        }
+
+        buttonCreateNewList.setOnClickListener {
+            showCreateNewListDialog()
         }
 
         val simpleCallback = object : ItemTouchHelper.SimpleCallback(
@@ -167,13 +181,33 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
                 refreshPlaylist()
             }
 
+            override fun getSwipeDirs(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder
+            ): Int {
+                // Letzte Station darf nicht gelöscht werden
+                if (stationList.size <= 1) {
+                    return 0
+                }
+                return super.getSwipeDirs(recyclerView, viewHolder)
+            }
+
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.adapterPosition
+
+                // Sicherheitscheck: Letzte Station nicht löschen
+                if (stationList.size <= 1) {
+                    adapter.notifyItemChanged(position)
+                    Toast.makeText(requireContext(), R.string.cannot_delete_last_station, Toast.LENGTH_SHORT).show()
+                    return
+                }
+
                 stationList.removeAt(position)
                 PreferencesHelper.saveStations(requireContext(), stationList)
                 adapter.notifyItemRemoved(position)
                 hasChanges = true
                 refreshPlaylist()
+                updateEmptyState()
             }
 
             override fun onChildDraw(
@@ -452,6 +486,70 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
             .show()
     }
 
+    private fun showDeleteListDialog() {
+        val currentName = PreferencesHelper.getSelectedListName(requireContext())
+        val listCount = PreferencesHelper.getListNames(requireContext()).size
+
+        // Letzte Liste kann nicht gelöscht werden
+        if (listCount <= 1) {
+            Toast.makeText(requireContext(), R.string.delete_list_last_error, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle(R.string.delete_list_title)
+            .setMessage(getString(R.string.delete_list_message, currentName))
+            .setPositiveButton(R.string.ok) { _, _ ->
+                val success = PreferencesHelper.deleteList(requireContext(), currentName)
+                if (success) {
+                    Toast.makeText(requireContext(), R.string.delete_list_success, Toast.LENGTH_SHORT).show()
+                    refreshStationList()
+                    updateListNameLabel()
+                    // Broadcast senden, damit PlayerFragment Dropdown aktualisiert
+                    LocalBroadcastManager.getInstance(requireContext())
+                        .sendBroadcast(Intent(Keys.ACTION_STATIONS_UPDATED))
+                    refreshPlaylist()
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showCreateNewListDialog() {
+        val padding = (16 * resources.displayMetrics.density).toInt()
+        val editText = EditText(requireContext()).apply {
+            hint = getString(R.string.new_list_hint)
+            setSingleLine(true)
+            setPadding(padding, padding, padding, padding)
+        }
+
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle(R.string.create_new_list)
+            .setView(editText)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                val newName = editText.text.toString().trim()
+                if (newName.isNotEmpty()) {
+                    val createdName = PreferencesHelper.createNewList(requireContext(), newName)
+                    if (createdName != null) {
+                        refreshStationList()
+                        updateListNameLabel()
+                        // Broadcast senden, damit PlayerFragment Dropdown aktualisiert
+                        LocalBroadcastManager.getInstance(requireContext())
+                            .sendBroadcast(Intent(Keys.ACTION_STATIONS_UPDATED))
+                        refreshPlaylist()
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Name existiert bereits oder ist ungültig",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
     override fun onResume() {
         super.onResume()
         hasChanges = false
@@ -478,6 +576,13 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
         stationPrefs.unregisterOnSharedPreferenceChangeListener(this)
         backPressedCallback?.remove()
         backPressedCallback = null
+
+        // Leere Listen aufräumen beim Verlassen
+        if (PreferencesHelper.cleanupEmptyLists(requireContext())) {
+            // Broadcast senden, damit PlayerFragment Dropdown aktualisiert
+            LocalBroadcastManager.getInstance(requireContext())
+                .sendBroadcast(Intent(Keys.ACTION_STATIONS_UPDATED))
+        }
 
         parentFragment?.view
             ?.findViewById<ViewPager2>(R.id.main_view_pager)

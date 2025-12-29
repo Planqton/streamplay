@@ -102,6 +102,11 @@ class StreamPlayApplication : Application() {
             Log.d("StreamPlayApplication", "Migriert zu Multi-Listen-Struktur")
         }
 
+        // Leere Stationslisten aufräumen
+        if (PreferencesHelper.cleanupEmptyLists(this)) {
+            Log.d("StreamPlayApplication", "Leere Stationslisten entfernt")
+        }
+
         // Bereinige korrupte 'lists' und 'stations' Keys die fälschlicherweise als String in settings gespeichert wurden
         if (prefs.contains("lists") || prefs.contains("stations")) {
             prefs.edit()

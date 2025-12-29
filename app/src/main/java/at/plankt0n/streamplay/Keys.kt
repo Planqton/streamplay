@@ -7,7 +7,7 @@ object Keys {
     const val KEY_STATIONS = "stations"
     const val KEY_STATION_LISTS = "station_lists"  // Multi-Listen-Struktur
     const val KEY_SELECTED_LIST = "selected_list"  // Aktuell ausgewählte Liste
-    const val DEFAULT_LIST_NAME = "default"        // Standard-Listenname
+    const val DEFAULT_LIST_NAME = "Meine Stations"  // Standard-Listenname
     const val PREF_LAST_PLAYED_STREAM_INDEX = "last_played_stream_index" //Letzte Gespielte Index
     const val PREF_UPDATE_AVAILABLE = "update_available"
     const val ACTION_SHOW_COUNTDOWN = "at.plankt0n.streamplay.SHOW_COUNTDOWN"

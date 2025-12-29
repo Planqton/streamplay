@@ -384,8 +384,17 @@
     <string name="add_station">Sender hinzufügen</string>
 
     <!-- Listenverwaltung -->
-    <string name="default_list_name">Standard</string>
+    <string name="default_list_name">Meine Stations</string>
     <string name="edit_list_name">Liste umbenennen</string>
     <string name="rename_list_title">Liste umbenennen</string>
     <string name="rename_list_hint">Neuer Name</string>
+    <string name="create_new_list">Neue Liste erstellen</string>
+    <string name="delete_list">Liste löschen</string>
+    <string name="delete_list_title">Liste löschen?</string>
+    <string name="delete_list_message">Möchtest du die Liste \"%1$s\" wirklich löschen? Alle Sender in dieser Liste werden entfernt.</string>
+    <string name="delete_list_success">Liste gelöscht</string>
+    <string name="delete_list_last_error">Die letzte Liste kann nicht gelöscht werden</string>
+    <string name="cannot_delete_last_station">Die letzte Station kann nicht gelöscht werden</string>
+    <string name="new_list_name">Neue Liste</string>
+    <string name="new_list_hint">Name der neuen Liste</string>
 </resources>
