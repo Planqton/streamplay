@@ -180,7 +180,7 @@ class StreamingService : MediaLibraryService() {
         if (!::player.isInitialized) return
 
         try {
-            val networkType = NetworkType.fromName(prefs.getString(Keys.PREF_NETWORK_TYPE, NetworkType.ALL.name))
+            val networkType = NetworkType.fromName(prefs.getString(Keys.PREF_NETWORK_TYPE, NetworkType.ALL.name) ?: NetworkType.ALL.name)
             val wasPlaying = player.isPlaying || player.playbackState == Player.STATE_BUFFERING
 
             if (networkType == NetworkType.ALL) {
@@ -292,7 +292,7 @@ class StreamingService : MediaLibraryService() {
     }
 
     private fun isAllowedNetwork(): Boolean {
-        val networkType = NetworkType.fromName(prefs.getString(Keys.PREF_NETWORK_TYPE, NetworkType.ALL.name))
+        val networkType = NetworkType.fromName(prefs.getString(Keys.PREF_NETWORK_TYPE, NetworkType.ALL.name) ?: NetworkType.ALL.name)
         if (networkType == NetworkType.ALL) return hasAnyNetwork()
         return findNetworkByType(networkType) != null
     }
@@ -1025,7 +1025,10 @@ class StreamingService : MediaLibraryService() {
         }
 
         player.setMediaItems(mediaItems, currentIndex, 0L)
-        currentStationUuid = mediaItems[currentIndex].mediaMetadata.extras?.getString("EXTRA_UUID")
+        // Bounds check to prevent IndexOutOfBoundsException
+        currentStationUuid = if (currentIndex in mediaItems.indices) {
+            mediaItems[currentIndex].mediaMetadata.extras?.getString("EXTRA_UUID")
+        } else null
 
         // Nur vorbereiten wenn Netzwerk erlaubt ist
         if (isAllowedNetwork()) {
@@ -1087,7 +1090,10 @@ class StreamingService : MediaLibraryService() {
         }
 
         player.setMediaItems(mediaItems, currentIndex, 0L)
-        currentStationUuid = mediaItems[currentIndex].mediaMetadata.extras?.getString("EXTRA_UUID")
+        // Bounds check to prevent IndexOutOfBoundsException
+        currentStationUuid = if (currentIndex in mediaItems.indices) {
+            mediaItems[currentIndex].mediaMetadata.extras?.getString("EXTRA_UUID")
+        } else null
 
         // Android Auto über Playlist-Änderung benachrichtigen
         notifyStationsChanged()
@@ -1104,7 +1110,7 @@ class StreamingService : MediaLibraryService() {
     }
 
     private fun maybeAutoplay(ignoreIfWasPlaying: Boolean = false) {
-        val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+        // Use cached prefs instead of getting new instance
         val autoplay = prefs.getBoolean("autoplay_enabled", false)
         if (!autoplay) return
         if (ignoreIfWasPlaying) return
@@ -1140,7 +1146,10 @@ class StreamingService : MediaLibraryService() {
                     setPackage(packageName)
                 }
                 sendBroadcast(intent)
-                autoplayHandler = Handler(Looper.getMainLooper())
+                // Reuse existing handler or create new one (prevents memory leak)
+                if (autoplayHandler == null) {
+                    autoplayHandler = Handler(Looper.getMainLooper())
+                }
                 autoplayHandler?.postDelayed(autoplayRunnable!!, delay * 1000L)
             } else {
                 autoplayRunnable?.run()
@@ -1269,7 +1278,7 @@ class StreamingService : MediaLibraryService() {
         }
 
         if (artist.isNotEmpty() && title.isNotEmpty()) {
-            val prefs = getSharedPreferences(Keys.PREFS_NAME, Context.MODE_PRIVATE)
+            // Use cached prefs instead of getting new instance
             val useSpotify = prefs.getBoolean(Keys.PREF_USE_SPOTIFY_META, false)
             val hasKeys = !prefs.getString(Keys.PREF_SPOTIFY_CLIENT_ID, "").isNullOrBlank() &&
                     !prefs.getString(Keys.PREF_SPOTIFY_CLIENT_SECRET, "").isNullOrBlank()

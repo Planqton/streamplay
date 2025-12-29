@@ -56,7 +56,9 @@ object SpotifyMetaReader {
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw IOException("Spotify Auth failed: ${response.code}")
 
-            val json = JSONObject(response.body?.string() ?: "")
+            val responseBody = response.body?.string()
+            if (responseBody.isNullOrBlank()) throw IOException("Empty response body from Spotify Auth")
+            val json = JSONObject(responseBody)
             val newToken = json.getString("access_token")
             val expiresIn = json.getLong("expires_in") // Sekunden
             synchronized(tokenLock) {
@@ -104,7 +106,12 @@ object SpotifyMetaReader {
                         Log.e("SpotifyMetaReader", "❌ API-Fehler ($step): ${response.code}")
                         return null
                     }
-                    val json = JSONObject(response.body?.string() ?: "")
+                    val responseBody = response.body?.string()
+                    if (responseBody.isNullOrBlank()) {
+                        Log.e("SpotifyMetaReader", "❌ Empty response ($step)")
+                        return null
+                    }
+                    val json = JSONObject(responseBody)
                     return json.getJSONObject("tracks").getJSONArray("items").optJSONObject(0)
                 }
             }
@@ -172,10 +179,13 @@ object SpotifyMetaReader {
 
                 client.newCall(artistRequest).execute().use { artistResponse ->
                     if (artistResponse.isSuccessful) {
-                        val artistJson = JSONObject(artistResponse.body?.string() ?: "")
-                        val genres = artistJson.optJSONArray("genres")
-                        if (genres != null && genres.length() > 0) {
-                            genre = genres.getString(0)
+                        val artistBody = artistResponse.body?.string()
+                        if (!artistBody.isNullOrBlank()) {
+                            val artistJson = JSONObject(artistBody)
+                            val genres = artistJson.optJSONArray("genres")
+                            if (genres != null && genres.length() > 0) {
+                                genre = genres.getString(0)
+                            }
                         }
                     } else {
                         Log.w("SpotifyMetaReader", "⚠️ Spotify Artist API-Fehler: ${artistResponse.code}")
@@ -194,9 +204,12 @@ object SpotifyMetaReader {
 
             val bestAlbumCoverUrl = client.newCall(albumRequest).execute().use { albumResponse ->
                 if (albumResponse.isSuccessful) {
-                    val albumJson = JSONObject(albumResponse.body?.string() ?: "")
-                    val albumImages = albumJson.getJSONArray("images")
-                    if (albumImages.length() > 0) albumImages.getJSONObject(0).getString("url") else null
+                    val albumBody = albumResponse.body?.string()
+                    if (!albumBody.isNullOrBlank()) {
+                        val albumJson = JSONObject(albumBody)
+                        val albumImages = albumJson.getJSONArray("images")
+                        if (albumImages.length() > 0) albumImages.getJSONObject(0).getString("url") else null
+                    } else null
                 } else {
                     Log.w("SpotifyMetaReader", "⚠️ Spotify Album API-Fehler: ${albumResponse.code}")
                     null

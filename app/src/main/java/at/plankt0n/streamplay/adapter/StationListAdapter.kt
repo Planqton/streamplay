@@ -21,6 +21,7 @@ class StationListAdapter(
     private val onDeleteStation: ((Int) -> Unit)? = null
 ) : RecyclerView.Adapter<StationListAdapter.ViewHolder>() {
 
+    @Volatile
     private var editingPosition: Int = -1
     private var currentPlayingIndex: Int = -1
 
@@ -85,8 +86,8 @@ class StationListAdapter(
                 val newStreamUrl = holder.editUrl.text.toString().trim()
                 val newStationName = holder.editName.text.toString().trim()
 
-                // Validate: Stream URL must not be empty
-                if (newStreamUrl.isBlank() && stationList[pos].streamURL.isBlank()) {
+                // Validate: Stream URL must not be empty (new URL is blank AND no fallback exists)
+                if (newStreamUrl.isBlank()) {
                     android.widget.Toast.makeText(
                         holder.itemView.context,
                         R.string.error_stream_url_required,
@@ -171,6 +172,12 @@ class StationListAdapter(
     }
 
     override fun getItemCount(): Int = stationList.size
+
+    override fun onViewRecycled(holder: ViewHolder) {
+        super.onViewRecycled(holder)
+        // Clear Glide request to prevent memory leaks
+        Glide.with(holder.playButton.context).clear(holder.playButton)
+    }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         // Bounds check to prevent IndexOutOfBoundsException

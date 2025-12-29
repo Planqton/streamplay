@@ -70,7 +70,13 @@ class MediaServiceController(private val context: Context) {
                 onConnected(controller)
 
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("MediaServiceController", "❌ Failed to connect to MediaController", e)
+                // Notify about connection failure through error callback
+                onPlayerError(androidx.media3.common.PlaybackException(
+                    "Failed to connect to media service: ${e.message}",
+                    e,
+                    androidx.media3.common.PlaybackException.ERROR_CODE_UNSPECIFIED
+                ))
             }
         }, context.mainExecutor)
     }

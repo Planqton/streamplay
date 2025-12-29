@@ -109,6 +109,7 @@ class PlayerFragment : Fragment() {
     private lateinit var connectingBanner: TextView
     private lateinit var listDropdown: Spinner
     private var listDropdownAdapter: ArrayAdapter<String>? = null
+    @Volatile
     private var isListDropdownInitializing = false
     private lateinit var metaFlipper: ViewFlipper
     private val countdownHandler = Handler(Looper.getMainLooper())
@@ -1437,6 +1438,8 @@ class PlayerFragment : Fragment() {
 
         countdownRunnable = object : Runnable {
             override fun run() {
+                // Lifecycle safety check to prevent crash after fragment destruction
+                if (!isAdded || view == null) return
                 remaining--
                 if (remaining <= 0) {
                     hideCountdown()

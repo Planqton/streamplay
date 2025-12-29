@@ -37,6 +37,14 @@
     <string name="add_stream">Add stream</string>
     <string name="edit_stream">Edit stream</string>
     <string name="delete_stream">Delete stream</string>
+    <string name="pin_to_home">Add to home screen</string>
+    <string name="more_options">More options</string>
+    <string name="station_name_hint">Station name</string>
+    <string name="stream_url_hint">Stream URL</string>
+    <string name="icon_url_hint">Icon URL (optional)</string>
+    <string name="save">Save</string>
+    <string name="confirm_delete_station">Delete station?</string>
+    <string name="confirm_delete_station_message">Do you really want to delete \"%1$s\"?</string>
     <string name="error_stream_url_required">Stream URL is required</string>
 
 
@@ -95,6 +103,14 @@
     <string name="bottom_sheet_equalizer_text">Equalizer</string>
     <string name="bottom_sheet_equalizer_desc">Adjust sound</string>
     <string name="bottom_sheet_equalizer_content_desc">Open equalizer</string>
+
+    <!-- Lyrics -->
+    <string name="lyrics_title">Lyrics</string>
+    <string name="lyrics_loading">Searching for lyrics…</string>
+    <string name="lyrics_not_found">No lyrics found</string>
+    <string name="lyrics_instrumental">Instrumental</string>
+    <string name="lyrics_no_track">No song is playing</string>
+    <string name="lyrics_error">Error loading lyrics</string>
 
     <!-- Equalizer -->
     <string name="eq_title">Equalizer</string>
@@ -171,6 +187,9 @@
     <string name="orientation_auto">Auto rotate</string>
     <string name="orientation_landscape">Lock landscape</string>
     <string name="orientation_portrait">Lock portrait</string>
+    <string name="rotation_locked_landscape">Rotation locked: Landscape</string>
+    <string name="rotation_locked_portrait">Rotation locked: Portrait</string>
+    <string name="rotation_unlocked">Rotation unlocked</string>
     <string name="settings_language">Language</string>
     <string name="language_system">System language</string>
     <string name="language_german">Deutsch</string>
@@ -179,8 +198,15 @@
     <string name="settings_category_ui">UI Settings</string>
     <string name="settings_category_metainfo">Metainfo Settings</string>
     <string name="settings_category_spotify_meta">Spotify Meta</string>
+    <string name="settings_category_recording">Recording</string>
     <string name="settings_category_personal_sync">Personal Sync</string>
     <string name="settings_category_about">About</string>
+    <string name="settings_category_dev">Developer</string>
+    <string name="settings_recording_enabled">Recording enabled</string>
+    <string name="settings_recording_enabled_summary">Allows recording of streams</string>
+    <string name="settings_recording_disabled_while_recording">Cannot disable while recording</string>
+    <string name="settings_recording_path">Save location</string>
+    <string name="settings_recording_path_summary">Downloads/streamplay</string>
     <string name="settings_category_player">Player settings</string>
     <string name="settings_app_version">App Version</string>
     <string name="settings_check_updates">Check for Updates</string>
@@ -245,6 +271,8 @@
     <string name="cover_mode_meta">Metadata Cover</string>
     <string name="settings_show_station_in_mediainfo">Station name in Mediainfo</string>
     <string name="settings_show_station_in_mediainfo_summary">Shows the station name in the title field of the media notification</string>
+    <string name="settings_show_rotate_lock">Show rotation lock</string>
+    <string name="settings_show_rotate_lock_summary">Shows a button to lock the screen orientation</string>
 
     <!-- Overlay Settings -->
     <string name="settings_ui_subscreen">UI Settings</string>
@@ -285,6 +313,8 @@
     <string name="settings_api_success">Success: %1$s</string>
     <string name="settings_api_error">Error: %1$s</string>
     <string name="settings_api_read_success">Profile loaded: %1$d stations</string>
+    <string name="settings_api_push_confirm_title">Push to profile?</string>
+    <string name="settings_api_push_confirm_message">Do you really want to upload your current settings and stations to the server?</string>
 
     <!-- Factory Reset -->
     <string name="settings_factory_reset">Factory Reset</string>
@@ -340,4 +370,32 @@
     <string name="cannot_delete_last_station">Cannot delete the last station</string>
     <string name="new_list_name">New List</string>
     <string name="new_list_hint">Name of the new list</string>
+
+    <!-- Dev Menu -->
+    <string name="dev_menu_enabled">Developer menu enabled</string>
+    <string name="dev_menu_disabled">Developer menu disabled</string>
+    <string name="settings_crash_app">Crash app</string>
+    <string name="settings_crash_app_summary">Tests the crash handler</string>
+    <string name="crash_type_null_pointer">NullPointerException</string>
+    <string name="crash_type_out_of_memory">OutOfMemoryError</string>
+    <string name="crash_type_index_out_of_bounds">ArrayIndexOutOfBoundsException</string>
+    <string name="crash_type_illegal_state">IllegalStateException</string>
+    <string name="crash_type_stack_overflow">StackOverflowError</string>
+    <string name="crash_type_runtime">RuntimeException</string>
+
+    <!-- Crash Logs -->
+    <string name="crash_log_title">Error Logs</string>
+    <string name="settings_crash_logs">View error logs</string>
+    <string name="settings_crash_logs_summary">Shows saved crash logs</string>
+    <string name="crash_log_empty_title">No error logs</string>
+    <string name="crash_log_empty_subtitle">Crash logs will appear here if the app crashes</string>
+    <string name="crash_log_share">Share</string>
+    <string name="crash_log_share_error">Error sharing</string>
+    <string name="crash_log_read_error">Error reading file</string>
+    <string name="crash_log_confirm_clear_title">Clear logs?</string>
+    <string name="crash_log_confirm_clear_message">All error logs will be permanently deleted.</string>
+    <string name="crash_log_cleared">Logs cleared</string>
+    <string name="crash_log_export">Export</string>
+    <string name="crash_log_exported">%d log(s) exported to Downloads/StreamPlay</string>
+    <string name="crash_log_export_error">Export failed</string>
 </resources>
