@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/item_station_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -10,99 +11,151 @@
     <RelativeLayout
         android:id="@+id/stationItemContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:minHeight="56dp">
 
-        <ImageButton
-            android:id="@+id/buttonPlayStation"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/desc_button_play_station"
-            android:src="@drawable/ic_stationcover_placeholder"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
-            android:scaleType="centerCrop" />
-
-        <LinearLayout
-            android:id="@+id/stationTexts"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_toEndOf="@id/buttonPlayStation"
-            android:layout_toStartOf="@+id/dragHandle">
-
-        <TextView
-            android:id="@+id/textStationName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Station Name"
-            android:textStyle="bold"
-            android:textSize="16sp"/>
-
-        <TextView
-            android:id="@+id/textStreamUrl"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Stream URL"
-            android:textSize="14sp"
-            android:textColor="@android:color/darker_gray"/>
-    </LinearLayout>
-
+        <!-- Drag Handle links -->
         <ImageView
             android:id="@+id/dragHandle"
             android:layout_width="24dp"
             android:layout_height="match_parent"
-            android:layout_alignParentEnd="true"
-            android:layout_marginStart="8dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="8dp"
             android:contentDescription="@string/drag_handle_desc"
-            android:src="@drawable/ic_drag_handle"/>
+            android:src="@drawable/ic_drag_handle" />
+
+        <!-- Station Icon -->
+        <ImageButton
+            android:id="@+id/buttonPlayStation"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_toEndOf="@id/dragHandle"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/desc_button_play_station"
+            android:src="@drawable/ic_stationcover_placeholder"
+            android:scaleType="centerCrop" />
+
+        <!-- Overflow Menu Button rechts -->
+        <ImageButton
+            android:id="@+id/buttonStationMenu"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/more_options"
+            android:src="@drawable/ic_more_vert"
+            app:tint="?attr/colorOnSurface" />
+
+        <!-- Station Texte in der Mitte -->
+        <LinearLayout
+            android:id="@+id/stationTexts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/buttonPlayStation"
+            android:layout_toStartOf="@id/buttonStationMenu"
+            android:layout_centerVertical="true"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textStationName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Station Name"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textStreamUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Stream URL"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="13sp" />
+        </LinearLayout>
 
     </RelativeLayout>
 
-    <!-- Editieransicht -->
+    <!-- Editieransicht (inline, wird bei Bedarf eingeblendet) -->
     <LinearLayout
         android:id="@+id/editLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:paddingTop="8dp"
         android:visibility="gone">
 
-        <EditText
-            android:id="@+id/editTextStationName"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Name"/>
+            android:hint="@string/station_name_hint"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-        <EditText
-            android:id="@+id/editTextStationUrl"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Stream URL"/>
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTextStationName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <EditText
-            android:id="@+id/editTextStationIcon"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Icon URL"/>
+            android:layout_marginTop="8dp"
+            android:hint="@string/stream_url_hint"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTextStationUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textUri"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="@string/icon_url_hint"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTextStationIcon"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textUri"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="end">
+            android:layout_marginTop="12dp"
+            android:gravity="end"
+            android:orientation="horizontal">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonCancelChangesItem"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cancel" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonSaveChangesItem"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Speichern" />
-
-            <Button
-                android:id="@+id/buttonCancelChangesItem"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Abbrechen"
-                android:layout_marginStart="8dp"/>
+                android:layout_marginStart="8dp"
+                android:text="@string/save" />
         </LinearLayout>
     </LinearLayout>
 

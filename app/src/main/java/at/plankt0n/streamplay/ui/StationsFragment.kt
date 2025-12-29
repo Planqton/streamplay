@@ -249,16 +249,17 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
 
         mediaServiceController = MediaServiceController(requireContext())
 
-        adapter = StationListAdapter(stationList, { holder ->
-            itemTouchHelper.startDrag(holder)
-        }, {
-            hasChanges = true
-            refreshPlaylist()
-        }, { index ->
-            mediaServiceController.playAtIndex(index)
-        }) { station ->
-            pinStationToHome(station)
-        }
+        adapter = StationListAdapter(
+            stationList = stationList,
+            startDrag = { holder -> itemTouchHelper.startDrag(holder) },
+            onDataChanged = {
+                hasChanges = true
+                refreshPlaylist()
+            },
+            onPlayClick = { index -> mediaServiceController.playAtIndex(index) },
+            onPinToHome = { station -> pinStationToHome(station) },
+            onDeleteStation = { position -> deleteStationAt(position) }
+        )
         recyclerView.adapter = adapter
         itemTouchHelper.attachToRecyclerView(recyclerView)
 
@@ -410,6 +411,23 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
             action = "at.plankt0n.streamplay.ACTION_REFRESH_PLAYLIST"
         }
         requireContext().startService(intent)
+    }
+
+    private fun deleteStationAt(position: Int) {
+        // Sicherheitscheck: Letzte Station nicht löschen
+        if (stationList.size <= 1) {
+            Toast.makeText(requireContext(), R.string.cannot_delete_last_station, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (position in stationList.indices) {
+            stationList.removeAt(position)
+            PreferencesHelper.saveStations(requireContext(), stationList)
+            adapter.notifyItemRemoved(position)
+            hasChanges = true
+            refreshPlaylist()
+            updateEmptyState()
+        }
     }
 
 

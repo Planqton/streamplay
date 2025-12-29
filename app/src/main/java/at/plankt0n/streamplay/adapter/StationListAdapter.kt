@@ -4,18 +4,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.appcompat.widget.PopupMenu
 import com.bumptech.glide.Glide
 import androidx.recyclerview.widget.RecyclerView
 import at.plankt0n.streamplay.R
 import at.plankt0n.streamplay.data.StationItem
 import at.plankt0n.streamplay.helper.PreferencesHelper
+import com.google.android.material.textfield.TextInputEditText
 
 class StationListAdapter(
     private val stationList: MutableList<StationItem>,
     private val startDrag: (RecyclerView.ViewHolder) -> Unit,
     private val onDataChanged: () -> Unit,
     private val onPlayClick: (Int) -> Unit,
-    private val onPinToHome: (StationItem) -> Unit
+    private val onPinToHome: (StationItem) -> Unit,
+    private val onDeleteStation: ((Int) -> Unit)? = null
 ) : RecyclerView.Adapter<StationListAdapter.ViewHolder>() {
 
     private var editingPosition: Int = -1
@@ -27,14 +30,15 @@ class StationListAdapter(
         val textUrl: TextView = itemView.findViewById(R.id.textStreamUrl)
         val dragHandle: ImageView = itemView.findViewById(R.id.dragHandle)
         val playButton: ImageButton = itemView.findViewById(R.id.buttonPlayStation)
+        val menuButton: ImageButton = itemView.findViewById(R.id.buttonStationMenu)
 
         // Editieransicht
         val editLayout: LinearLayout = itemView.findViewById(R.id.editLayout)
-        val editName: EditText = itemView.findViewById(R.id.editTextStationName)
-        val editUrl: EditText = itemView.findViewById(R.id.editTextStationUrl)
-        val editIcon: EditText = itemView.findViewById(R.id.editTextStationIcon)
-        val buttonSave: Button = itemView.findViewById(R.id.buttonSaveChangesItem)
-        val buttonCancel: Button = itemView.findViewById(R.id.buttonCancelChangesItem)
+        val editName: TextInputEditText = itemView.findViewById(R.id.editTextStationName)
+        val editUrl: TextInputEditText = itemView.findViewById(R.id.editTextStationUrl)
+        val editIcon: TextInputEditText = itemView.findViewById(R.id.editTextStationIcon)
+        val buttonSave: View = itemView.findViewById(R.id.buttonSaveChangesItem)
+        val buttonCancel: View = itemView.findViewById(R.id.buttonCancelChangesItem)
 
         val normalLayout: ViewGroup = itemView.findViewById(R.id.stationItemContainer)
     }
@@ -44,43 +48,44 @@ class StationListAdapter(
             .inflate(R.layout.item_station_editable, parent, false)
         val holder = ViewHolder(view)
 
-        // Click-Listener einmal setzen statt bei jedem Bind (Memory Leak Fix)
+        // Play Button - Klick zum Abspielen
         holder.playButton.setOnClickListener {
             val pos = holder.bindingAdapterPosition
             if (pos != RecyclerView.NO_POSITION) onPlayClick(pos)
         }
-        holder.playButton.setOnLongClickListener {
-            val pos = holder.bindingAdapterPosition
-            if (pos != RecyclerView.NO_POSITION && pos < stationList.size) {
-                onPinToHome(stationList[pos])
-            }
-            true
-        }
-        holder.itemView.setOnLongClickListener {
-            val pos = holder.bindingAdapterPosition
-            if (pos != RecyclerView.NO_POSITION) {
-                val wasEditing = (pos == editingPosition)
-                val oldEditingPos = editingPosition
-                editingPosition = if (wasEditing) -1 else pos
-                // Granulare Updates statt notifyDataSetChanged
-                if (oldEditingPos >= 0) notifyItemChanged(oldEditingPos)
-                if (editingPosition >= 0) notifyItemChanged(editingPosition)
-            }
-            true
-        }
+
+        // Drag Handle
         holder.dragHandle.setOnTouchListener { _, event ->
             if (event.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
                 startDrag(holder)
             }
             false
         }
+
+        // Menü Button - PopupMenu anzeigen
+        holder.menuButton.setOnClickListener { view ->
+            val pos = holder.bindingAdapterPosition
+            if (pos != RecyclerView.NO_POSITION && pos < stationList.size) {
+                showPopupMenu(view, pos)
+            }
+        }
+
+        // Auf Item tippen öffnet auch das Menü (intuitiver)
+        holder.normalLayout.setOnClickListener {
+            val pos = holder.bindingAdapterPosition
+            if (pos != RecyclerView.NO_POSITION && pos < stationList.size) {
+                showPopupMenu(holder.menuButton, pos)
+            }
+        }
+
+        // Save Button
         holder.buttonSave.setOnClickListener {
             val pos = holder.bindingAdapterPosition
             if (pos != RecyclerView.NO_POSITION && pos < stationList.size) {
                 val updatedStation = stationList[pos].copy(
-                    stationName = holder.editName.text.toString(),
-                    streamURL = holder.editUrl.text.toString(),
-                    iconURL = holder.editIcon.text.toString()
+                    stationName = holder.editName.text.toString().trim().ifEmpty { stationList[pos].stationName },
+                    streamURL = holder.editUrl.text.toString().trim().ifEmpty { stationList[pos].streamURL },
+                    iconURL = holder.editIcon.text.toString().trim()
                 )
                 stationList[pos] = updatedStation
                 PreferencesHelper.saveStations(holder.itemView.context, stationList)
@@ -89,6 +94,8 @@ class StationListAdapter(
                 onDataChanged()
             }
         }
+
+        // Cancel Button
         holder.buttonCancel.setOnClickListener {
             val pos = holder.bindingAdapterPosition
             if (pos != RecyclerView.NO_POSITION) {
@@ -98,6 +105,56 @@ class StationListAdapter(
         }
 
         return holder
+    }
+
+    private fun showPopupMenu(anchorView: View, position: Int) {
+        val context = anchorView.context
+        val station = stationList[position]
+
+        val popup = PopupMenu(context, anchorView)
+        popup.menuInflater.inflate(R.menu.menu_station_item, popup.menu)
+
+        // Löschen-Option ausblenden wenn nur noch eine Station
+        if (stationList.size <= 1) {
+            popup.menu.findItem(R.id.menu_delete)?.isVisible = false
+        }
+
+        popup.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.menu_edit -> {
+                    // Edit-Modus aktivieren
+                    val oldEditingPos = editingPosition
+                    editingPosition = position
+                    if (oldEditingPos >= 0) notifyItemChanged(oldEditingPos)
+                    notifyItemChanged(position)
+                    true
+                }
+                R.id.menu_delete -> {
+                    // Lösch-Bestätigung anzeigen
+                    showDeleteConfirmation(context, station, position)
+                    true
+                }
+                R.id.menu_pin_home -> {
+                    onPinToHome(station)
+                    true
+                }
+                else -> false
+            }
+        }
+
+        popup.show()
+    }
+
+    private fun showDeleteConfirmation(context: android.content.Context, station: StationItem, position: Int) {
+        android.app.AlertDialog.Builder(context)
+            .setTitle(R.string.confirm_delete_station)
+            .setMessage(context.getString(R.string.confirm_delete_station_message, station.stationName))
+            .setPositiveButton(R.string.delete_stream) { _, _ ->
+                // Callback an Fragment oder direkt löschen
+                onDeleteStation?.invoke(position)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     override fun getItemCount(): Int = stationList.size
@@ -121,8 +178,7 @@ class StationListAdapter(
         holder.normalLayout.visibility = if (isEditing) View.GONE else View.VISIBLE
         holder.editLayout.visibility = if (isEditing) View.VISIBLE else View.GONE
 
-        holder.playButton.visibility = if (isEditing) View.GONE else View.VISIBLE
-
+        // Station Icon laden
         Glide.with(holder.playButton.context)
             .load(station.iconURL)
             .placeholder(R.drawable.ic_stationcover_placeholder)
@@ -130,6 +186,7 @@ class StationListAdapter(
             .fallback(R.drawable.ic_stationcover_placeholder)
             .into(holder.playButton)
 
+        // Aktuell spielender Sender hervorheben
         val context = holder.itemView.context
         if (position == currentPlayingIndex) {
             holder.itemView.setBackgroundColor(context.getColor(R.color.highlight))
@@ -156,6 +213,14 @@ class StationListAdapter(
         }
         if (index >= 0 && index < stationList.size) {
             notifyItemChanged(index)
+        }
+    }
+
+    fun closeEditMode() {
+        if (editingPosition >= 0) {
+            val pos = editingPosition
+            editingPosition = -1
+            notifyItemChanged(pos)
         }
     }
 }

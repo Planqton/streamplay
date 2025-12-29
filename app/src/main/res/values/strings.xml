@@ -37,6 +37,14 @@
     <string name="add_stream">Stream hinzufügen</string>
     <string name="edit_stream">Stream bearbeiten</string>
     <string name="delete_stream">Stream löschen</string>
+    <string name="pin_to_home">Zum Startbildschirm</string>
+    <string name="more_options">Weitere Optionen</string>
+    <string name="station_name_hint">Sendername</string>
+    <string name="stream_url_hint">Stream-URL</string>
+    <string name="icon_url_hint">Icon-URL (optional)</string>
+    <string name="save">Speichern</string>
+    <string name="confirm_delete_station">Sender löschen?</string>
+    <string name="confirm_delete_station_message">Möchtest du \"%1$s\" wirklich löschen?</string>
 
 
     <!-- Sonstige Standardstrings -->

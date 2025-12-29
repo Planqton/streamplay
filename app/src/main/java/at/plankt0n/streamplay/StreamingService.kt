@@ -721,13 +721,17 @@ class StreamingService : MediaLibraryService() {
             return item
         }
 
-        // Look up the station by mediaId
+        // Look up the station by mediaId (uuid) in allen Quellen
         val mediaId = item.mediaId
         val stations = PreferencesHelper.getStations(this)
-        val station = stations.find { it.uuid == mediaId }
+        val forYouItems = PreferencesHelper.getDevForYouItems(this)
+        val whatToListenItems = PreferencesHelper.getDevWhatToListenItems(this)
+        val allStations = stations + forYouItems + whatToListenItems
+
+        val station = allStations.find { it.uuid == mediaId }
 
         return if (station != null) {
-            createPlayableMediaItem(station)
+            createQueueMediaItem(station)  // Konsistent mit Player-Queue
         } else {
             item // Return original if not found
         }
@@ -1011,22 +1015,9 @@ class StreamingService : MediaLibraryService() {
             currentIndex = 0
         }
 
-        mediaItems = streams.map {
-            val extras = Bundle().apply {
-                putString("EXTRA_ICON_URL", it.iconURL)
-                putString("EXTRA_UUID", it.uuid)
-                putString("EXTRA_STATION_NAME", it.stationName)
-            }
-
-            val metadata = MediaMetadata.Builder()
-                .setExtras(extras)
-                .build()
-
-            MediaItem.Builder()
-                .setUri(it.streamURL)
-                .setMediaId(it.streamURL)
-                .setMediaMetadata(metadata)
-                .build()
+        // MediaItems mit vollständigen Metadaten für Android Auto Queue
+        mediaItems = streams.map { station ->
+            createQueueMediaItem(station)
         }
 
         player.setMediaItems(mediaItems, currentIndex, 0L)
@@ -1039,6 +1030,35 @@ class StreamingService : MediaLibraryService() {
         } else {
             resumeOnNetwork = true
         }
+    }
+
+    // Erstellt ein MediaItem für die Player-Queue mit vollständigen Metadaten
+    private fun createQueueMediaItem(station: StationItem): MediaItem {
+        val artworkUri = if (station.iconURL.isNotBlank()) {
+            Uri.parse(station.iconURL)
+        } else null
+
+        val extras = Bundle().apply {
+            putString("EXTRA_ICON_URL", station.iconURL)
+            putString("EXTRA_UUID", station.uuid)
+            putString("EXTRA_STATION_NAME", station.stationName)
+        }
+
+        return MediaItem.Builder()
+            .setUri(station.streamURL)
+            .setMediaId(station.uuid)  // Konsistent mit createPlayableMediaItem
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(station.stationName)
+                    .setStation(station.stationName)
+                    .setArtworkUri(artworkUri)
+                    .setIsPlayable(true)
+                    .setIsBrowsable(false)
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_RADIO_STATION)
+                    .setExtras(extras)
+                    .build()
+            )
+            .build()
     }
 
     private fun refreshPlaylist() {
@@ -1057,26 +1077,17 @@ class StreamingService : MediaLibraryService() {
             currentIndex = 0
         }
 
-        mediaItems = streams.map {
-            val extras = Bundle().apply {
-                putString("EXTRA_ICON_URL", it.iconURL)
-                putString("EXTRA_UUID", it.uuid)
-                putString("EXTRA_STATION_NAME", it.stationName)
-            }
-
-            val metadata = MediaMetadata.Builder()
-                .setExtras(extras)
-                .build()
-
-            MediaItem.Builder()
-                .setUri(it.streamURL)
-                .setMediaId(it.streamURL)
-                .setMediaMetadata(metadata)
-                .build()
+        // MediaItems mit vollständigen Metadaten für Android Auto Queue
+        mediaItems = streams.map { station ->
+            createQueueMediaItem(station)
         }
 
         player.setMediaItems(mediaItems, currentIndex, 0L)
         currentStationUuid = mediaItems[currentIndex].mediaMetadata.extras?.getString("EXTRA_UUID")
+
+        // Android Auto über Playlist-Änderung benachrichtigen
+        notifyStationsChanged()
+        Log.d("StreamingService", "🔄 Playlist aktualisiert mit ${mediaItems.size} Sendern")
 
         // Nur vorbereiten wenn Netzwerk erlaubt ist
         if (isAllowedNetwork()) {
