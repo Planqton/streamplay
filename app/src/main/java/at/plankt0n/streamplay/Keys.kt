@@ -19,6 +19,7 @@ object Keys {
     const val EXTRA_STATION_NAME = "extra_station_name"
     const val EXTRA_STATION_STREAM_URL = "extra_station_stream_url"
     const val EXTRA_STATION_ICON_URL = "extra_station_icon_url"
+    const val EXTRA_STATION_LIST_NAME = "extra_station_list_name"  // Liste des Senders für Shortcuts
     const val UPDATE_FORCE_TAP_COUNT = 5
 
     const val PREF_AUDIO_FOCUS_MODE = "audio_focus_mode"

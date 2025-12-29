@@ -366,12 +366,14 @@ class StationsFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeL
         }
 
         val shortcutId = "station_${station.uuid}"
+        val currentListName = PreferencesHelper.getSelectedListName(context)
         val intent = Intent(context, MainActivity::class.java).apply {
             action = Keys.ACTION_PLAY_STATION
             putExtra(Keys.EXTRA_STATION_UUID, station.uuid)
             putExtra(Keys.EXTRA_STATION_NAME, station.stationName)
             putExtra(Keys.EXTRA_STATION_STREAM_URL, station.streamURL)
             putExtra(Keys.EXTRA_STATION_ICON_URL, station.iconURL)
+            putExtra(Keys.EXTRA_STATION_LIST_NAME, currentListName)  // Listenname für korrektes Abspielen
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
 

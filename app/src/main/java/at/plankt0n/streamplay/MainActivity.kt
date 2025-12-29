@@ -27,6 +27,7 @@ import at.plankt0n.streamplay.Keys
 import at.plankt0n.streamplay.ScreenOrientationMode
 import at.plankt0n.streamplay.ui.MainPagerFragment
 import at.plankt0n.streamplay.ui.DiscoverFragment
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
@@ -34,6 +35,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     private var mainPagerFragment: MainPagerFragment? = null
     private var shortcutController: MediaServiceController? = null
     private var pendingShortcutStation: StationItem? = null
+    private var pendingShortcutListName: String? = null  // Liste des Shortcut-Senders
     private lateinit var prefs: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -147,16 +149,21 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         val name = intent.getStringExtra(Keys.EXTRA_STATION_NAME) ?: return
         val streamUrl = intent.getStringExtra(Keys.EXTRA_STATION_STREAM_URL) ?: return
         val iconUrl = intent.getStringExtra(Keys.EXTRA_STATION_ICON_URL) ?: ""
+        val listName = intent.getStringExtra(Keys.EXTRA_STATION_LIST_NAME)  // Kann null sein bei alten Shortcuts
+
         val station = StationItem(uuid, name, streamUrl, iconUrl)
         pendingShortcutStation = station
+        pendingShortcutListName = listName
         maybePlayPendingShortcutStation()
     }
 
     private fun maybePlayPendingShortcutStation() {
         val station = pendingShortcutStation ?: return
+        val listName = pendingShortcutListName
         if (mainPagerFragment?.view != null) {
-            playStationFromShortcut(station)
+            playStationFromShortcut(station, listName)
             pendingShortcutStation = null
+            pendingShortcutListName = null
         } else {
             Handler(Looper.getMainLooper()).postDelayed(
                 { maybePlayPendingShortcutStation() },
@@ -165,17 +172,38 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         }
     }
 
-    private fun playStationFromShortcut(station: StationItem) {
+    private fun playStationFromShortcut(station: StationItem, listName: String?) {
+        // 1. Zur richtigen Liste wechseln (falls angegeben)
+        if (listName != null) {
+            val existingLists = PreferencesHelper.getListNames(this)
+
+            if (listName in existingLists) {
+                // Liste existiert → zu dieser Liste wechseln
+                PreferencesHelper.setSelectedListName(this, listName)
+                Log.d("MainActivity", "🔄 Shortcut: Wechsel zu Liste '$listName'")
+            } else {
+                // Liste existiert nicht mehr → neu erstellen mit diesem Sender
+                PreferencesHelper.createNewList(this, listName)
+                // createNewList wechselt automatisch zur neuen Liste
+                PreferencesHelper.saveStations(this, listOf(station))
+                Log.d("MainActivity", "🔄 Shortcut: Liste '$listName' neu erstellt")
+            }
+        }
+
+        // 2. Sender in der (jetzt aktiven) Liste finden/hinzufügen
         val list = PreferencesHelper.getStations(this).toMutableList()
         var index = list.indexOfFirst { it.uuid == station.uuid }
+
         if (index == -1) {
+            // Sender nicht in Liste → hinzufügen
             list.add(station)
             PreferencesHelper.saveStations(this, list)
             index = list.size - 1
+            Log.d("MainActivity", "🔄 Shortcut: Sender zur Liste hinzugefügt")
         }
 
+        // 3. Index speichern und Playlist aktualisieren
         PreferencesHelper.setLastPlayedStreamIndex(this, index)
-
         StateHelper.isPlaylistChangePending = true
 
         val refreshIntent = Intent(this, StreamingService::class.java).apply {
@@ -183,17 +211,23 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         }
         startService(refreshIntent)
 
+        // 4. UI über Listenwechsel informieren
+        LocalBroadcastManager.getInstance(this)
+            .sendBroadcast(Intent(Keys.ACTION_STATIONS_UPDATED))
+
+        // 5. Abspielen mit UUID statt URL
         shortcutController = MediaServiceController(this)
         shortcutController?.initializeAndConnect(
             onConnected = {
-                val idx = shortcutController?.findIndexByMediaId(station.streamURL)?.takeIf { it >= 0 } ?: index
+                // Suche mit UUID statt URL
+                val idx = shortcutController?.findIndexByMediaId(station.uuid)?.takeIf { it >= 0 } ?: index
                 shortcutController?.playAtIndex(idx)
             },
             onPlaybackChanged = {},
             onStreamIndexChanged = {},
             onMetadataChanged = {},
             onTimelineChanged = {
-                val idx = shortcutController?.findIndexByMediaId(station.streamURL)?.takeIf { it >= 0 } ?: index
+                val idx = shortcutController?.findIndexByMediaId(station.uuid)?.takeIf { it >= 0 } ?: index
                 shortcutController?.playAtIndex(idx)
                 StateHelper.isPlaylistChangePending = false
                 // Controller nach erfolgreicher Wiedergabe freigeben
