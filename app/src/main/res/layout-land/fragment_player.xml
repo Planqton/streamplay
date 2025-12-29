@@ -7,22 +7,30 @@
     android:layout_height="match_parent"
     android:background="@color/backgroundDark">
 
-    <!-- ViewPager2 für Cover links (quadratisch) -->
+    <!-- Guideline für ViewPager-Breite (wird programmatisch angepasst) -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_viewpager_end"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="1.0" />
+
+    <!-- ViewPager für Cover -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/guideline_viewpager_end"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintDimensionRatio="1:1" />
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- UI Overlay rechts -->
-    <include
-        layout="@layout/fragment_player_ui_overlay"
+    <!-- Container für UI Overlay (wird bei Orientierungswechsel neu befüllt) -->
+    <FrameLayout
+        android:id="@+id/ui_overlay_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintStart_toEndOf="@id/view_pager"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
